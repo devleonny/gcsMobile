@@ -1,0 +1,301 @@
+body,
+html {
+    background: linear-gradient(45deg, #249f41, #151749);
+    font-family: 'Poppins', sans-serif;
+    height: 100%;
+    width: 100vw;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+span {
+    font-size: 4vw;
+    color: black;
+}
+
+#app {
+    position: relative;
+}
+
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.overlay {
+    position: fixed;
+    z-index: 10001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+select {
+    font-size: 3vw;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+input {
+    display: block;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #888;
+}
+
+button {
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #249f41;
+}
+
+.login-container {
+    padding: 20px;
+    background-color: rgb(255, 255, 255);
+}
+
+.janela {
+    min-width: 90vw;
+    overflow: auto;
+    max-height: 90vh;
+}
+
+.janela_fora {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    max-width: 90vw;
+    text-align: center;
+    font-size: 3vw;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.topo_popup {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: #3b444c;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #d2d2d2;
+}
+
+.botao_popup {
+    background-color: #3b444c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 10vw;
+    height: 5vh;
+    cursor: pointer;
+
+}
+
+.botao_popup img {
+    width: 5vw;
+}
+
+.botao_popup label {
+    cursor: pointer;
+    color: white;
+    font-size: 5vw;
+}
+
+.btnLateral {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 10px;
+    border-radius: 2px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    width: 100%;
+    background-color: #d2d2d2;
+}
+
+.btnLateral img {
+    margin-left: 10px
+}
+
+/* Container geral */
+.menu-container {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Botão hambúrguer */
+.menu-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 300;
+}
+
+.menu-btn div {
+    width: 25px;
+    height: 3px;
+    background: white;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+/* Menu lateral */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #222222ec;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+    transition: 0.3s;
+    z-index: 200;
+}
+
+.side-menu.active {
+    left: 0;
+}
+
+.painelBotoes {
+    border-bottom: 1px solid #666666;
+    min-height: 4vh;
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+    background-color: #b1b1b1;
+    gap: 2px;
+    width: 100%;
+}
+
+.rodapeTabela {
+    border-top: 1px solid #666666;
+    width: 100%;
+    height: 2vh;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: #b1b1b1;
+}
+
+.tabela {
+    width: 100%;
+    background-color: white;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tabela thead input {
+    width: 100%;
+}
+
+.tabela th {
+    border: solid 1px #d2d2d2;
+    color: #222;
+    font-size: 5vw;
+    padding: 8px;
+}
+
+.tabela td {
+    text-align: center;
+    padding: 3px;
+    font-size: 0.8vw;
+    overflow: hidden;
+    border: 1px solid #d2d2d2;
+}
+
+.tabela thead {
+    box-shadow: 0 1px 0 #ccc;
+    background-color: #d2d2d2;
+}
+
+.btnRodape {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 90%;
+    border-radius: 3px;
+    padding: 10px;
+    background-color: #222;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5vw;
+    z-index: 0;
+}
+
+.opcaoStatus {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 5px;
+}
+
+input[type="file"] {
+    width: 70%;
+}
+
+.btnPadrao {
+    width: 100%;
+    font-size: 5vw;
+    background-color: #249f41;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 3px;
+    color: white;
+}
+
+.aguarde {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10005;
+}
+
+.pesquisa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 50px;
+    padding-left: 5vw;
+    margin: 5vw;
+}
+
+.pesquisa input {
+    border: none;
+    background-color: transparent;
+}
