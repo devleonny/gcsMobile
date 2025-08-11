@@ -241,6 +241,7 @@ button {
 }
 
 .painelBotoes {
+    position: relative;
     border-bottom: 1px solid #666666;
     min-height: 4vh;
     display: flex;
@@ -401,7 +402,12 @@ input[type="file"] {
     transition: 0.4s;
 }
 
-
+.atualizar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10vw;
+}
 
 /* Ajustes para modo horizontal (landscape) */
 @media screen and (orientation: landscape),
@@ -493,7 +499,8 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .toolbarPopup span,
-    .toolbar span {
+    .toolbar span,
+    .tabela th {
         font-size: 1.8vw;
     }
 
@@ -503,6 +510,10 @@ screen and (min-aspect-ratio: 13/9) {
 
     .painelCadastro {
         padding: 5vw;
+    }
+
+    .atualizar {
+        width: 5vw;
     }
 
 }

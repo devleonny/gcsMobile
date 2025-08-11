@@ -22,6 +22,7 @@ const modeloTabela = (colunas) => {
                 <input oninput="pesquisarGenerico('0', this.value, filtrosColaboradores, 'body')" placeholder="Pesquisar" style="width: 100%;">
                 <img src="imagens/pesquisar2.png">
             </div>
+            <img class="atualizar" src="imagens/atualizar.png">
         </div>
         <div class="recorteTabela">
             <table class="tabela">
@@ -444,6 +445,7 @@ async function salvarObra(idObra) {
 
     for (const campo of camposFixos) obra[campo] = obVal(campo)
 
+    await enviar(`dados_obras/${idObra}`, obra)
     await inserirDados({ [idObra]: obra }, 'dados_obras')
 
     criarLinha(obra, idObra, 'obra')
@@ -679,6 +681,7 @@ async function salvarColaborador(idColaborador) {
         colaborador[campo] = valor
     }
 
+    await enviar(`dados_colaboradores/${idColaborador}`, colaborador)
     await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
 
     criarLinha(colaborador, idColaborador, 'colaborador')
