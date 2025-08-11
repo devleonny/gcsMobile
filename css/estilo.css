@@ -6,8 +6,9 @@ html {
     width: 100vw;
     margin: 0;
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
+    flex-direction: column;
 }
 
 span {
@@ -106,15 +107,31 @@ button {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.topo_popup {
+.painelCadastro {
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10vw;
+    background-color: #d2d2d2;
+}
+
+.toolbarPopup {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
-    background-color: #3b444c;
+    justify-content: space-between;
+    border-bottom: 1px solid #d2d2d2;
     width: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #d2d2d2;
+    color: white;
+    background: linear-gradient(to left, #B12425 10%, #3b444c 0%);
+}
+
+.toolbarPopup span {
+    color: white;
+    font-size: 7vw;
 }
 
 .botao_popup {
@@ -143,7 +160,6 @@ button {
     align-items: start;
     justify-content: start;
     flex-direction: column;
-    padding: 5vw;
 }
 
 .recorteTabela {
@@ -362,9 +378,6 @@ input[type="file"] {
     align-items: center;
     justify-content: start;
     background-color: #222222ec;
-    position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
 }
 
@@ -387,16 +400,11 @@ input[type="file"] {
     transition: 0.4s;
 }
 
+
+
 /* Ajustes para modo horizontal (landscape) */
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
-
-    body,
-    html {
-        flex-direction: row;
-        align-items: flex-start;
-        padding: 2vh 2vw;
-    }
 
     input {
         padding: 0.8vw;
@@ -447,8 +455,8 @@ screen and (min-aspect-ratio: 13/9) {
     .btnRodape {
         width: auto;
         position: fixed;
-        right: 7vw;
-        bottom: 7vh;
+        right: 3vw;
+        bottom: 3vh;
         font-size: 1.8vw;
     }
 
@@ -484,7 +492,7 @@ screen and (min-aspect-ratio: 13/9) {
         width: 10vw;
     }
 
-    .topo_popup span,
+    .toolbarPopup span,
     .toolbar span {
         font-size: 1.8vw;
     }
@@ -493,5 +501,8 @@ screen and (min-aspect-ratio: 13/9) {
         padding: 2vw;
     }
 
+    .painelCadastro {
+        padding: 5vw;
+    }
 
 }

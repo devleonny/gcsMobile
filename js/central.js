@@ -207,17 +207,10 @@ function popup(elementoHTML, titulo, naoRemoverAnteriores) {
 
             <div class="janela_fora">
                 
-                <div class="topo_popup">
+                <div class="toolbarPopup">
 
-                    <span style="background-color: transparent; color: white; margin-left: 5vw;">${titulo || 'Popup'}</span>
-
-                    <div style="display: flex; align-items: center; justify-content: center;">
-
-                        <div class="botao_popup" style="border-top-right-radius: 5px; background-color: #b12425;" onclick="removerPopup()">
-                            <label>×</label>
-                        </div>
-
-                    </div>
+                    <span style="width: 90%;">${titulo || 'Popup'}</span>
+                    <span style="width: 10%" onclick="removerPopup()">×</span>
 
                 </div>
                 
@@ -327,7 +320,7 @@ async function telaPrincipal() {
 
 function verificarClique(event) {
     const menu = document.getElementById('sideMenu');
-    if (!menu.contains(event.target)) esconderMenus()
+    if (menu.classList.contains('active') && !menu.contains(event.target)) menu.classList.remove('active')
 }
 
 async function usuarios() {
@@ -385,7 +378,7 @@ async function adicionarObra(idObra) {
     `
 
     const acumulado = `
-        <div style="${vertical}; gap: 5px; padding: 10vw; background-color: #d2d2d2;">
+        <div class="painelCadastro">
 
             ${modelo('Distrito', `<select name="distrito" onchange="carregarSelects(this)"></select>`)}
             ${modelo('Cidade', `<select name="cidade"></select>`)}
@@ -527,14 +520,12 @@ function criarLinha(dados, id, tabela) {
 
     const linha = `
         <tr id="${id}">
-            <td>
-                <div class="linha">
-                    ${tds}
-                    <td class="detalhes">
-                        <img onclick="${funcao}" src="imagens/pesquisar.png">
-                    </td>
-                </div>
-            </td>
+            <tr>
+                ${tds}
+                <td class="detalhes">
+                    <img onclick="${funcao}" src="imagens/pesquisar.png">
+                </td>
+            </tr>
         </tr>
     `
 
@@ -613,7 +604,7 @@ async function adicionarPessoa(id) {
     const caixaDocumentos = `${retornarCaixas('documento')} <input placeholder="Número do documento">`
 
     const acumulado = `
-        <div style="${vertical}; gap: 5px; padding: 10vw; background-color: #d2d2d2;">
+        <div class="painelCadastro">
 
             ${modelo('Nome Completo', `<input value="${colaborador?.nome || ''}" name="nome" placeholder="Nome Completo">`)}
             ${modelo('Data de Nascimento', `<input value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
