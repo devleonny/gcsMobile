@@ -1,4 +1,6 @@
 const tela = document.getElementById('tela')
+const toolbar = document.querySelector('.toolbar')
+const titulo = toolbar.querySelector('span')
 const horizontal = `display: flex; align-items: center; justify-content: center;`
 const vertical = `display: flex; align-items: start; justify-content: start; flex-direction: column`
 const nomeBaseCentral = 'Reconstrular'
@@ -63,7 +65,7 @@ function cadastrar() {
     `
 
     const acumulado = `
-        <div id="camposCadastro" style="${vertical}; gap: 5px; background-color: #d2d2d2; padding: 5vw;">
+        <div class="camposCadastro">
             ${campos.map(campo => `${modelo(campo)}`).join('')}
             <hr style="width: 100%;">
             ${btnPadrao('Criar acesso', 'salvarCadastro()')}
@@ -139,7 +141,7 @@ function salvarCadastro() {
 
     overlayAguarde()
 
-    let camposCadastro = document.getElementById('camposCadastro')
+    let camposCadastro = document.querySelector('.camposCadastro')
     let campos = camposCadastro.querySelectorAll('input')
     let nome_completo = campos[0].value
     let usuario = campos[1].value
@@ -283,41 +285,36 @@ function overlayAguarde(desabilitar) {
 
 async function telaPrincipal() {
 
+    toolbar.style.display = 'flex'
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     const acumulado = `
 
-        <button class="menu-btn" onclick="esconderMenus()">
-            <div></div>
-            <div></div>
-            <div></div>
-        </button>
+    <div class="menu-container">
 
-        <div class="menu-container">
+        <div class="side-menu" id="sideMenu">
 
-            <div class="side-menu" id="sideMenu">
+            <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
 
-                <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
+            <div style="${vertical}; justify-content: space-between; height: 100%;">
+                
+                <div class="botoesMenu">
 
-                <div style="${vertical}; justify-content: space-between; height: 100%;">
-                    
-                    <div class="botoesMenu">
-
-                        ${btn('pessoas', 'Colaboradores', 'telaPessoas()')}
-                        ${btn('obras', 'Obras', 'telaObras()')}
-                        ${btn('kanban', 'Acompanhamento', 'acompanhamento()')}
-                        ${btn('perfil', 'Usuários', 'usuarios()')}
-                        ${btn('sair', 'Desconectar', 'deslogar()')}
-
-                    </div>
+                    ${btn('pessoas', 'Colaboradores', 'telaPessoas()')}
+                    ${btn('obras', 'Obras', 'telaObras()')}
+                    ${btn('kanban', 'Acompanhamento', 'acompanhamento()')}
+                    ${btn('perfil', 'Usuários', 'usuarios()')}
+                    ${btn('sair', 'Desconectar', 'deslogar()')}
 
                 </div>
-            </div>
 
-            <div class="telaInterna">
-                <h1>Reconstrular</h1>
-                <p>Seja bem vindo!</p>
             </div>
         </div>
+
+        <div class="telaInterna">
+            <h1>Reconstrular</h1>
+            <p>Seja bem vindo!</p>
+        </div>
+    </div>
     `
 
     tela.innerHTML = acumulado
@@ -328,6 +325,11 @@ async function telaPrincipal() {
 
 }
 
+function verificarClique(event) {
+    const menu = document.getElementById('sideMenu');
+    if (!menu.contains(event.target)) esconderMenus()
+}
+
 async function usuarios() {
 
     esconderMenus()
@@ -336,6 +338,7 @@ async function usuarios() {
         ${modeloTabela()}
     `
 
+    titulo.textContent = 'Gerenciar Usuários'
     const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
@@ -357,7 +360,7 @@ async function sincronizarDados(base, overlayOff) {
 async function telaObras() {
 
     esconderMenus()
-
+    titulo.textContent = 'Gerenciar Obras'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarObra()')}
         ${modeloTabela()}
@@ -462,6 +465,7 @@ async function telaPessoas() {
 
     esconderMenus()
 
+    titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
         ${modeloTabela()}
@@ -477,21 +481,27 @@ async function telaPessoas() {
 
 function criarLinha(dados, id, tabela) {
 
-    const modelo = (texto1, texto2) => `
-        <div style="${horizontal}; gap: 5px;">
-            <span><strong>${texto1}</strong></span>
-            <span>${texto2}</span>
-        </div>
+    const modelo = (texto2) => `
+        <td>
+            <div style="${horizontal}; gap: 5px;">
+                <span>${texto2}</span>
+            </div>
+        </td>
     `
     let tds = ''
     let funcao = ''
 
     if (tabela == 'colaborador') {
         funcao = `adicionarPessoa('${id}')`
+
         tds = `
-            ${modelo('Nome', dados?.nome || '--')}
-            ${modelo('Telefone', dados?.telefone || '--')}
-            ${modelo('Morada', dados?.morada || '--')}
+            ${modelo(dados?.nome || '--')}
+            ${modelo(dados?.telefone || '--')}
+            ${modelo(dados?.morada || '--')}
+            ${modelo(dados?.dataNascimento || '--')}
+            ${modelo(dados?.apolice || '--')}
+            ${modelo(dados?.status || '--')}
+            ${modelo(dados?.especialidade || '--')}
         `
     } else if (tabela == 'obra') {
         funcao = `adicionarObra('${id}')`
@@ -499,31 +509,30 @@ function criarLinha(dados, id, tabela) {
         const cidades = distrito?.cidades?.[dados?.cidade] || {}
 
         tds = `
-            ${modelo('Cliente', dados?.cliente || '--')}
-            ${modelo('Distrito', distrito?.nome || '--')}
-            ${modelo('Cidade', cidades?.nome || '--')}
-            ${modelo('Contacto', dados?.contacto || '--')}
-            ${modelo('E-mail', dados?.email || '--')}
+            ${modelo(dados?.cliente || '--')}
+            ${modelo(distrito?.nome || '--')}
+            ${modelo(cidades?.nome || '--')}
+            ${modelo(dados?.contacto || '--')}
+            ${modelo(dados?.email || '--')}
         `
     } else if (tabela == 'usuario') {
         funcao = `gerenciarUsuario('${id}')`
         tds = `
-            ${modelo('Nome', dados?.nome_completo || '--')}
-            ${modelo('Usuário', dados?.usuario || '--')}
-            ${modelo('Setor', dados?.setor || '--')}
-            ${modelo('Permissão', dados?.permissao || '--')}
+            ${modelo(dados?.nome_completo || '--')}
+            ${modelo(dados?.usuario || '--')}
+            ${modelo(dados?.setor || '--')}
+            ${modelo(dados?.permissao || '--')}
         `
     }
-
 
     const linha = `
         <tr id="${id}">
             <td>
                 <div class="linha">
-                    <div style="${vertical}; gap: 5px;">
-                        ${tds}
-                    </div>
-                    <img onclick="${funcao}" src="imagens/pesquisar.png">
+                    ${tds}
+                    <td class="detalhes">
+                        <img onclick="${funcao}" src="imagens/pesquisar.png">
+                    </td>
                 </div>
             </td>
         </tr>
@@ -679,6 +688,8 @@ function telaLogin() {
 
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     if (acesso) return telaPrincipal()
+
+    toolbar.style.display = 'none'
 
     const acumulado = `
         <div id="acesso" class="login-container">

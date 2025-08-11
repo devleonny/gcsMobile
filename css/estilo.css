@@ -33,6 +33,7 @@ span {
 }
 
 .login-container {
+    margin-top: 15vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -148,7 +149,38 @@ button {
 .recorteTabela {
     height: max-content;
     max-height: 70vh;
-    overflow-y: auto;
+    max-width: 80vw;
+    overflow: auto;
+}
+
+.tabela {
+    min-width: max-content;
+    width: 90vw;
+    background-color: white;
+    border-collapse: collapse;
+}
+
+.tabela thead input {
+    width: 100%;
+}
+
+.tabela th {
+    border: solid 1px #d2d2d2;
+    color: #222;
+    font-size: 5vw;
+    padding: 8px;
+}
+
+.tabela td {
+    text-align: center;
+    padding: 2vw;
+    font-size: 0.8vw;
+    border: 1px solid #d2d2d2;
+}
+
+.tabela thead {
+    box-shadow: 0 1px 0 #ccc;
+    background-color: #d2d2d2;
 }
 
 .btnLateral {
@@ -174,23 +206,6 @@ button {
     overflow: hidden;
 }
 
-.menu-btn {
-    position: absolute;
-    top: 0;
-    left: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    z-index: 300;
-}
-
-.menu-btn div {
-    width: 25px;
-    height: 3px;
-    background: white;
-    margin: 5px 0;
-    transition: 0.4s;
-}
 
 /* Menu lateral */
 .side-menu {
@@ -229,37 +244,6 @@ button {
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     background-color: #b1b1b1;
-}
-
-.tabela {
-    width: 100%;
-    background-color: white;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.tabela thead input {
-    width: 100%;
-}
-
-.tabela th {
-    border: solid 1px #d2d2d2;
-    color: #222;
-    font-size: 5vw;
-    padding: 8px;
-}
-
-.tabela td {
-    text-align: center;
-    padding: 3px;
-    font-size: 0.8vw;
-    overflow: hidden;
-    border: 1px solid #d2d2d2;
-}
-
-.tabela thead {
-    box-shadow: 0 1px 0 #ccc;
-    background-color: #d2d2d2;
 }
 
 .btnRodape {
@@ -353,15 +337,54 @@ input[type="file"] {
     justify-content: space-between;
 }
 
-.linha img {
+.detalhes img {
     width: 10vw;
-    margin-right: 5vw;
 }
 
 .telaInterna {
     color: white;
     padding: 2vw 1vw;
     height: 80vh;
+}
+
+.camposCadastro {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: 5px;
+    background-color: #d2d2d2;
+    padding: 5vw;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    background-color: #222222ec;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.toolbar span {
+    font-size: 5vw;
+    color: white;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.menu-btn div {
+    width: 25px;
+    height: 3px;
+    background: white;
+    margin: 5px 0;
+    transition: 0.4s;
 }
 
 /* Ajustes para modo horizontal (landscape) */
@@ -424,7 +447,7 @@ screen and (min-aspect-ratio: 13/9) {
     .btnRodape {
         width: auto;
         position: fixed;
-        right: 5vw;
+        right: 7vw;
         bottom: 7vh;
         font-size: 1.8vw;
     }
@@ -444,16 +467,31 @@ screen and (min-aspect-ratio: 13/9) {
         width: 3vw;
     }
 
+    .detalhes img {
+        width: 3vw;
+    }
+
     .botoesMenu {
         margin-top: 10vw;
     }
 
     .recorteTabela {
         max-height: 50vh;
+        max-width: 90vw;
     }
 
     .aguarde img {
         width: 10vw;
     }
+
+    .topo_popup span,
+    .toolbar span {
+        font-size: 1.8vw;
+    }
+
+    .camposCadastro {
+        padding: 2vw;
+    }
+
 
 }

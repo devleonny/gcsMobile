@@ -11,7 +11,15 @@
 
 <body>
 
-    <div id="tela"></div>
+    <div class="toolbar">
+        <button class="menu-btn" onclick="esconderMenus()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </button>
+        <span></span>
+    </div>
+    <div id="tela" onclick="verificarClique(event)"></div>
 
 </body>
 <script src="js/central.js"></script>
