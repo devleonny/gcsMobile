@@ -7,14 +7,14 @@ const filtrosColaboradores = {}
 let dados_distritos = {}
 
 const modeloTabela = () => `
-    <div style="${vertical};">
+    <div class="blocoTabela">
         <div class="painelBotoes">
             <div class="pesquisa">
                 <input oninput="pesquisarGenerico('0', this.value, filtrosColaboradores, 'body')" placeholder="Pesquisar" style="width: 100%;">
-                <img src="imagens/pesquisar2.png" style="width: 10vw;">
-            </div>    
+                <img src="imagens/pesquisar2.png">
+            </div>
         </div>
-        <div style="height: max-content; max-height: 70vh; overflow-y: auto;">
+        <div class="recorteTabela">
             <table class="tabela">
                 <tbody id="body"></tbody>
             </table>
@@ -22,10 +22,9 @@ const modeloTabela = () => `
         <div class="rodapeTabela"></div>
     </div>
 `
-
 const mensagem = (mensagem) => `
-    <div style="background-color: #d2d2d2; display: flex; gap: 10px; padding: 2vw; align-items: center; justify-content: center;">
-        <img src="gifs/alerta.gif" style="width: 10vw;">
+    <div class="mensagem">
+        <img src="gifs/alerta.gif">
         <label>${mensagem}</label>
     </div>
     `
@@ -35,25 +34,20 @@ const btnRodape = (texto, funcao) => `
 const btnPadrao = (texto, funcao) => `
         <span class="btnPadrao" onclick="${funcao}">${texto}</span>
 `
-
 const btn = (img, valor, funcao) => `
     <div class="btnLateral" onclick="${funcao}">
-        <img src="imagens/${img}.png" style="width: 10vw;">
+        <img src="imagens/${img}.png">
         <div>${valor}</div>
     </div>
 `
 telaLogin()
 
 function exibirSenha(img) {
-    let inputSenha = img.previousElementSibling
 
-    if (inputSenha.type == 'password') {
-        inputSenha.type = 'text'
-        img.src = 'imagens/olhoAberto.png'
-    } else {
-        inputSenha.type = 'password'
-        img.src = 'imagens/olhoFechado.png'
-    }
+    let inputSenha = img.previousElementSibling
+    const atual = inputSenha.type == 'password'
+    inputSenha.type = atual ? 'text' : 'password'
+    img.src = `imagens/${atual ? 'olhoAberto' : 'olhoFechado'}.png`
 
 }
 
@@ -302,24 +296,24 @@ async function telaPrincipal() {
 
             <div class="side-menu" id="sideMenu">
 
+                <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
+
                 <div style="${vertical}; justify-content: space-between; height: 100%;">
                     
-                    <div style="${vertical}; width: 100%; gap: 3px; ">
-                        <span style="height: 150px;"></span>
+                    <div class="botoesMenu">
+
                         ${btn('pessoas', 'Colaboradores', 'telaPessoas()')}
                         ${btn('obras', 'Obras', 'telaObras()')}
                         ${btn('kanban', 'Acompanhamento', 'acompanhamento()')}
                         ${btn('perfil', 'Usuários', 'usuarios()')}
                         ${btn('sair', 'Desconectar', 'deslogar()')}
+
                     </div>
 
-                    <div style="${horizontal}; width: 100%;">
-                        <span style="color: white;">${acesso.usuario}</span>
-                    </div>
                 </div>
             </div>
 
-            <div style="color: white; padding: 50px 20px; height: 80vh;" id="telaInterna">
+            <div class="telaInterna">
                 <h1>Reconstrular</h1>
                 <p>Seja bem vindo!</p>
             </div>
@@ -342,7 +336,7 @@ async function usuarios() {
         ${modeloTabela()}
     `
 
-    const telaInterna = document.getElementById('telaInterna')
+    const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
     const dados_setores = await recuperarDados('dados_setores')
@@ -368,7 +362,7 @@ async function telaObras() {
         ${btnRodape('Adicionar', 'adicionarObra()')}
         ${modeloTabela()}
     `
-    const telaInterna = document.getElementById('telaInterna')
+    const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
 
@@ -472,7 +466,7 @@ async function telaPessoas() {
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
         ${modeloTabela()}
     `
-    const telaInterna = document.getElementById('telaInterna')
+    const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
 
@@ -484,10 +478,10 @@ async function telaPessoas() {
 function criarLinha(dados, id, tabela) {
 
     const modelo = (texto1, texto2) => `
-    <div style="${vertical}; gap: 5px;">
-        <span><strong>${texto1}</strong></span>
-        <span>${texto2}</span>
-    </div>
+        <div style="${horizontal}; gap: 5px;">
+            <span><strong>${texto1}</strong></span>
+            <span>${texto2}</span>
+        </div>
     `
     let tds = ''
     let funcao = ''
@@ -525,11 +519,11 @@ function criarLinha(dados, id, tabela) {
     const linha = `
         <tr id="${id}">
             <td>
-                <div style="${horizontal}; justify-content: space-between;">
+                <div class="linha">
                     <div style="${vertical}; gap: 5px;">
                         ${tds}
                     </div>
-                    <img onclick="${funcao}" src="imagens/pesquisar.png" style="width: 10vw; margin-right: 5vw;">
+                    <img onclick="${funcao}" src="imagens/pesquisar.png">
                 </div>
             </td>
         </tr>
@@ -705,11 +699,10 @@ function telaLogin() {
 
             </div>
             <br>
-            <hr style="width: 100%;">
 
             <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
                 <label>Primeiro acesso?</label>
-                <button style="background-color:#097fe6;" onclick="cadastrar()">Cadastre-se</button>
+                <button style="background-color: #097fe6; white-space: nowrap;" onclick="cadastrar()">Cadastre-se</button>
             </div>
 
         </div>
@@ -1002,7 +995,7 @@ async function configuracoes(usuario, campo, valor) {
 
     let dados_usuario = await recuperarDado('dados_setores', usuario)
     dados_usuario[campo] = valor
-    await inserirDados({[usuario]: dados_usuario}, 'dados_setores')
+    await inserirDados({ [usuario]: dados_usuario }, 'dados_setores')
     criarLinha(dados_usuario, usuario, 'usuario')
 
     return new Promise((resolve, reject) => {
