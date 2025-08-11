@@ -8,7 +8,14 @@ const nomeStore = 'Bases'
 const filtrosColaboradores = {}
 let dados_distritos = {}
 
-const modeloTabela = () => `
+const modeloTabela = (colunas) => {
+
+    const ths = colunas
+        .map(col => `<th>${col}</th>`).join('')
+
+    const thead = (colunas && colunas.length > 0) ? `<thead>${ths}</thead>` : ''
+
+    return `
     <div class="blocoTabela">
         <div class="painelBotoes">
             <div class="pesquisa">
@@ -18,12 +25,13 @@ const modeloTabela = () => `
         </div>
         <div class="recorteTabela">
             <table class="tabela">
+                ${thead}
                 <tbody id="body"></tbody>
             </table>
         </div>
         <div class="rodapeTabela"></div>
     </div>
-`
+`}
 const mensagem = (mensagem) => `
     <div class="mensagem">
         <img src="gifs/alerta.gif">
@@ -320,7 +328,7 @@ async function telaPrincipal() {
 
 function verificarClique(event) {
     const menu = document.getElementById('sideMenu');
-    if (menu.classList.contains('active') && !menu.contains(event.target)) menu.classList.remove('active')
+    if (menu && menu.classList.contains('active') && !menu.contains(event.target)) menu.classList.remove('active')
 }
 
 async function usuarios() {
@@ -328,7 +336,7 @@ async function usuarios() {
     esconderMenus()
 
     const acumulado = `
-        ${modeloTabela()}
+        ${modeloTabela(['Nome', 'Usuário', 'Setor', 'Permissão', ''])}
     `
 
     titulo.textContent = 'Gerenciar Usuários'
@@ -356,7 +364,7 @@ async function telaObras() {
     titulo.textContent = 'Gerenciar Obras'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarObra()')}
-        ${modeloTabela()}
+        ${modeloTabela(['Cliente', 'Distrito', 'Cidade', 'Contacto', 'E-mail', ''])}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -461,7 +469,7 @@ async function telaPessoas() {
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela()}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Apólice', 'Status', 'Especialidade', ''])}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -516,16 +524,20 @@ function criarLinha(dados, id, tabela) {
             ${modelo(dados?.setor || '--')}
             ${modelo(dados?.permissao || '--')}
         `
+    } else if (tabela == 'usuario') {
+        funcao = `verAndamento('${id}')`
+        tds = `
+            ${modelo(dados?.data || '--')}
+            ${modelo(dados?.obra || '--')}
+            `
     }
 
     const linha = `
         <tr id="${id}">
-            <tr>
-                ${tds}
-                <td class="detalhes">
-                    <img onclick="${funcao}" src="imagens/pesquisar.png">
-                </td>
-            </tr>
+            ${tds}
+            <td class="detalhes">
+                <img onclick="${funcao}" src="imagens/pesquisar.png">
+            </td>
         </tr>
     `
 
@@ -1055,5 +1067,56 @@ async function listaSetores(timestamp) {
 
     } catch {
         return {}
+    }
+}
+
+async function acompanhamento() {
+
+    esconderMenus()
+    titulo.textContent = 'Gerenciar Tarefas'
+    const acumulado = `
+        <div class="btnRodape">
+            <input type="file" id="arquivoExcel" accept=".xls,.xlsx">
+            <button>Importar</button>
+        </div>
+
+        ${modeloTabela(['Data', 'Obra', ''])}
+    `
+    const telaInterna = document.querySelector('.telaInterna')
+
+    telaInterna.innerHTML = acumulado
+
+    const dados_tarefas = await recuperarDados('dados_tarefas')
+    for (const [idTarefa, tarefa] of Object.entries(dados_tarefas)) criarLinha(tarefa, idTarefa, 'obra')
+
+}
+
+async function enviarExcel() {
+    const input = document.querySelector('#arquivoExcel');
+    if (!input.files.length) {
+        alert('Selecione um arquivo Excel');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('arquivo', input.files[0]);
+
+    try {
+        const resposta = await fetch('/processar-tarefas', {
+            method: 'POST',
+            body: formData
+        });
+
+        const dados = await resposta.json();
+        if (resposta.ok) {
+            console.log('Sucesso:', dados);
+            alert('Arquivo enviado com sucesso!');
+        } else {
+            console.error('Erro:', dados);
+            alert('Erro: ' + (dados.erro || 'Falha no envio'));
+        }
+    } catch (err) {
+        console.error('Erro de rede:', err);
+        alert('Erro de rede');
     }
 }
