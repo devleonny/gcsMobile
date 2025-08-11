@@ -267,7 +267,7 @@ function overlayAguarde(desabilitar) {
 
     const elemento = `
         <div class="aguarde">
-            <img src="gifs/loading.gif" style="width: 35vw;">
+            <img src="gifs/loading.gif">
         </div>
     `
     document.body.insertAdjacentHTML('beforeend', elemento)

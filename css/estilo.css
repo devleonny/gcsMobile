@@ -311,6 +311,10 @@ input[type="file"] {
     z-index: 10005;
 }
 
+.aguarde img {
+    width: 35vw;
+}
+
 .mensagem {
     background-color: #d2d2d2;
     display: flex;
@@ -446,6 +450,10 @@ screen and (min-aspect-ratio: 13/9) {
 
     .recorteTabela {
         max-height: 50vh;
+    }
+
+    .aguarde img {
+        width: 10vw;
     }
 
 }
