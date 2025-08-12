@@ -7,7 +7,7 @@ const nomeBaseCentral = 'Reconstrular'
 const nomeStore = 'Bases'
 const filtrosColaboradores = {}
 let dados_distritos = {}
-
+let etapasProvisorias = []
 const modeloTabela = (colunas, base) => {
 
     const ths = colunas
@@ -1210,23 +1210,44 @@ async function verAndamento(id) {
 
 }
 
-async function caixa(id, button) {
+async function caixa(id, button) { //29
 
-    const acumulado = `
-        <div style="${vertical}; gap: 5px;">
-            <span>Etapa</span>
-            <span>Tarefa</span>
-        </div>
-    `
+    const existente = document.getElementById('caixa-temporaria');
+    if (existente) existente.remove();
+
+    const caixa = document.createElement('div');
+    caixa.id = 'caixa-temporaria';
+    caixa.classList = 'caixa'
+
+    const rect = button.getBoundingClientRect();
+    caixa.style.top = (window.scrollY + rect.bottom) + 'px';
+    caixa.style.left = (window.scrollX + rect.left) + 'px';
+
+    caixa.innerHTML = `
+        <span onclick="adicionar('${id}', 'etapa')">Etapa</span>
+        <span onclick="adicionar('${id}', 'tarefa')">Tarefa</span>
+    `;
+
+    document.body.appendChild(caixa);
+
+    const removerCaixa = (e) => {
+        if (!caixa.contains(e.target) && e.target !== button) {
+            caixa.remove();
+            document.removeEventListener('click', removerCaixa);
+        }
+    };
+    setTimeout(() => {
+        document.addEventListener('click', removerCaixa);
+    }, 0);
 }
 
 async function carregarLinhas(id, nomeEtapa) {
     const tarefa = await recuperarDado('tarefas', id)
 
-    if(nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
+    if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
     const tbody = document.getElementById('bodyTarefas')
-    if(nomeEtapa) tbody.innerHTML = ''
+    if (nomeEtapa) tbody.innerHTML = ''
 
     for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
 
@@ -1277,7 +1298,7 @@ function pesquisarTarefas(input) {
 async function atualizarToolbar(id, nomeEtapa) {
     const tarefa = await recuperarDado('tarefas', id)
 
-    if(nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
+    if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
     const bloco = (texto, valor) => `
         <div class="bloco">
@@ -1321,6 +1342,7 @@ async function atualizarToolbar(id, nomeEtapa) {
     const emPorcentagemConcluido = totais.porcentagemConcluido / 100
     const porcentagemAndamento = ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
 
+    etapasProvisorias = etapas
     const opcoes = etapas
         .map(op => `<option ${nomeEtapa == op ? 'selected' : ''}>${op}</option>`).join('')
 
