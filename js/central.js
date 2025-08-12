@@ -1139,19 +1139,12 @@ function porcentagemHtml(valor) {
   `;
 }
 
-async function verAndamento(id) {
+function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
-    const tarefa = await recuperarDado('tarefas', id)
+    const idLinha = idTarefa ? idTarefa : idEtapa
 
-    titulo.textContent = 'Lista de Tarefas'
-    const bloco = (texto, valor) => `
-        <div class="bloco">
-            <span>${valor}</span>
-            <label>${texto}</label>
-        </div>
-    `
-    const modeloTR = ({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) => `
-        <tr style="background-color: ${cor ? cor : ''};">
+    const tr = `
+        <tr id="${idLinha}" style="background-color: ${cor ? cor : ''};">
             <td>${ordem}</td>
             <td>
                 <div style="${horizontal}; justify-content: space-between;">
@@ -1159,7 +1152,7 @@ async function verAndamento(id) {
                     <span>${quantidade ? `${quantidade} ${unidade}` : ''}</span>
                 </div>
             </td>
-            <td>${porcentagem !== '' ? porcentagemHtml(porcentagem) : ''}</td>
+            <td>${idTarefa ? porcentagemHtml(porcentagem) : ''}</td>
             <td>
                 <div class="edicao">
                     <img class="btnAcmp" src="imagens/lapis.png" onclick="editarTarefa('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})">
@@ -1168,47 +1161,26 @@ async function verAndamento(id) {
             </td>
         <tr>
     `
-    let totais = {
-        tarefas: 0,
-        naoIniciado: 0,
-        emAndamento: 0,
-        concluido: 0,
-        porcentagemConcluido: 0
-    }
 
-    let linhas = ''
-    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
-        linhas += modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
-        const tarefas = Object.entries(dados?.tarefas || [])
-        totais.tarefas += tarefas.length
+    const trExistente = document.getElementById(idLinha)
 
-        for (const [idTarefa, tarefa] of tarefas) {
+    if (trExistente) return trExistente.innerHTML = tr
+    document.getElementById('bodyTarefas').insertAdjacentHTML('beforeend', tr)
 
-            if (tarefa.porcentagem == 0) {
-                totais.naoIniciado++
-            } else if (tarefa.porcentagem !== 0) {
-                totais.emAndamento++
-            } else if (tarefa.porcentagem == 100) {
-                totais.concluido++
-            }
+}
 
-            totais.porcentagemConcluido += tarefa.porcentagem
+async function verAndamento(id) {
 
-            linhas += modeloTR({ ...tarefa, id, idEtapa, idTarefa })
-        }
-    }
+    const tarefa = await recuperarDado('tarefas', id)
 
-    const porcentagemAndamento = ((totais.porcentagemConcluido / totais.tarefas) * 100).toFixed(0)
-
-    const opcoes = ['Todas as tarefas']
-        .map(op => `<option>${op}</option>`).join('')
+    titulo.textContent = 'Lista de Tarefas'
 
     const acumulado = `
         <div class="acompanhamento">
 
             <div style="${horizontal}; justify-content: start; gap: 2vw;">
                 <input placeholder="Pesquisa">
-                <select>${opcoes}</select>
+                <select id="etapas"></select>
                 <div style="${vertical};">
                     <div style="${horizontal}; gap: 1vw;">
                         <input type="checkbox">
@@ -1221,18 +1193,12 @@ async function verAndamento(id) {
                 </div>
             </div>
 
-            <div style="${horizontal}; justify-content: space-between;">
-                ${bloco('Total', totais.tarefas)}
-                ${bloco('Não iniciado', totais.naoIniciado)}
-                ${bloco('Em andamento', totais.emAndamento)}
-                ${bloco('Concluída', totais.concluido)}
-                ${bloco('Realizado', `${porcentagemAndamento}%`)}
-            </div>
+            <div id="resumo" style="${horizontal}; justify-content: space-between;"></div>
 
             <br>
 
             <table class="tabela">
-                <tbody>${linhas}</tbody>
+                <tbody id="bodyTarefas"></tbody>
             </table>
 
         </div>
@@ -1240,15 +1206,78 @@ async function verAndamento(id) {
     const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
+    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
+        modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
+        const tarefas = Object.entries(dados?.tarefas || [])
+
+        for (const [idTarefa, tarefa] of tarefas) {
+            modeloTR({ ...tarefa, id, idEtapa, idTarefa })
+        }
+    }
+
+    await atualizarToolbar(id)
+
+}
+
+async function atualizarToolbar(id, nomeEtapa) {
+    const tarefa = await recuperarDado('tarefas', id)
+
+    const bloco = (texto, valor) => `
+        <div class="bloco">
+            <span>${valor}</span>
+            <label>${texto}</label>
+        </div>
+    `
+
+    let totais = {
+        tarefas: 0,
+        naoIniciado: 0,
+        emAndamento: 0,
+        concluido: 0,
+        porcentagemConcluido: 0
+    }
+
+    let etapas = ['Todas as tarefas']
+    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
+
+        const tarefas = Object.entries(dados?.tarefas || [])
+        totais.tarefas += dados.descricao == nomeEtapa ? tarefas.length : 0
+        etapas.push(dados.descricao)
+
+        for (const [idTarefa, tarefa] of tarefas) {
+
+            if (tarefa.porcentagem == 0) {
+                totais.naoIniciado++
+            } else if (tarefa.porcentagem !== 0 && tarefa.porcentagem < 100) {
+                totais.emAndamento++
+            } else if (tarefa.porcentagem >= 100) {
+                totais.concluido++
+            }
+
+            totais.porcentagemConcluido += tarefa.porcentagem
+        }
+    }
+
+    const emPorcentagemConcluido = totais.porcentagemConcluido / 100
+    const porcentagemAndamento = ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
+
+    const opcoes = etapas
+        .map(op => `<option>${op}</option>`).join('')
+
+    document.getElementById('etapas').innerHTML = opcoes
+    document.getElementById('resumo').innerHTML = `
+        ${bloco('Total', totais.tarefas)}
+        ${bloco('Não iniciado', totais.naoIniciado)}
+        ${bloco('Em andamento', totais.emAndamento)}
+        ${bloco('Concluída', totais.concluido)}
+        ${bloco('Realizado', `${porcentagemAndamento}%`)}
+    `
 }
 
 async function editarTarefa(id, idEtapa, idTarefa) {
 
     const objeto = await recuperarDado('tarefas', id)
     const tarefa = idTarefa ? objeto.etapas[idEtapa].tarefas[idTarefa] : objeto.etapas[idEtapa]
-
-    console.log(tarefa);
-
 
     const modelo = (texto, elemento, campo) => `
         <div style="${vertical}; gap: 3px;">
@@ -1264,14 +1293,43 @@ async function editarTarefa(id, idEtapa, idTarefa) {
             ${modelo('Unidade', tarefa?.unidade || '')}
             ${modelo('Quantidade', tarefa?.quantidade || '', true)}
             ${modelo('Resultado', tarefa?.resultado || '', true)}
-            <hr style="width: 100%">
             <div id="indPorcentagem"></div>
+            <input name="Porcentagem" type="number" style="display: none;">
             <hr style="width: 100%">
-            <button>Salvar</button>
+            <button onclick="salvarTarefa('${id}', '${idEtapa}', '${idTarefa}')">Salvar</button>
         </div>
     
     `
     popup(acumulado, 'Edição')
+
+}
+
+async function salvarTarefa(id, idEtapa, idTarefa) {
+
+    overlayAguarde()
+    let objeto = await recuperarDado('tarefas', id)
+    let tarefa = objeto.etapas[idEtapa].tarefas[idTarefa]
+
+    const valor = (name) => {
+        const valor = document.querySelector(`[name="${name}"]`)
+        return valor ? valor.value : ''
+    }
+
+    Object.assign(objeto.etapas[idEtapa].tarefas[idTarefa], {
+        ordem: valor('Ordem'),
+        unidade: valor('Unidade'),
+        quantidade: valor('Quantidade'),
+        resultado: valor('Resultado'),
+        porcentagem: Number(valor('Porcentagem'))
+    })
+
+    await enviar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`, tarefa)
+    await inserirDados({ [id]: objeto }, 'tarefas')
+
+    modeloTR({ ...tarefa, id, idTarefa, idEtapa })
+    await atualizarToolbar(id)
+
+    removerPopup()
 
 }
 
@@ -1282,6 +1340,8 @@ function calcular() {
     const porcentagem = (resultado / quantidade) * 100
 
     indPorcentagem.innerHTML = porcentagemHtml(porcentagem)
+
+    document.querySelector(`[name="Porcentagem"]`).value = porcentagem
 }
 
 async function enviarExcel() {
