@@ -52,7 +52,7 @@ span {
     justify-content: center;
     flex-direction: column;
     width: 100%;
-    gap: 3px;
+    gap: 1px;
     margin-top: 20vw;
 }
 
@@ -227,7 +227,6 @@ button {
     align-items: center;
     justify-content: start;
     gap: 10px;
-    border-radius: 2px;
     padding-top: 5px;
     padding-bottom: 5px;
     width: 100%;

@@ -7,7 +7,7 @@ const nomeBaseCentral = 'Reconstrular'
 const nomeStore = 'Bases'
 const filtrosColaboradores = {}
 let dados_distritos = {}
-let etapasProvisorias = []
+let etapasProvisorias = {}
 const modeloTabela = (colunas, base) => {
 
     const ths = colunas
@@ -930,6 +930,34 @@ async function receber(chave) {
     })
 }
 
+async function deletar(chave) {
+    const url = `https://leonny.dev.br/deletar`;
+    const acesso = JSON.parse(localStorage.getItem('acesso'))
+    const objeto = {
+        chave,
+        usuario: acesso.usuario,
+        servidor: 'RECONST'
+    }
+
+    return new Promise((resolve) => {
+        fetch(url, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(objeto)
+        })
+            .then(response => response.json())
+            .then(data => {
+                resolve(data);
+            })
+            .catch((err) => {
+                popup(mensagem(err), 'Aviso', true)
+                resolve();
+            });
+    });
+}
+
 function offline(motivo) {
 
     const motivos = {
@@ -1142,9 +1170,8 @@ function porcentagemHtml(valor) {
 function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
     const idLinha = idTarefa ? idTarefa : idEtapa
-
     const tr = `
-        <tr id="${idLinha}" style="background-color: ${cor ? cor : ''};">
+        <tr id="${idLinha}" data-etapa="${!idTarefa ? 'sim' : ''}" data-concluido="${porcentagem >= 100 ? 'sim' : ''}" style="background-color: ${cor ? cor : ''};">
             <td>${ordem}</td>
             <td>
                 <div style="${horizontal}; justify-content: space-between;">
@@ -1181,11 +1208,11 @@ async function verAndamento(id) {
                 <select id="etapas" onchange="atualizarToolbar('${id}', this.value); carregarLinhas('${id}', this.value)"></select>
                 <div style="${vertical};">
                     <div style="${horizontal}; gap: 1vw;">
-                        <input type="checkbox">
+                        <input type="checkbox" name="etapa" onchange="filtrar()">
                         <span>Exibir somente as etapas</span>
                     </div>
                     <div style="${horizontal}; gap: 1vw;">
-                        <input type="checkbox">
+                        <input type="checkbox" name="concluido" onchange="filtrar()">
                         <span>Ocultar etapa concluídas</span>
                     </div>
                 </div>
@@ -1210,6 +1237,32 @@ async function verAndamento(id) {
 
 }
 
+function filtrar() {
+    const inputEtapa = document.querySelector('[name="etapa"]');
+    const inputConcluido = document.querySelector('[name="concluido"]');
+    const tbody = document.getElementById('bodyTarefas');
+    if (!tbody) return;
+
+    const etapaChecked = !!inputEtapa?.checked;
+    const concluidoChecked = !!inputConcluido?.checked;
+
+    const linhas = tbody.querySelectorAll('tr');
+
+    linhas.forEach(tr => {
+        const etapaAttr = (tr.dataset.etapa || '').toLowerCase();
+        const concluidoAttr = (tr.dataset.concluido || '').toLowerCase();
+
+        let mostrar = true;
+
+        if (etapaChecked && etapaAttr !== 'sim') mostrar = false;
+
+        if (concluidoChecked && concluidoAttr === 'sim') mostrar = false;
+
+        tr.style.display = mostrar ? '' : 'none';
+    });
+}
+
+
 async function caixa(id, button) { //29
 
     const existente = document.getElementById('caixa-temporaria');
@@ -1224,8 +1277,8 @@ async function caixa(id, button) { //29
     caixa.style.left = (window.scrollX + rect.left) + 'px';
 
     caixa.innerHTML = `
-        <span onclick="adicionar('${id}', 'etapa')">Etapa</span>
-        <span onclick="adicionar('${id}', 'tarefa')">Tarefa</span>
+        <span onclick="editarTarefa('${id}', 'novo')">Etapa</span>
+        <span onclick="editarTarefa('${id}', 'novo', 'novo')">Tarefa</span>
     `;
 
     document.body.appendChild(caixa);
@@ -1320,6 +1373,8 @@ async function atualizarToolbar(id, nomeEtapa) {
 
         const etapaAtual = dados.descricao
         etapas.push(etapaAtual)
+        etapasProvisorias[idEtapa] = dados.descricao
+
         if (nomeEtapa && nomeEtapa !== etapaAtual) continue
 
         const tarefas = Object.entries(dados?.tarefas || [])
@@ -1341,8 +1396,6 @@ async function atualizarToolbar(id, nomeEtapa) {
 
     const emPorcentagemConcluido = totais.porcentagemConcluido / 100
     const porcentagemAndamento = ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
-
-    etapasProvisorias = etapas
     const opcoes = etapas
         .map(op => `<option ${nomeEtapa == op ? 'selected' : ''}>${op}</option>`).join('')
 
@@ -1358,65 +1411,133 @@ async function atualizarToolbar(id, nomeEtapa) {
 
 async function editarTarefa(id, idEtapa, idTarefa) {
 
-    const objeto = await recuperarDado('tarefas', id)
-    const tarefa = idTarefa ? objeto.etapas[idEtapa].tarefas[idTarefa] : objeto.etapas[idEtapa]
-
     const modelo = (texto, elemento, campo) => `
         <div style="${vertical}; gap: 3px;">
             <span style="text-align: left;"><strong>${texto}</strong></span>
-            <input name="${texto}" ${campo ? 'type="number"' : ''} value="${elemento}" oninput="calcular()">
+            ${texto == 'Etapa' ? elemento : `<input name="${texto}" ${campo ? 'type="number"' : ''} value="${elemento}" oninput="calcular()">`}
         </div>
     `
+    const objeto = await recuperarDado('tarefas', id)
+    let campos = ''
+    let tarefa = {}
+    let funcao = ''
 
-    const acumulado = `
-        <div class="painelCadastro">
-            ${modelo('Ordem', tarefa?.ordem || '')}
-            ${modelo('Descrição', tarefa?.descricao || '')}
+    if (idTarefa) {
+
+        tarefa = objeto?.etapas?.[idEtapa]?.tarefas?.[idTarefa] || {}
+
+        funcao = `salvarTarefa('${id}', '${idEtapa}', '${idTarefa}')`
+        campos = `
+            ${modelo('Etapa',
+            `<select name="Etapa">
+                ${Object.entries(etapasProvisorias).map(([id, nomeEtapa]) => `<option value="${id}" ${id == idEtapa ? 'selected' : ''}>${nomeEtapa}</option>`).join('')}
+            </select>`)}
+
             ${modelo('Unidade', tarefa?.unidade || '')}
             ${modelo('Quantidade', tarefa?.quantidade || '', true)}
             ${modelo('Resultado', tarefa?.resultado || '', true)}
             <div id="indPorcentagem"></div>
             <input name="Porcentagem" type="number" style="display: none;">
+            `
+
+    } else {
+        idEtapa = idEtapa || ID5digitos()
+        tarefa = objeto.etapas[idEtapa]
+        funcao = `salvarTarefa('${id}', '${idEtapa}')`
+    }
+
+    const acumulado = `
+        <div class="painelCadastro">
+            ${modelo('Ordem', tarefa?.ordem || '')}
+            ${modelo('Descrição', tarefa?.descricao || '')}
+            ${campos}
             <hr style="width: 100%">
-            <button onclick="salvarTarefa('${id}', '${idEtapa}', '${idTarefa}')">Salvar</button>
+            <button onclick="${funcao}">Salvar</button>
         </div>
     
     `
-    popup(acumulado, 'Edição')
+    popup(acumulado, 'Gerenciamento de Etapas e Tarefas')
 
 }
 
 async function salvarTarefa(id, idEtapa, idTarefa) {
 
-    overlayAguarde()
-    let objeto = await recuperarDado('tarefas', id)
-    let tarefa = objeto.etapas[idEtapa].tarefas[idTarefa]
+    overlayAguarde();
 
-    const valor = (name) => {
-        const valor = document.querySelector(`[name="${name}"]`)
-        return valor ? valor.value : ''
+    const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
+
+    const objeto = await recuperarDado('tarefas', id);
+    if (!objeto.etapas[idEtapa]) objeto.etapas[idEtapa] = { tarefas: {} }
+
+    const novosDadosBase = {
+        ordem: valor('Ordem'),
+        descricao: valor('Descrição')
+    };
+
+    let etapaAlterada = false;
+    let tarefa = null;
+
+    if (idTarefa) {
+
+        const idEtapaAtual = valor('Etapa');
+
+        if (idEtapaAtual == idEtapa) {
+
+            if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} }
+            tarefa = objeto.etapas[idEtapaAtual].tarefas[idTarefa]
+
+        } else if (idTarefa == 'novo') { 
+
+            idTarefa = ID5digitos()
+
+            if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} }
+            tarefa = objeto.etapas[idEtapaAtual].tarefas[idTarefa]
+
+        } else if (idEtapaAtual !== idEtapa) {
+
+            tarefa = objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
+            if (!tarefa) tarefa = {};
+
+            delete objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
+            await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
+
+            objeto.etapas[idEtapaAtual] ??= { tarefas: {} };
+
+            etapaAlterada = true;
+
+        }
+
+        Object.assign(tarefa, {
+            ...novosDadosBase,
+            unidade: valor('Unidade'),
+            quantidade: valor('Quantidade'),
+            resultado: valor('Resultado'),
+            porcentagem: Number(valor('Porcentagem') || 0)
+        });
+
+        objeto.etapas[idEtapaAtual].tarefas[idTarefa] = tarefa;
+
+        await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, tarefa);
+        modeloTR({ ...tarefa, id, idTarefa, idEtapa: idEtapaAtual });
+
+    } else {
+        // Edição de etapa
+        Object.assign(objeto.etapas[idEtapa], novosDadosBase);
+        await enviar(`tarefas/${id}/etapas/${idEtapa}`, objeto.etapas[idEtapa]);
+        modeloTR({ ...objeto.etapas[idEtapa], id, idEtapa });
     }
 
-    Object.assign(objeto.etapas[idEtapa].tarefas[idTarefa], {
-        ordem: valor('Ordem'),
-        unidade: valor('Unidade'),
-        quantidade: valor('Quantidade'),
-        resultado: valor('Resultado'),
-        porcentagem: Number(valor('Porcentagem'))
-    })
+    await inserirDados({ [id]: objeto }, 'tarefas');
+    etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
 
-    await enviar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`, tarefa)
-    await inserirDados({ [id]: objeto }, 'tarefas')
-
-    modeloTR({ ...tarefa, id, idTarefa, idEtapa })
-    await atualizarToolbar(id)
-
-    removerPopup()
-
+    removerPopup();
 }
 
 function calcular() {
-    const quantidade = Number(document.querySelector('[name="Quantidade"]').value)
+
+    const campoQuantidade = document.querySelector('[name="Quantidade"]')
+    if (!campoQuantidade) return
+    const quantidade = Number(campoQuantidade.value)
     const resultado = Number(document.querySelector('[name="Resultado"]').value)
     const indPorcentagem = document.getElementById('indPorcentagem')
     const porcentagem = (resultado / quantidade) * 100
@@ -1467,4 +1588,14 @@ function conversor(stringMonetario) {
 
         return valorNumerico;
     }
+}
+
+function ID5digitos() {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let id = '';
+    for (let i = 0; i < 5; i++) {
+        const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
+        id += caracteres.charAt(indiceAleatorio);
+    }
+    return id;
 }
