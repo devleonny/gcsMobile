@@ -8,7 +8,7 @@ const nomeStore = 'Bases'
 const filtrosColaboradores = {}
 let dados_distritos = {}
 
-const modeloTabela = (colunas) => {
+const modeloTabela = (colunas, base) => {
 
     const ths = colunas
         .map(col => `<th>${col}</th>`).join('')
@@ -22,7 +22,7 @@ const modeloTabela = (colunas) => {
                 <input oninput="pesquisarGenerico('0', this.value, filtrosColaboradores, 'body')" placeholder="Pesquisar" style="width: 100%;">
                 <img src="imagens/pesquisar2.png">
             </div>
-            <img class="atualizar" src="imagens/atualizar.png">
+            <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarDados('${base}')">
         </div>
         <div class="recorteTabela">
             <table class="tabela">
@@ -264,7 +264,7 @@ function removerOverlay() {
     if (aguarde) aguarde.remove()
 }
 
-function overlayAguarde(desabilitar) {
+function overlayAguarde() {
 
     const aguarde = document.querySelector('.aguarde')
     if (aguarde) aguarde.remove()
@@ -336,16 +336,16 @@ async function usuarios() {
 
     esconderMenus()
 
+    const nomeBase = 'dados_setores'
     const acumulado = `
-        ${modeloTabela(['Nome', 'Usuário', 'Setor', 'Permissão', ''])}
+        ${modeloTabela(['Nome', 'Usuário', 'Setor', 'Permissão', ''], nomeBase)}
     `
-
     titulo.textContent = 'Gerenciar Usuários'
     const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
-    const dados_setores = await recuperarDados('dados_setores')
-    for (const [id, usuario] of Object.entries(dados_setores)) criarLinha(usuario, id, 'usuario')
+    const dados_setores = await recuperarDados(nomeBase)
+    for (const [id, usuario] of Object.entries(dados_setores)) criarLinha(usuario, id, nomeBase)
 
 }
 
@@ -362,17 +362,29 @@ async function sincronizarDados(base, overlayOff) {
 async function telaObras() {
 
     esconderMenus()
+    const nomeBase = 'dados_obras'
     titulo.textContent = 'Gerenciar Obras'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarObra()')}
-        ${modeloTabela(['Cliente', 'Distrito', 'Cidade', 'Contacto', 'E-mail', ''])}
+        ${modeloTabela(['Cliente', 'Distrito', 'Cidade', 'Contacto', 'E-mail', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
 
-    const dados_obras = await recuperarDados('dados_obras')
-    for (const [idObra, obra] of Object.entries(dados_obras)) criarLinha(obra, idObra, 'obra')
+    const dados_obras = await recuperarDados(nomeBase)
+    for (const [idObra, obra] of Object.entries(dados_obras)) criarLinha(obra, idObra, nomeBase)
+}
+
+async function atualizarDados(base) {
+
+    overlayAguarde()
+    await sincronizarDados(base)
+
+    const dados = await recuperarDados(base)
+    for (const [id, objeto] of Object.entries(dados)) criarLinha(objeto, id, base)
+    removerOverlay()
+
 }
 
 async function adicionarObra(idObra) {
@@ -448,7 +460,7 @@ async function salvarObra(idObra) {
     await enviar(`dados_obras/${idObra}`, obra)
     await inserirDados({ [idObra]: obra }, 'dados_obras')
 
-    criarLinha(obra, idObra, 'obra')
+    criarLinha(obra, idObra, 'dados_obras')
 
     removerPopup()
 
@@ -467,22 +479,22 @@ function esconderMenus() {
 async function telaPessoas() {
 
     esconderMenus()
-
+    const nomeBase = 'dados_colaboradores'
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Apólice', 'Status', 'Especialidade', ''])}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Apólice', 'Status', 'Especialidade', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
 
-    const dados_colaboradores = await recuperarDados('dados_colaboradores')
-    for (const [id, colaborador] of Object.entries(dados_colaboradores)) criarLinha(colaborador, id, 'colaborador')
+    const dados_colaboradores = await recuperarDados(nomeBase)
+    for (const [id, colaborador] of Object.entries(dados_colaboradores)) criarLinha(colaborador, id, nomeBase)
 
 }
 
-function criarLinha(dados, id, tabela) {
+function criarLinha(dados, id, nomeBase) {
 
     const modelo = (texto2) => `
         <td>
@@ -494,7 +506,7 @@ function criarLinha(dados, id, tabela) {
     let tds = ''
     let funcao = ''
 
-    if (tabela == 'colaborador') {
+    if (nomeBase == 'dados_colaboradores') {
         funcao = `adicionarPessoa('${id}')`
 
         tds = `
@@ -506,7 +518,7 @@ function criarLinha(dados, id, tabela) {
             ${modelo(dados?.status || '--')}
             ${modelo(dados?.especialidade || '--')}
         `
-    } else if (tabela == 'obra') {
+    } else if (nomeBase == 'dados_obras') {
         funcao = `adicionarObra('${id}')`
         const distrito = dados_distritos?.[dados?.distrito] || {}
         const cidades = distrito?.cidades?.[dados?.cidade] || {}
@@ -518,7 +530,7 @@ function criarLinha(dados, id, tabela) {
             ${modelo(dados?.contacto || '--')}
             ${modelo(dados?.email || '--')}
         `
-    } else if (tabela == 'usuario') {
+    } else if (nomeBase == 'dados_setores') {
         funcao = `gerenciarUsuario('${id}')`
         tds = `
             ${modelo(dados?.nome_completo || '--')}
@@ -526,7 +538,7 @@ function criarLinha(dados, id, tabela) {
             ${modelo(dados?.setor || '--')}
             ${modelo(dados?.permissao || '--')}
         `
-    } else if (tabela == 'usuario') {
+    } else if (nomeBase == 'tarefas') {
         funcao = `verAndamento('${id}')`
         tds = `
             ${modelo(dados?.data || '--')}
@@ -684,7 +696,7 @@ async function salvarColaborador(idColaborador) {
     await enviar(`dados_colaboradores/${idColaborador}`, colaborador)
     await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
 
-    criarLinha(colaborador, idColaborador, 'colaborador')
+    criarLinha(colaborador, idColaborador, 'dados_colaboradores')
 
     removerPopup()
 
@@ -728,7 +740,6 @@ function telaLogin() {
     tela.innerHTML = acumulado
 
 }
-
 
 // BASE DE DADOS
 async function inserirDados(dados, nomeBase, resetar) {
@@ -919,6 +930,26 @@ async function receber(chave) {
     })
 }
 
+function offline(motivo) {
+
+    const motivos = {
+        1: 'Você está offline!',
+        2: 'O servidor caiu... tente novamente.'
+    }
+
+    let acumulado = `
+    <div class="telaOffline">
+        <div class="mensagemTela">
+            <img src="gifs/offline.gif" class="dino">
+            <label>${motivos[motivo]}</label>
+            ${btn('atualizar', 'Reconectar', `telaPrincipal()`)}
+        </div>
+    </div>
+    `
+
+    tela.innerHTML = acumulado
+}
+
 function pesquisarGenerico(coluna, texto, filtro, id) {
 
     filtro[coluna] = String(texto).toLowerCase().replace('.', '')
@@ -1013,7 +1044,7 @@ async function configuracoes(usuario, campo, valor) {
     let dados_usuario = await recuperarDado('dados_setores', usuario)
     dados_usuario[campo] = valor
     await inserirDados({ [usuario]: dados_usuario }, 'dados_setores')
-    criarLinha(dados_usuario, usuario, 'usuario')
+    criarLinha(dados_usuario, usuario, 'dados_setores')
 
     return new Promise((resolve, reject) => {
         fetch("https://leonny.dev.br/configuracoes", {
@@ -1042,7 +1073,7 @@ async function sincronizarSetores() {
     dados_setores = await recuperarDados('dados_setores')
 
     let timestamp = 0
-    for ([usuario, objeto] of Object.entries(dados_setores)) {
+    for (const [usuario, objeto] of Object.entries(dados_setores)) {
         if (objeto.timestamp && objeto.timestamp > timestamp) timestamp = objeto.timestamp
     }
 
@@ -1076,50 +1107,222 @@ async function listaSetores(timestamp) {
 async function acompanhamento() {
 
     esconderMenus()
+    const nomeBase = 'tarefas'
     titulo.textContent = 'Gerenciar Tarefas'
     const acumulado = `
         <div class="btnRodape">
             <input type="file" id="arquivoExcel" accept=".xls,.xlsx">
-            <button>Importar</button>
+            <button onclick="enviarExcel()">Importar</button>
         </div>
 
-        ${modeloTabela(['Data', 'Obra', ''])}
+        ${modeloTabela(['Data', 'Obra', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
 
-    const dados_tarefas = await recuperarDados('dados_tarefas')
-    for (const [idTarefa, tarefa] of Object.entries(dados_tarefas)) criarLinha(tarefa, idTarefa, 'obra')
+    const tarefas = await recuperarDados(nomeBase)
+    for (const [idTarefa, tarefa] of Object.entries(tarefas)) criarLinha(tarefa, idTarefa, nomeBase)
 
+}
+
+function porcentagemHtml(valor) {
+    valor = conversor(valor)
+    const percentual = Math.max(0, Math.min(100, valor)); // limita de 0 a 100
+    return `
+    <div style="display:flex; align-items:center; gap:4px;">
+        <span style="color:#888; font-size:14px;">${percentual}%</span>
+        <div class="barra">
+            <div style="width:${percentual}%; height:100%; background:#f8b84e;"></div>
+        </div>
+    </div>
+  `;
+}
+
+async function verAndamento(id) {
+
+    const tarefa = await recuperarDado('tarefas', id)
+
+    titulo.textContent = 'Lista de Tarefas'
+    const bloco = (texto, valor) => `
+        <div class="bloco">
+            <span>${valor}</span>
+            <label>${texto}</label>
+        </div>
+    `
+    const modeloTR = ({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) => `
+        <tr style="background-color: ${cor ? cor : ''};">
+            <td>${ordem}</td>
+            <td>
+                <div style="${horizontal}; justify-content: space-between;">
+                    <span>${descricao}</span>
+                    <span>${quantidade ? `${quantidade} ${unidade}` : ''}</span>
+                </div>
+            </td>
+            <td>${porcentagem !== '' ? porcentagemHtml(porcentagem) : ''}</td>
+            <td>
+                <div class="edicao">
+                    <img class="btnAcmp" src="imagens/lapis.png" onclick="editarTarefa('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})">
+                    <img class="btnAcmp" src="imagens/fechar.png">
+                </div>
+            </td>
+        <tr>
+    `
+    let totais = {
+        tarefas: 0,
+        naoIniciado: 0,
+        emAndamento: 0,
+        concluido: 0,
+        porcentagemConcluido: 0
+    }
+
+    let linhas = ''
+    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
+        linhas += modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
+        const tarefas = Object.entries(dados?.tarefas || [])
+        totais.tarefas += tarefas.length
+
+        for (const [idTarefa, tarefa] of tarefas) {
+
+            if (tarefa.porcentagem == 0) {
+                totais.naoIniciado++
+            } else if (tarefa.porcentagem !== 0) {
+                totais.emAndamento++
+            } else if (tarefa.porcentagem == 100) {
+                totais.concluido++
+            }
+
+            totais.porcentagemConcluido += tarefa.porcentagem
+
+            linhas += modeloTR({ ...tarefa, id, idEtapa, idTarefa })
+        }
+    }
+
+    const porcentagemAndamento = ((totais.porcentagemConcluido / totais.tarefas) * 100).toFixed(0)
+
+    const opcoes = ['Todas as tarefas']
+        .map(op => `<option>${op}</option>`).join('')
+
+    const acumulado = `
+        <div class="acompanhamento">
+
+            <div style="${horizontal}; justify-content: start; gap: 2vw;">
+                <input placeholder="Pesquisa">
+                <select>${opcoes}</select>
+                <div style="${vertical};">
+                    <div style="${horizontal}; gap: 1vw;">
+                        <input type="checkbox">
+                        <span>Exibir somente as etapas</span>
+                    </div>
+                    <div style="${horizontal}; gap: 1vw;">
+                        <input type="checkbox">
+                        <span>Ocultar etapa concluídas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="${horizontal}; justify-content: space-between;">
+                ${bloco('Total', totais.tarefas)}
+                ${bloco('Não iniciado', totais.naoIniciado)}
+                ${bloco('Em andamento', totais.emAndamento)}
+                ${bloco('Concluída', totais.concluido)}
+                ${bloco('Realizado', `${porcentagemAndamento}%`)}
+            </div>
+
+            <br>
+
+            <table class="tabela">
+                <tbody>${linhas}</tbody>
+            </table>
+
+        </div>
+    `
+    const telaInterna = document.querySelector('.telaInterna')
+    telaInterna.innerHTML = acumulado
+
+}
+
+async function editarTarefa(id, idEtapa, idTarefa) {
+
+    const objeto = await recuperarDado('tarefas', id)
+    const tarefa = idTarefa ? objeto.etapas[idEtapa].tarefas[idTarefa] : objeto.etapas[idEtapa]
+
+    console.log(tarefa);
+
+
+    const modelo = (texto, elemento, campo) => `
+        <div style="${vertical}; gap: 3px;">
+            <span style="text-align: left;"><strong>${texto}</strong></span>
+            <input name="${texto}" ${campo ? 'type="number"' : ''} value="${elemento}" oninput="calcular()">
+        </div>
+    `
+
+    const acumulado = `
+        <div class="painelCadastro">
+            ${modelo('Ordem', tarefa?.ordem || '')}
+            ${modelo('Descrição', tarefa?.descricao || '')}
+            ${modelo('Unidade', tarefa?.unidade || '')}
+            ${modelo('Quantidade', tarefa?.quantidade || '', true)}
+            ${modelo('Resultado', tarefa?.resultado || '', true)}
+            <hr style="width: 100%">
+            <div id="indPorcentagem"></div>
+            <hr style="width: 100%">
+            <button>Salvar</button>
+        </div>
+    
+    `
+    popup(acumulado, 'Edição')
+
+}
+
+function calcular() {
+    const quantidade = Number(document.querySelector('[name="Quantidade"]').value)
+    const resultado = Number(document.querySelector('[name="Resultado"]').value)
+    const indPorcentagem = document.getElementById('indPorcentagem')
+    const porcentagem = (resultado / quantidade) * 100
+
+    indPorcentagem.innerHTML = porcentagemHtml(porcentagem)
 }
 
 async function enviarExcel() {
     const input = document.querySelector('#arquivoExcel');
-    if (!input.files.length) {
-        alert('Selecione um arquivo Excel');
-        return;
-    }
+    if (!input.files.length) return popup(mensagem('Você ainda não selecionou nenhum arquivo'), 'Alerta')
 
     const formData = new FormData();
     formData.append('arquivo', input.files[0]);
 
     try {
-        const resposta = await fetch('/processar-tarefas', {
+        const resposta = await fetch('https://leonny.dev.br/processar-tarefas', {
             method: 'POST',
             body: formData
         });
 
         const dados = await resposta.json();
         if (resposta.ok) {
-            console.log('Sucesso:', dados);
-            alert('Arquivo enviado com sucesso!');
+            popup(mensagem('Arquivo enviado com sucesso!'), 'Alerta')
         } else {
-            console.error('Erro:', dados);
-            alert('Erro: ' + (dados.erro || 'Falha no envio'));
+            popup(mensagem(`Erro: ${dados.erro}`), 'Alerta')
         }
     } catch (err) {
-        console.error('Erro de rede:', err);
-        alert('Erro de rede');
+        popup(mensagem(`Erro de conexão: ${err}`), 'Alerta')
+    }
+}
+
+function conversor(stringMonetario) {
+    if (typeof stringMonetario === 'number') {
+        return stringMonetario;
+    } else if (!stringMonetario || stringMonetario.trim() === "") {
+        return 0;
+    } else {
+        stringMonetario = stringMonetario.trim();
+        stringMonetario = stringMonetario.replace(/[^\d,]/g, '');
+        stringMonetario = stringMonetario.replace(',', '.');
+        var valorNumerico = parseFloat(stringMonetario);
+
+        if (isNaN(valorNumerico)) {
+            return 0;
+        }
+
+        return valorNumerico;
     }
 }

@@ -23,6 +23,29 @@ span {
     right: 5px;
 }
 
+.telaOffline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 60vh;
+}
+
+.mensagemTela {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1vw;
+    background-color: white;
+    padding: 2vw;
+    border-radius: 3px;
+}
+
+.dino {
+    width: 30vw;
+}
+
 .botoesMenu {
     display: flex;
     align-items: center;
@@ -349,6 +372,67 @@ input[type="file"] {
     background-color: transparent;
 }
 
+.barra {
+    width: 5vw;
+    flex: 1;
+    background: #eee;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.acompanhamento {
+    border-radius: 3px;
+    padding: 2vw;
+    background-color: white;
+    width: 90vw;
+    height: 70vh;
+    color: #222;
+    overflow-y: auto;
+    padding-bottom: 50vh;
+    box-shadow: 0px 0px 3px #222;
+}
+
+.edicao {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.edicao img {
+    width: 3vw;
+}
+
+.btnAcmp {
+    border-radius: 5px;
+    padding: 3px;
+    background-color: #dbdbdb;
+}
+
+.bloco {
+    border: solid 1px #c9c9c9;
+    border-radius: 2px;
+    background-color: #F5F5F5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-left: 5vw;
+    padding-right: 5vw;
+}
+
+.bloco label {
+    color: #222;
+    font-size: 1.2vw;
+    white-space: nowrap;
+}
+
+.bloco span {
+    color: #fd6828;
+    font-size: 3vw;
+}
+
 .linha {
     display: flex;
     align-items: center;
@@ -494,7 +578,8 @@ screen and (min-aspect-ratio: 13/9) {
         max-width: 90vw;
     }
 
-    .aguarde img {
+    .aguarde img,
+    .dino {
         width: 10vw;
     }
 
