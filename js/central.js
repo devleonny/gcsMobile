@@ -1171,16 +1171,14 @@ function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id,
 
 async function verAndamento(id) {
 
-    const tarefa = await recuperarDado('tarefas', id)
-
     titulo.textContent = 'Lista de Tarefas'
 
     const acumulado = `
         <div class="acompanhamento">
 
-            <div style="${horizontal}; justify-content: start; gap: 2vw;">
-                <input placeholder="Pesquisa">
-                <select id="etapas"></select>
+            <div style="${horizontal}; justify-content: space-between; gap: 2vw;">
+                <input placeholder="Pesquisa" oninput="pesquisarTarefas(this)">
+                <select id="etapas" onchange="atualizarToolbar('${id}', this.value); carregarLinhas('${id}', this.value)"></select>
                 <div style="${vertical};">
                     <div style="${horizontal}; gap: 1vw;">
                         <input type="checkbox">
@@ -1191,6 +1189,7 @@ async function verAndamento(id) {
                         <span>Ocultar etapa concluídas</span>
                     </div>
                 </div>
+                <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
             </div>
 
             <div id="resumo" style="${horizontal}; justify-content: space-between;"></div>
@@ -1206,21 +1205,79 @@ async function verAndamento(id) {
     const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
+    await atualizarToolbar(id)
+    await carregarLinhas(id)
+
+}
+
+async function caixa(id, button) {
+
+    const acumulado = `
+        <div style="${vertical}; gap: 5px;">
+            <span>Etapa</span>
+            <span>Tarefa</span>
+        </div>
+    `
+}
+
+async function carregarLinhas(id, nomeEtapa) {
+    const tarefa = await recuperarDado('tarefas', id)
+
+    if(nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
+
+    const tbody = document.getElementById('bodyTarefas')
+    if(nomeEtapa) tbody.innerHTML = ''
+
     for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
-        modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
+
+        const etapaAtual = dados.descricao
+
+        if (nomeEtapa && nomeEtapa !== etapaAtual) continue
+
         const tarefas = Object.entries(dados?.tarefas || [])
+        modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
 
         for (const [idTarefa, tarefa] of tarefas) {
             modeloTR({ ...tarefa, id, idEtapa, idTarefa })
         }
     }
-
-    await atualizarToolbar(id)
-
 }
+
+function pesquisarTarefas(input) {
+    const termo = input.value.trim().toLowerCase();
+    const tbody = document.getElementById('bodyTarefas');
+    const trs = tbody.querySelectorAll('tr');
+
+    trs.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        let encontrou = false;
+
+        tds.forEach(td => {
+            let texto = td.textContent.trim().toLowerCase();
+
+            const inputInterno = td.querySelector('input, textarea, select');
+            if (inputInterno) {
+                texto += ' ' + inputInterno.value.trim().toLowerCase();
+            }
+
+            if (termo && texto.includes(termo)) {
+                encontrou = true;
+            }
+        });
+
+        if (!termo || encontrou) {
+            tr.style.display = ''; // mostra
+        } else {
+            tr.style.display = 'none'; // oculta
+        }
+    });
+}
+
 
 async function atualizarToolbar(id, nomeEtapa) {
     const tarefa = await recuperarDado('tarefas', id)
+
+    if(nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
     const bloco = (texto, valor) => `
         <div class="bloco">
@@ -1240,9 +1297,12 @@ async function atualizarToolbar(id, nomeEtapa) {
     let etapas = ['Todas as tarefas']
     for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
 
+        const etapaAtual = dados.descricao
+        etapas.push(etapaAtual)
+        if (nomeEtapa && nomeEtapa !== etapaAtual) continue
+
         const tarefas = Object.entries(dados?.tarefas || [])
-        totais.tarefas += dados.descricao == nomeEtapa ? tarefas.length : 0
-        etapas.push(dados.descricao)
+        totais.tarefas += tarefas.length
 
         for (const [idTarefa, tarefa] of tarefas) {
 
@@ -1262,7 +1322,7 @@ async function atualizarToolbar(id, nomeEtapa) {
     const porcentagemAndamento = ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
 
     const opcoes = etapas
-        .map(op => `<option>${op}</option>`).join('')
+        .map(op => `<option ${nomeEtapa == op ? 'selected' : ''}>${op}</option>`).join('')
 
     document.getElementById('etapas').innerHTML = opcoes
     document.getElementById('resumo').innerHTML = `
