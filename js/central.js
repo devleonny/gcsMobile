@@ -1461,77 +1461,60 @@ async function editarTarefa(id, idEtapa, idTarefa) {
 }
 
 async function salvarTarefa(id, idEtapa, idTarefa) {
+  overlayAguarde();
 
-    overlayAguarde();
+  const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
 
-    const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
+  const objeto = await recuperarDado('tarefas', id);
+  if (!objeto.etapas[idEtapa]) objeto.etapas[idEtapa] = { tarefas: {} };
 
-    const objeto = await recuperarDado('tarefas', id);
-    if (!objeto.etapas[idEtapa]) objeto.etapas[idEtapa] = { tarefas: {} }
+  const novosDadosBase = {
+    ordem: valor('Ordem'),
+    descricao: valor('Descrição')
+  };
 
-    const novosDadosBase = {
-        ordem: valor('Ordem'),
-        descricao: valor('Descrição')
-    };
+  let etapaAlterada = false;
+  let tarefa = null;
 
-    let etapaAlterada = false;
-    let tarefa = null;
+  const idEtapaAtual = valor('Etapa');
 
-    if (idTarefa) {
+  if (idTarefa === 'novo') {
+    idTarefa = ID5digitos();
+    if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} };
+    tarefa = {};
+  } else {
+    // tarefa existente, pode ser troca de etapa ou atualização simples
+    tarefa = objeto.etapas[idEtapa]?.tarefas?.[idTarefa] || {};
 
-        const idEtapaAtual = valor('Etapa');
+    if (idEtapaAtual !== idEtapa) {
+      // remove da etapa antiga
+      delete objeto.etapas[idEtapa].tarefas[idTarefa];
+      await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
 
-        if (idEtapaAtual == idEtapa) {
-
-            if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} }
-            tarefa = objeto.etapas[idEtapaAtual].tarefas[idTarefa]
-
-        } else if (idTarefa == 'novo') { 
-
-            idTarefa = ID5digitos()
-
-            if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} }
-            tarefa = objeto.etapas[idEtapaAtual].tarefas[idTarefa]
-
-        } else if (idEtapaAtual !== idEtapa) {
-
-            tarefa = objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
-            if (!tarefa) tarefa = {};
-
-            delete objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
-            await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
-
-            objeto.etapas[idEtapaAtual] ??= { tarefas: {} };
-
-            etapaAlterada = true;
-
-        }
-
-        Object.assign(tarefa, {
-            ...novosDadosBase,
-            unidade: valor('Unidade'),
-            quantidade: valor('Quantidade'),
-            resultado: valor('Resultado'),
-            porcentagem: Number(valor('Porcentagem') || 0)
-        });
-
-        objeto.etapas[idEtapaAtual].tarefas[idTarefa] = tarefa;
-
-        await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, tarefa);
-        modeloTR({ ...tarefa, id, idTarefa, idEtapa: idEtapaAtual });
-
-    } else {
-        // Edição de etapa
-        Object.assign(objeto.etapas[idEtapa], novosDadosBase);
-        await enviar(`tarefas/${id}/etapas/${idEtapa}`, objeto.etapas[idEtapa]);
-        modeloTR({ ...objeto.etapas[idEtapa], id, idEtapa });
+      if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} };
+      etapaAlterada = true;
     }
+  }
 
-    await inserirDados({ [id]: objeto }, 'tarefas');
-    etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
+  Object.assign(tarefa, {
+    ...novosDadosBase,
+    unidade: valor('Unidade'),
+    quantidade: valor('Quantidade'),
+    resultado: valor('Resultado'),
+    porcentagem: Number(valor('Porcentagem') || 0)
+  });
 
-    removerPopup();
+  objeto.etapas[idEtapaAtual].tarefas[idTarefa] = tarefa;
+
+  await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, tarefa);
+  modeloTR({ ...tarefa, id, idTarefa, idEtapa: idEtapaAtual });
+
+  await inserirDados({ [id]: objeto }, 'tarefas');
+  etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
+
+  removerPopup();
 }
+
 
 function calcular() {
 
