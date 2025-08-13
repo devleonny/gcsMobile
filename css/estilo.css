@@ -212,8 +212,7 @@ button {
 
 .tabela td {
     text-align: center;
-    padding: 2vw;
-    font-size: 0.8vw;
+    padding: 3px;
     border: 1px solid #d2d2d2;
 }
 
@@ -415,6 +414,18 @@ input[type="file"] {
 }
 
 .edicao img {
+    width: 2vw;
+}
+
+.botoesCima {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 2vw;
+    padding-bottom: 5px;
+}
+
+.botoesCima img {
     width: 3vw;
 }
 
@@ -422,6 +433,26 @@ input[type="file"] {
     border-radius: 5px;
     padding: 3px;
     background-color: #dbdbdb;
+}
+
+.alteracaoNomeObra {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.alteracaoNomeObra img{
+    width: 4vw;
+}
+
+.aviso {
+    background-color: #d2d2d2;
+    padding: 2vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
 }
 
 .bloco {
@@ -532,7 +563,7 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     select {
-        font-size: 1.8vw;
+        font-size: 1.2vw;
     }
 
     .janela {

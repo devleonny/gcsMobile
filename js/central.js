@@ -5,9 +5,15 @@ const horizontal = `display: flex; align-items: center; justify-content: center;
 const vertical = `display: flex; align-items: start; justify-content: start; flex-direction: column`
 const nomeBaseCentral = 'Reconstrular'
 const nomeStore = 'Bases'
-const filtrosColaboradores = {}
 let dados_distritos = {}
 let etapasProvisorias = {}
+
+const dtFormatada = (data) => {
+    if (!data) return '--'
+    const [ano, mes, dia] = data.split('-')
+    return `${dia}/${mes}/${ano}`
+}
+
 const modeloTabela = (colunas, base) => {
 
     const ths = colunas
@@ -19,7 +25,7 @@ const modeloTabela = (colunas, base) => {
     <div class="blocoTabela">
         <div class="painelBotoes">
             <div class="pesquisa">
-                <input oninput="pesquisarGenerico('0', this.value, filtrosColaboradores, 'body')" placeholder="Pesquisar" style="width: 100%;">
+                <input oninput="pesquisar(this, 'body')" placeholder="Pesquisar" style="width: 100%;">
                 <img src="imagens/pesquisar2.png">
             </div>
             <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarDados('${base}')">
@@ -33,6 +39,7 @@ const modeloTabela = (colunas, base) => {
         <div class="rodapeTabela"></div>
     </div>
 `}
+
 const mensagem = (mensagem) => `
     <div class="mensagem">
         <img src="gifs/alerta.gif">
@@ -345,7 +352,7 @@ async function usuarios() {
     telaInterna.innerHTML = acumulado
 
     const dados_setores = await recuperarDados(nomeBase)
-    for (const [id, usuario] of Object.entries(dados_setores)) criarLinha(usuario, id, nomeBase)
+    for (const [id, usuario] of Object.entries(dados_setores).reverse()) criarLinha(usuario, id, nomeBase)
 
 }
 
@@ -373,7 +380,7 @@ async function telaObras() {
     telaInterna.innerHTML = acumulado
 
     const dados_obras = await recuperarDados(nomeBase)
-    for (const [idObra, obra] of Object.entries(dados_obras)) criarLinha(obra, idObra, nomeBase)
+    for (const [idObra, obra] of Object.entries(dados_obras).reverse()) criarLinha(obra, idObra, nomeBase)
 }
 
 async function atualizarDados(base) {
@@ -382,7 +389,7 @@ async function atualizarDados(base) {
     await sincronizarDados(base)
 
     const dados = await recuperarDados(base)
-    for (const [id, objeto] of Object.entries(dados)) criarLinha(objeto, id, base)
+    for (const [id, objeto] of Object.entries(dados).reverse()) criarLinha(objeto, id, base)
     removerOverlay()
 
 }
@@ -490,7 +497,7 @@ async function telaPessoas() {
     telaInterna.innerHTML = acumulado
 
     const dados_colaboradores = await recuperarDados(nomeBase)
-    for (const [id, colaborador] of Object.entries(dados_colaboradores)) criarLinha(colaborador, id, nomeBase)
+    for (const [id, colaborador] of Object.entries(dados_colaboradores).reverse()) criarLinha(colaborador, id, nomeBase)
 
 }
 
@@ -513,7 +520,7 @@ function criarLinha(dados, id, nomeBase) {
             ${modelo(dados?.nome || '--')}
             ${modelo(dados?.telefone || '--')}
             ${modelo(dados?.morada || '--')}
-            ${modelo(dados?.dataNascimento || '--')}
+            ${modelo(dtFormatada(dados.dataNascimento))}
             ${modelo(dados?.apolice || '--')}
             ${modelo(dados?.status || '--')}
             ${modelo(dados?.especialidade || '--')}
@@ -594,6 +601,8 @@ async function gerenciarUsuario(id) {
 async function adicionarPessoa(id) {
 
     const colaborador = await recuperarDado('dados_colaboradores', id)
+    const dados_obras = await recuperarDados('dados_obras')
+    const dados_distritos = await recuperarDados('dados_distritos')
 
     const listas = {
         status: ['Ativo', 'Baixa Médica', 'Não Ativo', 'Impedido'],
@@ -613,7 +622,7 @@ async function adicionarPessoa(id) {
         const opcoesStatus = listas[name]
             .map(op => `
             <div class="opcaoStatus">
-                <input value="${op}" type="radio" name="${name}" ${colaborador?.[name] == op ? 'checked' : ''}>
+                <input ${regras} value="${op}" type="radio" name="${name}" ${colaborador?.[name] == op ? 'checked' : ''}>
                 <span style="text-align: left;">${op}</span>
             </div>
             `).join('')
@@ -625,27 +634,37 @@ async function adicionarPessoa(id) {
 
     }
 
+    const obras = { '': { cliente: 'Sem Obra', cidade: '--', distrito: '--' }, ...dados_obras }
+    let opcoesObras = ''
+    for (const [idObra, obra] of Object.entries(obras)) {
+        const distrito = dados_distritos?.[obra.distrito] || {}
+        const cidade = distrito?.cidades?.[obra.cidade] || {}
+        opcoesObras += `<option ${colaborador?.obraAlocada == idObra ? 'selected' : ''} value="${idObra}">${obra.cliente} / ${distrito.nome || '--'} / ${cidade.nome || '--'}</option>`
+    }
+
+    const regras = `oninput="regras()"`
     const caixaStatus = retornarCaixas('status')
     const caixaEspecialidades = retornarCaixas('especialidade')
-    const caixaDocumentos = `${retornarCaixas('documento')} <input placeholder="Número do documento">`
+    const caixaDocumentos = `${retornarCaixas('documento')} <input ${regras} value="${colaborador?.numeroDocumento || ''}" name="numeroDocumento" placeholder="Número do documento">`
 
     const acumulado = `
         <div class="painelCadastro">
 
-            ${modelo('Nome Completo', `<input value="${colaborador?.nome || ''}" name="nome" placeholder="Nome Completo">`)}
+            ${modelo('Nome Completo', `<input ${regras} value="${colaborador?.nome || ''}" name="nome" placeholder="Nome Completo">`)}
             ${modelo('Data de Nascimento', `<input value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
             ${modelo('Morada', `<input value="${colaborador?.morada || ''}" name="morada" placeholder="Morada">`)}
-            ${modelo('Apólice de Seguro', '<input name="apolice" placeholder="Número da Apólice">')}
-            ${modelo('Telefone', '<input name="telefone" placeholder="Telefone">')}
-            ${modelo('Contrato de Obra', '<input name="contratoObra" type="file">')}
+            ${modelo('Apólice de Seguro', `<input value="${colaborador?.apolice || ''}" name="apolice" placeholder="Número da Apólice">`)}
+            ${modelo('Telefone', `<input ${regras} value="${colaborador?.telefone || ''}" name="telefone" placeholder="Telefone">`)}
+            ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
+            ${modelo('Obra Alocada', `<select name="obraAlocada">${opcoesObras}</select>`)}
             ${modelo('Documento', caixaDocumentos)}
-            ${modelo('Número de Contribuinte', '<input name="numeroContribuinte" type="text" maxlength="9" placeholder="Máximo de 9 dígitos">')}
-            ${modelo('Segurança Social', '<input name="segurancaSocial" placeholder="Número Segurança Social">')}
+            ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 9 dígitos">`)}
+            ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Número Segurança Social">`)}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${modelo('Epi’s', '<input name="epi" type="file">')}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
-            ${modelo('Senha de Acesso', '<input name="pin" type="text" maxlength="4" placeholder="Máximo de 4 números">')}
+            ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" type="number" placeholder="Máximo de 4 números">`)}
             ${modelo('Foto do Colaborador', '<input name="foto" type="file">')}
 
             <hr style="width: 100%;">
@@ -656,6 +675,28 @@ async function adicionarPessoa(id) {
     `
 
     popup(acumulado, 'Cadastro')
+}
+
+function regras() {
+    // REGRAS
+    const input = (name) => document.querySelector(`[name="${name}"]`)
+    const nome = input('nome')
+    const telefone = input('telefone')
+    const numeroContribuinte = input('numeroContribuinte')
+    const pin = input('pin')
+
+    nome.value = nome.value.replace(/[0-9]/g, '')
+    if (telefone.value.length > 9) telefone.value = telefone.value.slice(0, 9);
+    if (numeroContribuinte.value.length > 11) numeroContribuinte.value = numeroContribuinte.value.slice(0, 11);
+    if (pin.value.length > 4) pin.value = pin.value.slice(0, 4)
+
+    const numeroDocumento = input('numeroDocumento')
+    const docAtivo = document.querySelector('input[name="documento"]:checked')
+    if (docAtivo.value == 'Cartão de Cidadão') {
+        if (numeroDocumento.value.length > 8) numeroDocumento.value = numeroDocumento.value.slice(0, 8)
+        numeroDocumento.value = numeroDocumento.value.replace(/\D/g, '')
+    }
+
 }
 
 function unicoID() {
@@ -683,7 +724,7 @@ async function salvarColaborador(idColaborador) {
     }
 
     let colaborador = {}
-    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroContribuinte', 'pin']
+    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'obraAlocada', 'numeroContribuinte', 'pin']
 
     for (const campo of camposFixos) colaborador[campo] = obVal(campo)
 
@@ -1150,7 +1191,7 @@ async function acompanhamento() {
     telaInterna.innerHTML = acumulado
 
     const tarefas = await recuperarDados(nomeBase)
-    for (const [idTarefa, tarefa] of Object.entries(tarefas)) criarLinha(tarefa, idTarefa, nomeBase)
+    for (const [idTarefa, tarefa] of Object.entries(tarefas).reverse()) criarLinha(tarefa, idTarefa, nomeBase)
 
 }
 
@@ -1170,6 +1211,7 @@ function porcentagemHtml(valor) {
 function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
     const idLinha = idTarefa ? idTarefa : idEtapa
+    const esquema = `('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})`
     const tr = `
         <tr id="${idLinha}" data-etapa="${!idTarefa ? 'sim' : ''}" data-concluido="${porcentagem >= 100 ? 'sim' : ''}" style="background-color: ${cor ? cor : ''};">
             <td>${ordem}</td>
@@ -1182,8 +1224,8 @@ function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id,
             <td>${idTarefa ? porcentagemHtml(porcentagem) : ''}</td>
             <td>
                 <div class="edicao">
-                    <img class="btnAcmp" src="imagens/lapis.png" onclick="editarTarefa('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})">
-                    <img class="btnAcmp" src="imagens/fechar.png">
+                    <img class="btnAcmp" src="imagens/lapis.png" onclick="editarTarefa${esquema}">
+                    <img class="btnAcmp" src="imagens/fechar.png" onclick="confirmarExclusao${esquema}">
                 </div>
             </td>
         <tr>
@@ -1196,16 +1238,71 @@ function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id,
 
 }
 
+async function confirmarExclusao(id, idEtapa, idTarefa) {
+
+    const esquema = `('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})`
+    const acumulado = `
+    <div class="aviso">
+        ${mensagem('Tem certeza que deseja remover este item?')}
+        <button onclick="excluir${esquema}">Confirmar</button>
+    </div>
+    `
+
+    popup(acumulado, 'Aviso')
+}
+
+async function excluir(id, idEtapa, idTarefa) {
+
+    removerPopup()
+    overlayAguarde()
+
+    let objeto = await recuperarDado('tarefas', id)
+
+    if (idTarefa) {
+
+        delete objeto.etapas[idEtapa].tarefas[idTarefa]
+        await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`)
+
+    } else {
+
+        delete objeto.etapas[idEtapa]
+        await deletar(`tarefas/${id}/etapas/${idEtapa}`)
+
+    }
+
+    await inserirDados({ [id]: objeto }, 'tarefas')
+
+    document.getElementById('bodyTarefas').innerHTML = ''
+    await verAndamento(id)
+
+    removerOverlay()
+
+}
+
 async function verAndamento(id) {
 
     titulo.textContent = 'Lista de Tarefas'
 
     const acumulado = `
+        <div class="botoesCima">
+            <img src="imagens/voltar.png" onclick="acompanhamento()">
+            <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
+        </div>
         <div class="acompanhamento">
 
             <div style="${horizontal}; justify-content: space-between; gap: 2vw;">
-                <input placeholder="Pesquisa" oninput="pesquisarTarefas(this)">
+                <input placeholder="Pesquisa" oninput="pesquisar(this, 'bodyTarefas')">
                 <select id="etapas" onchange="atualizarToolbar('${id}', this.value); carregarLinhas('${id}', this.value)"></select>
+
+                <div style="${horizontal}; gap: 5px;">
+
+                    <input name="obra" placeholder="Nome da Obra">
+                    <button onclick="atualizarNomeObra('${id}', this)">Alterar</button>
+
+                    <div class="alteracaoNomeObra"></div>
+
+                </div>
+
                 <div style="${vertical};">
                     <div style="${horizontal}; gap: 1vw;">
                         <input type="checkbox" name="etapa" onchange="filtrar()">
@@ -1216,7 +1313,6 @@ async function verAndamento(id) {
                         <span>Ocultar etapa concluídas</span>
                     </div>
                 </div>
-                <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
             </div>
 
             <div id="resumo" style="${horizontal}; justify-content: space-between;"></div>
@@ -1234,6 +1330,31 @@ async function verAndamento(id) {
 
     await atualizarToolbar(id)
     await carregarLinhas(id)
+
+}
+
+async function atualizarNomeObra(id, button) {
+
+    const alteracaoNomeObra = document.querySelector('.alteracaoNomeObra')
+    button.style.display = 'none'
+
+    alteracaoNomeObra.innerHTML = `<img src="gifs/loading.gif">`
+    alteracaoNomeObra.style.display = 'flex'
+
+    const nomeObra = document.querySelector('[name="obra"]')
+    const objeto = await recuperarDado('tarefas', id)
+    objeto.obra = nomeObra.value
+    await enviar(`tarefas/${id}/obra`, nomeObra.value)
+    await inserirDados({ [id]: objeto }, 'tarefas')
+
+    alteracaoNomeObra.innerHTML = `
+        <img src="imagens/concluido.png">
+    `
+
+    setTimeout(() => {
+        button.style.display = ''
+        alteracaoNomeObra.style.display = 'none'
+    }, 2000);
 
 }
 
@@ -1263,7 +1384,7 @@ function filtrar() {
 }
 
 
-async function caixa(id, button) { //29
+async function caixa(id, button) {
 
     const existente = document.getElementById('caixa-temporaria');
     if (existente) existente.remove();
@@ -1317,9 +1438,9 @@ async function carregarLinhas(id, nomeEtapa) {
     }
 }
 
-function pesquisarTarefas(input) {
+function pesquisar(input, idTbody) {
     const termo = input.value.trim().toLowerCase();
-    const tbody = document.getElementById('bodyTarefas');
+    const tbody = document.getElementById(idTbody);
     const trs = tbody.querySelectorAll('tr');
 
     trs.forEach(tr => {
@@ -1350,6 +1471,8 @@ function pesquisarTarefas(input) {
 
 async function atualizarToolbar(id, nomeEtapa) {
     const tarefa = await recuperarDado('tarefas', id)
+
+    document.querySelector('[name="obra"]').value = tarefa?.obra || ''
 
     if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
@@ -1395,7 +1518,8 @@ async function atualizarToolbar(id, nomeEtapa) {
     }
 
     const emPorcentagemConcluido = totais.porcentagemConcluido / 100
-    const porcentagemAndamento = ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
+    const porcentagemAndamento = emPorcentagemConcluido == 0 ? 0 : ((emPorcentagemConcluido / totais.tarefas) * 100).toFixed(0)
+
     const opcoes = etapas
         .map(op => `<option ${nomeEtapa == op ? 'selected' : ''}>${op}</option>`).join('')
 
@@ -1441,8 +1565,6 @@ async function editarTarefa(id, idEtapa, idTarefa) {
             `
 
     } else {
-        idEtapa = idEtapa || ID5digitos()
-        tarefa = objeto.etapas[idEtapa]
         funcao = `salvarTarefa('${id}', '${idEtapa}')`
     }
 
@@ -1461,58 +1583,65 @@ async function editarTarefa(id, idEtapa, idTarefa) {
 }
 
 async function salvarTarefa(id, idEtapa, idTarefa) {
-  overlayAguarde();
+    overlayAguarde();
 
-  const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
+    const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
+    let idEtapaAtual = valor('Etapa');
 
-  const objeto = await recuperarDado('tarefas', id);
-  if (!objeto.etapas[idEtapa]) objeto.etapas[idEtapa] = { tarefas: {} };
+    const objeto = await recuperarDado('tarefas', id);
 
-  const novosDadosBase = {
-    ordem: valor('Ordem'),
-    descricao: valor('Descrição')
-  };
+    let novosDadosBase = {
+        ordem: valor('Ordem'),
+        descricao: valor('Descrição'),
+    };
 
-  let etapaAlterada = false;
-  let tarefa = null;
+    let etapaAlterada = false;
 
-  const idEtapaAtual = valor('Etapa');
+    // CASO 1: NOVA ETAPA
+    if (idEtapa === 'novo' && idTarefa !== 'novo') {
 
-  if (idTarefa === 'novo') {
-    idTarefa = ID5digitos();
-    if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} };
-    tarefa = {};
-  } else {
-    // tarefa existente, pode ser troca de etapa ou atualização simples
-    tarefa = objeto.etapas[idEtapa]?.tarefas?.[idTarefa] || {};
+        idEtapaAtual = ID5digitos()
+        objeto.etapas[idEtapaAtual] = {
+            tarefas: {},
+            ...novosDadosBase
+        };
 
-    if (idEtapaAtual !== idEtapa) {
-      // remove da etapa antiga
-      delete objeto.etapas[idEtapa].tarefas[idTarefa];
-      await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
-
-      if (!objeto.etapas[idEtapaAtual]) objeto.etapas[idEtapaAtual] = { tarefas: {} };
-      etapaAlterada = true;
+        await enviar(`tarefas/${id}/etapas/${idEtapaAtual}`, objeto.etapas[idEtapaAtual]);
+        await inserirDados({ [id]: objeto }, 'tarefas');
+        await verAndamento(id)
+        removerPopup();
+        return; // encerra aqui, não continua para tarefas
     }
-  }
 
-  Object.assign(tarefa, {
-    ...novosDadosBase,
-    unidade: valor('Unidade'),
-    quantidade: valor('Quantidade'),
-    resultado: valor('Resultado'),
-    porcentagem: Number(valor('Porcentagem') || 0)
-  });
+    novosDadosBase = {
+        ...novosDadosBase,
+        unidade: valor('Unidade'),
+        quantidade: valor('Quantidade'),
+        resultado: valor('Resultado'),
+        porcentagem: Number(valor('Porcentagem') || 0)
+    }
 
-  objeto.etapas[idEtapaAtual].tarefas[idTarefa] = tarefa;
+    if (idTarefa === 'novo') { // CASO 2: NOVA TAREFA (etapa já existe)
+        idTarefa = ID5digitos();
+        etapaAlterada = true;
 
-  await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, tarefa);
-  modeloTR({ ...tarefa, id, idTarefa, idEtapa: idEtapaAtual });
+    } else if (idEtapaAtual !== idEtapa) { // CASO 3: MUDANÇA DE ETAPA (tarefa já existe)
 
-  await inserirDados({ [id]: objeto }, 'tarefas');
-  etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
+        delete objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
+        await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
 
-  removerPopup();
+        etapaAlterada = true;
+    }
+
+    // SALVAR TAREFA
+    objeto.etapas[idEtapaAtual].tarefas[idTarefa] = novosDadosBase;
+    await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, novosDadosBase);
+
+    modeloTR({ ...novosDadosBase, id, idTarefa, idEtapa: idEtapaAtual });
+    await inserirDados({ [id]: objeto }, 'tarefas');
+
+    etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
+    removerPopup();
 }
 
 
