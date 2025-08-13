@@ -11,6 +11,38 @@ html {
     flex-direction: column;
 }
 
+.contornoAnexos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background-color: #222;
+    color: white;
+    border-radius: 5px;
+    height: max-content;
+    padding: 5px;
+    margin: 5px;
+}
+
+.contornoInterno {
+    width: 100%;
+    justify-content: start;
+    gap: 2px;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 3px;
+    background-color: #99999940;
+}
+
+.contornoInterno img {
+    width: 1.5vw
+}
+
+.contornoInterno label {
+    font-size: 0.7vw;
+}
+
 span {
     font-size: 4vw;
     color: black;
@@ -29,6 +61,13 @@ span {
     justify-content: center;
     width: 100vw;
     height: 60vh;
+}
+
+.invalido {
+    padding: 1vw;
+    border: solid 1px red;
+    border-radius: 5px;
+    background-color: #f7c5c5;
 }
 
 .mensagemTela {
@@ -100,6 +139,10 @@ input {
     border: 1px solid #888;
 }
 
+input:focus {
+    outline: none;
+}
+
 button {
     padding: 10px 20px;
     color: white;
@@ -169,7 +212,6 @@ button {
     width: 10vw;
     height: 5vh;
     cursor: pointer;
-
 }
 
 .botao_popup img {
@@ -635,7 +677,7 @@ screen and (min-aspect-ratio: 13/9) {
     .toolbarPopup span,
     .toolbar span,
     .tabela th {
-        font-size: 1.8vw;
+        font-size: 1.2vw;
     }
 
     .camposCadastro {

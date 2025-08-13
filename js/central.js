@@ -628,7 +628,7 @@ async function adicionarPessoa(id) {
             `).join('')
 
         return `
-            <div style="${vertical}; gap: 5px;">
+            <div name="${name}_bloco" style="${vertical}; gap: 5px;">
                 ${opcoesStatus}
             </div>`
 
@@ -642,30 +642,42 @@ async function adicionarPessoa(id) {
         opcoesObras += `<option ${colaborador?.obraAlocada == idObra ? 'selected' : ''} value="${idObra}">${obra.cliente} / ${distrito.nome || '--'} / ${cidade.nome || '--'}</option>`
     }
 
-    const regras = `oninput="regras()"`
+    const regras = `oninput="verificarRegras()"`
     const caixaStatus = retornarCaixas('status')
     const caixaEspecialidades = retornarCaixas('especialidade')
     const caixaDocumentos = `${retornarCaixas('documento')} <input ${regras} value="${colaborador?.numeroDocumento || ''}" name="numeroDocumento" placeholder="Número do documento">`
+    const divAnexos = (chave) => {
+        const anexos = colaborador[chave] || {}
+        let anexoString = ''
+        for (const [idAnexo, anexo] of Object.entries(anexos)) {
+            anexoString += criarAnexoVisual({ anexo })
+        }
+        return `<div style="${vertical}">${anexos}</div>`
+    }
 
     const acumulado = `
         <div class="painelCadastro">
 
             ${modelo('Nome Completo', `<input ${regras} value="${colaborador?.nome || ''}" name="nome" placeholder="Nome Completo">`)}
-            ${modelo('Data de Nascimento', `<input value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
-            ${modelo('Morada', `<input value="${colaborador?.morada || ''}" name="morada" placeholder="Morada">`)}
-            ${modelo('Apólice de Seguro', `<input value="${colaborador?.apolice || ''}" name="apolice" placeholder="Número da Apólice">`)}
+            ${modelo('Data de Nascimento', `<input ${regras} value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
+            ${modelo('Morada', `<input ${regras} value="${colaborador?.morada || ''}" name="morada" placeholder="Morada">`)}
+            ${modelo('Apólice de Seguro', `<input ${regras} value="${colaborador?.apolice || ''}" name="apolice" placeholder="Número da Apólice">`)}
             ${modelo('Telefone', `<input ${regras} value="${colaborador?.telefone || ''}" name="telefone" placeholder="Telefone">`)}
-            ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
             ${modelo('Obra Alocada', `<select name="obraAlocada">${opcoesObras}</select>`)}
             ${modelo('Documento', caixaDocumentos)}
-            ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 9 dígitos">`)}
-            ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Número Segurança Social">`)}
-            ${modelo('Exame médico', '<input name="exame" type="file">')}
+            ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 11 dígitos">`)}
+            ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Epi’s', '<input name="epi" type="file">')}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
-            ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" type="number" placeholder="Máximo de 4 números">`)}
-            ${modelo('Foto do Colaborador', '<input name="foto" type="file">')}
+            ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
+
+            ${modelo('Foto do Colaborador', '<input name="foto" type="file" accept="image/*" capture="environment">')}
+            ${divAnexos('foto')}
+            ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
+            ${divAnexos('contratoObra')}
+            ${modelo('Exame médico', '<input name="exame" type="file">')}
+            ${divAnexos('exame')}
 
             <hr style="width: 100%;">
 
@@ -675,27 +687,93 @@ async function adicionarPessoa(id) {
     `
 
     popup(acumulado, 'Cadastro')
+
+    verificarRegras()
+
 }
 
-function regras() {
-    // REGRAS
+function verificarRegras() {
+    //REGRAS
     const input = (name) => document.querySelector(`[name="${name}"]`)
-    const nome = input('nome')
-    const telefone = input('telefone')
-    const numeroContribuinte = input('numeroContribuinte')
-    const pin = input('pin')
+    let liberado = true
+    let limites = {
+        'nome': { tipo: 'A' },
+        'numeroContribuinte': { limite: 11, tipo: 1 },
+        'segurancaSocial': { limite: 11, tipo: 1 },
+        'pin': { limite: 4, tipo: 1 },
+        'telefone': { limite: 9, tipo: 1 },
+    }
 
-    nome.value = nome.value.replace(/[0-9]/g, '')
-    if (telefone.value.length > 9) telefone.value = telefone.value.slice(0, 9);
-    if (numeroContribuinte.value.length > 11) numeroContribuinte.value = numeroContribuinte.value.slice(0, 11);
-    if (pin.value.length > 4) pin.value = pin.value.slice(0, 4)
+    //Aplicar regras
+    for (let [name, regra] of Object.entries(limites)) {
+        const campo = input(name)
+        if (!campo) continue;
 
+        //Tipo
+        if (regra.tipo === 1) {
+            campo.value = campo.value.replace(/\D/g, '');
+        } else if (regra.tipo === 'A') {
+            campo.value = campo.value.replace(/[0-9]/g, '');
+        }
+
+        if (!regra.limite) continue
+
+        //Limite
+        if (campo.value.length > regra.limite) {
+            campo.value = campo.value.slice(0, regra.limite);
+        }
+
+        //Limite === ao tamanho atual
+        regra.liberado = campo.value.length === regra.limite
+        if (regra.liberado) {
+            campo.classList.remove('invalido')
+        } else {
+            campo.classList.add('invalido')
+        }
+
+        if (!regra.liberado) liberado = false
+    }
+
+    //Campos Fixos
+    const camposFixos = ['documento', 'especialidade', 'status']
+    for (const campo of camposFixos) {
+        const ativo = document.querySelector(`input[name="${campo}"]:checked`)
+        const bloco = document.querySelector(`[name="${campo}_bloco"]`)
+        if (!ativo) {
+            bloco.classList.add('invalido')
+            liberado = false
+        } else {
+            bloco.classList.remove('invalido')
+        }
+    }
+
+    //Campos Flexíveis
+    const camposFlex = ['nome', 'dataNascimento', 'morada', 'numeroDocumento', 'apolice']
+    for (const campo of camposFlex) {
+        const el = input(campo)
+        if (el.value == '') {
+            el.classList.add('invalido')
+            liberado = false
+        } else {
+            el.classList.remove('invalido')
+        }
+    }
+
+    //Documento
     const numeroDocumento = input('numeroDocumento')
     const docAtivo = document.querySelector('input[name="documento"]:checked')
-    if (docAtivo.value == 'Cartão de Cidadão') {
+    if (docAtivo && docAtivo.value == 'Cartão de Cidadão') {
         if (numeroDocumento.value.length > 8) numeroDocumento.value = numeroDocumento.value.slice(0, 8)
         numeroDocumento.value = numeroDocumento.value.replace(/\D/g, '')
+        if (numeroDocumento.value.length !== 8) {
+            liberado = false
+            numeroDocumento.classList.add('invalido')
+        } else {
+            numeroDocumento.classList.remove('invalido')
+        }
     }
+
+    return liberado
 
 }
 
@@ -714,6 +792,9 @@ function unicoID() {
 
 async function salvarColaborador(idColaborador) {
 
+    const liberado = verificarRegras()
+    if (!liberado) return popup(mensagem('Verifique os campos inválidos!'), 'Aviso', true)
+
     overlayAguarde()
 
     idColaborador = idColaborador || unicoID()
@@ -724,7 +805,7 @@ async function salvarColaborador(idColaborador) {
     }
 
     let colaborador = {}
-    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'obraAlocada', 'numeroContribuinte', 'pin']
+    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin']
 
     for (const campo of camposFixos) colaborador[campo] = obVal(campo)
 
@@ -732,6 +813,17 @@ async function salvarColaborador(idColaborador) {
     for (const campo of camposRatio) {
         const valor = document.querySelector(`input[name="${campo}"]:checked`)?.value
         colaborador[campo] = valor
+    }
+
+    const camposAnexos = ['contratoObra', 'exame', 'epi', 'foto']
+
+    for (const campo of camposAnexos) {
+        const input = document.querySelector(`[name="${campo}"]`)
+        const resposta = await importarAnexos(input)
+
+        if
+        colaborador[campo] 
+
     }
 
     await enviar(`dados_colaboradores/${idColaborador}`, colaborador)
@@ -1710,4 +1802,53 @@ function ID5digitos() {
         id += caracteres.charAt(indiceAleatorio);
     }
     return id;
+}
+
+async function importarAnexos(arquivoInput) {
+    return new Promise((resolve, reject) => {
+        const formData = new FormData();
+
+        for (let i = 0; i < arquivoInput.files.length; i++) {
+            formData.append('arquivos', arquivoInput.files[i]);
+        }
+
+        fetch('https://leonny.dev.br/uploadX', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                resolve(data);
+            })
+            .catch(err => {
+                popup(mensagem(`Erro na API: ${err}`))
+                reject();
+            });
+    });
+}
+
+function criarAnexoVisual(nome, link, funcao) {
+
+    let displayExcluir = 'flex'
+
+    if (!funcao) displayExcluir = 'none'
+
+    // Formata o nome para exibição curta
+    const nomeFormatado = nome.length > 15
+        ? `${nome.slice(0, 6)}...${nome.slice(-6)}`
+        : nome;
+
+    return `
+        <div class="contornoAnexos" name="${link}">
+            <div onclick="abrirArquivo('${link}')" class="contornoInterno">
+                <img src="imagens/anexo2.png">
+                <label title="${nome}">${nomeFormatado}</label>
+            </div>
+            <img src="imagens/cancel.png" style="display: ${displayExcluir};" onclick="${funcao}">
+        </div>`
+}
+
+function abrirArquivo(link) {
+    link = `https://leonny.dev.br/uploadsX/${link}`
+    window.open(link, '_blank');
 }
