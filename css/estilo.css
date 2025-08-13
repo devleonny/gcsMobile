@@ -82,6 +82,10 @@ span {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
+.olho {
+    width: 6vw;
+}
+
 select {
     font-size: 3vw;
     padding: 5px;
@@ -442,7 +446,7 @@ input[type="file"] {
     gap: 5px;
 }
 
-.alteracaoNomeObra img{
+.alteracaoNomeObra img {
     width: 4vw;
 }
 
@@ -644,6 +648,10 @@ screen and (min-aspect-ratio: 13/9) {
 
     .atualizar {
         width: 5vw;
+    }
+
+    .olho {
+        width: 3vw;
     }
 
 }

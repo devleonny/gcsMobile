@@ -763,7 +763,7 @@ function telaLogin() {
                 <label>Senha</label>
                 <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
                     <input type="password" placeholder="Senha">
-                    <img src="imagens/olhoFechado.png" style="width: 6vw; cursor: pointer;" onclick="exibirSenha(this)">
+                    <img src="imagens/olhoFechado.png" class="olho" onclick="exibirSenha(this)">
                 </div>
                 <button onclick="acessoLogin()">Entrar</button>
 
