@@ -221,6 +221,7 @@ button {
     align-items: center;
     color: white;
     background: linear-gradient(to left, #B12425 10%, #3b444c 0%);
+    min-height: 35px;
 }
 
 .toolbarPopup span {
@@ -228,7 +229,7 @@ button {
     font-size: 4vw;
 }
 
-.botao_popup {
+.botaoPopup {
     background-color: #3b444c;
     display: flex;
     align-items: center;
@@ -238,11 +239,11 @@ button {
     cursor: pointer;
 }
 
-.botao_popup img {
+.botaoPopup img {
     width: 5vw;
 }
 
-.botao_popup label {
+.botaoPopup label {
     cursor: pointer;
     color: white;
     font-size: 5vw;
@@ -646,7 +647,7 @@ screen and (min-aspect-ratio: 13/9) {
         max-width: 80vw;
     }
 
-    .botao_popup label {
+    .botaoPopup label {
         font-size: 3vw;
     }
 
@@ -698,7 +699,10 @@ screen and (min-aspect-ratio: 13/9) {
         width: 10vw;
     }
 
-    .toolbarPopup span,
+    .toolbarPopup span {
+        font-size: 2.0vw;
+    }
+
     .toolbar span,
     .tabela th {
         font-size: 1.2vw;

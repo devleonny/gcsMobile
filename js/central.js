@@ -668,7 +668,6 @@ async function adicionarPessoa(id) {
             ${modelo('Documento', caixaDocumentos)}
             ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
-            ${modelo('Epi’s', '<input name="epi" type="file">')}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
             ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
@@ -677,6 +676,8 @@ async function adicionarPessoa(id) {
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
+            ${modelo('Epi’s', '<input name="epi" type="file">')}
+            ${divAnexos('epi')}
             ${modelo('Foto do Colaborador', '<input name="foto" type="file" accept="image/*" capture="environment">')}
             ${divAnexos('foto')}
 
