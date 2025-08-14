@@ -1,3 +1,11 @@
+const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+
+async function loadModels() {
+    const MODEL_URL = '/models';
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+}
 
 async function telaRegistroPonto() {
 
@@ -10,7 +18,7 @@ async function telaRegistroPonto() {
         </div>
         <div class="loginBloco">
             <span>Informe o seu PIN de 4 dígitos</span>
-            <input type="number" name="pin" placeholder="Máximo de 4 dígitos">
+            <input type="text" maxlength="4" name="pin" placeholder="Máximo de 4 dígitos">
             <button onclick="verificarColaborador()">Avançar</butto>
         </div>
     </div>
@@ -25,16 +33,21 @@ async function verificarColaborador() {
     overlayAguarde()
     const pin = document.querySelector('[name="pin"]')
 
-    const resposta = await colaboradorPin(pin)
+    const resposta = await colaboradorPin(pin.value)
 
-    console.log(resposta)
+    if (resposta.mensagem) return popup(mensagem(resposta.mensagem), 'Alerta', true)
 
+    const fotoUrl = `${api}/uploads/RECONST/${resposta}`;
+    
     removerOverlay()
-
+    await validarFacial(fotoUrl)
+    
 }
 
 async function colaboradorPin(pin) {
     try {
+
+        const url = `${api}/colaborador`
         const requisicao = {
             method: "POST",
             headers: {
@@ -43,7 +56,7 @@ async function colaboradorPin(pin) {
             body: JSON.stringify({ pin, servidor: 'RECONST' })
         };
 
-        const response = await fetch("https://leonny.dev.br/colaborador", requisicao);
+        const response = await fetch(url, requisicao);
 
         if (!response.ok) {
             throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
@@ -55,185 +68,90 @@ async function colaboradorPin(pin) {
     }
 }
 
-async function validarFacial() {
+function mostrarStatus(mensagem) {
+    const liveStatus = document.getElementById('liveStatus')
+    liveStatus.textContent = mensagem
+}
 
+async function validarFacial(fotoUrl) {
     const acumulado = `
         <div class="wrap">
-            <h1>Registro de Ponto — Face Match</h1>
-
-            <div class="grid">
-                <div class="card">
-                    <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                        <div>
-                            <div class="muted" style="font-size:12px">Foto cadastral</div>
-                            <input id="refInput" type="file" accept="image/*" />
-                        </div>
-                        <div class="row">
-                            <div class="muted" style="font-size:12px">Limite</div>
-                            <input id="threshold" class="slider" type="range" min="0.3" max="0.8" step="0.01" value="0.5" />
-                            <span id="thVal" class="muted">0.50</span>
-                        </div>
-                    </div>
-                    <img id="refImg" alt="Referencia" />
-                    <div id="refStatus" class="status muted">Carregue uma foto com um rosto</div>
-                </div>
-
-                <div class="card">
-                    <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                        <div class="row">
-                            <button id="startCam" class="btn">Iniciar câmera</button>
-                            <button id="stopCam" class="btn ghost" disabled>Parar</button>
-                        </div>
-                        <button id="checkIn" class="btn" disabled>Bater ponto</button>
-                    </div>
-                    <video id="video" autoplay muted playsinline></video>
-                    <canvas id="overlay"></canvas>
-                    <div id="liveStatus" class="status muted">Câmera parada</div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top:16px">
+            <div class="card">
                 <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                    <div class="muted">Registros</div>
-                    <button id="limpar" class="btn ghost">Limpar registros</button>
+                    <div class="row">
+                        <button onclick="iniciarCam()" class="btn">Iniciar câmera</button>
+                        <button onclick="pararCam()" class="btn ghost" id="stopBtn" disabled>Parar</button>
+                    </div>
+                    <button onclick="baterPonto()" class="btn" id="checkInBtn">Bater ponto</button>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data/Hora</th>
-                            <th>Resultado</th>
-                            <th>Distância</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs"></tbody>
-                </table>
+                <video id="video" autoplay muted playsinline></video>
+                <canvas style="display: none;"></canvas>
+                <div id="liveStatus" class="status muted">Câmera parada</div>
             </div>
         </div>
-    `
+    `;
+    tela.innerHTML = acumulado;
 
-    tela.innerHTML = acumulado
+    await loadModels();
 
-    await iniciarServico()
+    // carregar referência facial da foto enviada
+    const refImg = new Image();
+    refImg.src = `${fotoUrl}`;
+    refImg.onload = async () => {
+       mostrarStatus('Processando referência…');
+        refDescriptor = await computeDescriptorFromImage(refImg);
+        if (!refDescriptor) {
+            mostrarStatus('Nenhum rosto detectado na foto');
+        } else {
+            mostrarStatus('Referência pronta');
+            document.getElementById('checkInBtn').disabled = !stream;
+        }
+    };
 }
 
-async function iniciarServico() {
+// variáveis compartilhadas
+let refDescriptor = null;
 
-    const el = (id) => document.getElementById(id)
-    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-    const refInput = el('refInput');
-    const refImg = el('refImg');
-    const refStatus = el('refStatus');
-    const startCam = el('startCam');
-    const stopCam = el('stopCam');
-    const checkIn = el('checkIn');
-    const thresholdEl = el('threshold');
-    const thVal = el('thVal');
-    const video = el('video');
-    const overlay = el('overlay');
-    const liveStatus = el('liveStatus');
-    const logsEl = el('logs');
-    const limpar = el('limpar');
-
-    let stream = null;
-    let refDescriptor = null;
-    let modelsReady = false;
-
-    thresholdEl.addEventListener('input', () => { thVal.textContent = Number(thresholdEl.value).toFixed(2); });
-
-    refInput.addEventListener('change', async (e) => {
-        if (!modelsReady) await loadModels();
-        const file = e.target.files?.[0];
-        if (!file) { refDescriptor = null; setStatus(refStatus, 'Carregue uma foto com um rosto', 'muted'); return; }
-        refImg.src = URL.createObjectURL(file);
-        refImg.onload = async () => {
-            setStatus(refStatus, 'Processando referência…', 'muted');
-            const desc = await computeDescriptorFromImage(refImg);
-            if (!desc) { refDescriptor = null; setStatus(refStatus, 'Nenhum rosto detectado', 'err'); checkIn.disabled = true; return; }
-            refDescriptor = desc;
-            setStatus(refStatus, 'Referência pronta', 'ok');
-            checkIn.disabled = !stream;
-        };
-    });
-
-    startCam.addEventListener('click', async () => {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-            video.srcObject = stream;
-            video.onloadedmetadata = () => video.play();
-            overlay.width = 0; overlay.height = 0;
-            setStatus(liveStatus, 'Câmera ativa', 'ok');
-            startCam.disabled = true; stopCam.disabled = false; checkIn.disabled = !refDescriptor;
-        } catch (e) { setStatus(liveStatus, 'Falha ao iniciar câmera', 'err'); }
-    });
-
-    stopCam.addEventListener('click', () => {
-        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-        video.srcObject = null; setStatus(liveStatus, 'Câmera parada', 'warn'); startCam.disabled = false; stopCam.disabled = true; checkIn.disabled = true;
-    });
-
-    checkIn.addEventListener('click', async () => {
-        if (!modelsReady) await loadModels();
-        if (!refDescriptor) { setStatus(liveStatus, 'Cadastre a foto de referência', 'err'); return; }
-        setStatus(liveStatus, 'Verificando…', 'muted');
-        const liveDesc = await grabLiveDescriptor();
-        if (!liveDesc) { setStatus(liveStatus, 'Rosto não detectado no vídeo', 'err'); addLog(false, null); return; }
-        const dist = faceapi.euclideanDistance(refDescriptor, liveDesc);
-        const ok = dist <= Number(thresholdEl.value);
-        setStatus(liveStatus, ok ? `Autorizado (dist ${dist.toFixed(4)})` : `Negado (dist ${dist.toFixed(4)})`, ok ? 'ok' : 'err');
-        addLog(ok, dist);
-    });
-
-    limpar.addEventListener('click', () => { localStorage.removeItem('registros_face'); logsEl.innerHTML = ''; });
-
-    restoreLogs();
-
+async function iniciarCam() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = () => video.play();
+        mostrarStatus('Câmera ativa');
+        document.getElementById('stopBtn').disabled = false;
+        document.getElementById('checkInBtn').disabled = !refDescriptor;
+    } catch {
+        mostrarStatus('Falha ao iniciar câmera');
+    }
 }
 
-function fmtDate(d) { return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Bahia' }).format(d) }
-function addLog(ok, dist) {
-    const tr = document.createElement('tr');
-    const dh = document.createElement('td');
-    const rs = document.createElement('td');
-    const di = document.createElement('td');
-    dh.textContent = fmtDate(new Date());
-    const span = document.createElement('span');
-    span.className = 'pill ' + (ok ? 'ok' : 'err');
-    span.textContent = ok ? 'Autorizado' : 'Negado';
-    rs.appendChild(span);
-    di.textContent = (dist ?? '—').toString().slice(0, 5);
-    tr.append(dh, rs, di);
-    logsEl.prepend(tr);
-    const data = JSON.parse(localStorage.getItem('registros_face') || '[]');
-    data.unshift({ ts: Date.now(), ok, dist });
-    localStorage.setItem('registros_face', JSON.stringify(data.slice(0, 1000)));
+function pararCam() {
+    if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+    }
+    document.getElementById('video').srcObject = null;
+    mostrarStatus('Câmera parada')
+    document.getElementById('stopBtn').disabled = true;
+    document.getElementById('checkInBtn').disabled = true;
 }
 
-function restoreLogs() {
-    const data = JSON.parse(localStorage.getItem('registros_face') || '[]');
-    data.forEach(x => addLog(x.ok, x.dist));
+async function baterPonto() {
+    if (!refDescriptor) {
+        mostrarStatus('Sem referência facial', 'err');
+        return;
+    }
+    mostrarStatus('Verificando…');
+    const liveDesc = await grabLiveDescriptor();
+    if (!liveDesc) {
+        mostrarStatus('Rosto não detectado no vídeo');
+        return;
+    }
+    const dist = faceapi.euclideanDistance(refDescriptor, liveDesc);
+    const ok = dist <= 0.5; // threshold fixo
+    mostrarStatus(
+        ok ? `Autorizado (dist ${dist.toFixed(4)})` : `Negado (dist ${dist.toFixed(4)})`,
+        ok ? 'ok' : 'err'
+    );
 }
-
-async function loadModels() {
-    await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-    ]);
-    modelsReady = true;
-}
-
-async function computeDescriptorFromImage(img) {
-    const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
-    return det ? det.descriptor : null;
-}
-
-async function grabLiveDescriptor() {
-    const c = document.createElement('canvas');
-    c.width = video.videoWidth; c.height = video.videoHeight;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(video, 0, 0, c.width, c.height);
-    const det = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
-    return det ? det.descriptor : null;
-}
-
-function setStatus(el, msg, cls) { el.className = 'status ' + (cls || ''); el.textContent = msg; }

@@ -8,7 +8,7 @@ const nomeStore = 'Bases'
 let dados_distritos = {}
 let etapasProvisorias = {}
 let stream;
-const url = `https://leonny.dev.br`
+const api = `https://leonny.dev.br`
 
 const dtFormatada = (data) => {
     if (!data) return '--'
@@ -101,7 +101,7 @@ function acessoLogin() {
     divAcesso.style.display = 'none'
 
     const inputs = divAcesso.querySelectorAll('input')
-    const url = `${url}/acesso`
+    const url = `${api}/acesso`
 
     if (inputs[0].value == '' || inputs[1].value == '') {
         popup(mensagem('Senha e/ou usuário não informado(s)'), 'ALERTA', true)
@@ -189,7 +189,7 @@ function salvarCadastro() {
             })
         }
 
-        fetch(`${url}/acesso`, payload)
+        fetch(`${api}/acesso`, payload)
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(err => { throw err; });
@@ -688,7 +688,7 @@ async function adicionarPessoa(id) {
                             <video autoplay playsinline></video>
                             <canvas style="display: none;"></canvas>
                         </div>
-                        <img name="foto" ${colaborador.foto ? `src="${url}/uploads/RECONST/${colaborador.foto}"` : ''} class="foto">
+                        <img name="foto" ${colaborador.foto ? `src="${api}/uploads/RECONST/${colaborador.foto}"` : ''} class="foto">
 
                     </div>
                 `)}
@@ -1078,7 +1078,7 @@ function enviar(caminho, info) {
             servidor: 'RECONST'
         };
 
-        fetch(`${url}/salvar`, {
+        fetch(`${api}/salvar`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1119,7 +1119,7 @@ async function receber(chave) {
     };
 
     return new Promise((resolve, reject) => {
-        fetch(`${url}/dados`, obs)
+        fetch(`${api}/dados`, obs)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
@@ -1138,7 +1138,7 @@ async function receber(chave) {
 }
 
 async function deletar(chave) {
-    const url = `${url}/deletar`;
+    const url = `${api}/deletar`;
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     const objeto = {
         chave,
@@ -1282,7 +1282,7 @@ async function configuracoes(usuario, campo, valor) {
     criarLinha(dados_usuario, usuario, 'dados_setores')
 
     return new Promise((resolve, reject) => {
-        fetch(`${url}/configuracoes`, {
+        fetch(`${api}/configuracoes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ usuario, campo, valor, servidor: 'RECONST' })
@@ -1321,7 +1321,7 @@ async function sincronizarSetores() {
 
 async function listaSetores(timestamp) {
     try {
-        const response = await fetch(`${url}/setores`, {
+        const response = await fetch(`${api}/setores`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ timestamp, servidor: 'RECONST' })
@@ -1853,7 +1853,7 @@ async function enviarExcel() {
     formData.append('arquivo', input.files[0]);
 
     try {
-        const resposta = await fetch(`${url}/processar-tarefas`, {
+        const resposta = await fetch(`${api}/processar-tarefas`, {
             method: 'POST',
             body: formData
         });
@@ -1923,7 +1923,7 @@ async function importarAnexos({ input, foto }) {
     }
 
     try {
-        const response = await fetch(`${url}/upload/RECONST`, {
+        const response = await fetch(`${api}/upload/RECONST`, {
             method: 'POST',
             body: formData
         });
@@ -1951,7 +1951,7 @@ function criarAnexoVisual({ nome, link, funcao }) {
 }
 
 function abrirArquivo(link, nome) {
-    link = `${url}/uploads/RECONST/${link}`;
+    link = `${api}/uploads/RECONST/${link}`;
     const imagens = ['png', 'jpg', 'jpeg'];
 
     const extensao = nome.split('.').pop().toLowerCase(); // pega sem o ponto
