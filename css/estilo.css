@@ -11,6 +11,14 @@ html {
     flex-direction: column;
 }
 
+.fundoImagens {
+    height: max-content;
+    max-height: 70vh;
+    overflow-y: auto;
+    background-color: #d2d2d2;
+    padding: 2vw;
+}
+
 .contornoAnexos {
     display: flex;
     align-items: center;
@@ -36,11 +44,11 @@ html {
 }
 
 .contornoInterno img {
-    width: 1.5vw
+    width: 5vw
 }
 
 .contornoInterno label {
-    font-size: 0.7vw;
+    font-size: 2vw;
 }
 
 span {
@@ -201,7 +209,7 @@ button {
 
 .toolbarPopup span {
     color: white;
-    font-size: 7vw;
+    font-size: 4vw;
 }
 
 .botao_popup {
@@ -694,6 +702,14 @@ screen and (min-aspect-ratio: 13/9) {
 
     .olho {
         width: 3vw;
+    }
+
+    .contornoInterno img {
+        width: 2vw
+    }
+
+    .contornoInterno label {
+        font-size: 1.2vw;
     }
 
 }

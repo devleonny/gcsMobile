@@ -430,9 +430,10 @@ async function carregarSelects(select) {
     const dados_distritos = await recuperarDados('dados_distritos');
     const selectDistrito = document.querySelector('[name="distrito"]');
     const selectCidade = document.querySelector('[name="cidade"]');
+    const campoVazio = { '': { nome: '' } }
 
     if (!select) {
-        const opcoesDistrito = Object.entries(dados_distritos)
+        const opcoesDistrito = Object.entries({ ...campoVazio, ...dados_distritos }).reverse()
             .map(([idDistrito, objDistrito]) => `<option value="${idDistrito}">${objDistrito.nome}</option>`)
             .join('');
         selectDistrito.innerHTML = opcoesDistrito;
@@ -440,7 +441,7 @@ async function carregarSelects(select) {
 
     const selectAtual = select ? select.value : selectDistrito.value
     const cidades = dados_distritos?.[selectAtual]?.cidades || {};
-    const opcoesCidade = Object.entries(cidades)
+    const opcoesCidade = Object.entries({ ...campoVazio, ...cidades }).reverse()
         .map(([idCidade, objCidade]) => `<option value="${idCidade}">${objCidade.nome}</option>`)
         .join('');
 
@@ -647,12 +648,12 @@ async function adicionarPessoa(id) {
     const caixaEspecialidades = retornarCaixas('especialidade')
     const caixaDocumentos = `${retornarCaixas('documento')} <input ${regras} value="${colaborador?.numeroDocumento || ''}" name="numeroDocumento" placeholder="Número do documento">`
     const divAnexos = (chave) => {
-        const anexos = colaborador[chave] || {}
+        const anexos = colaborador?.[chave] || {}
         let anexoString = ''
         for (const [idAnexo, anexo] of Object.entries(anexos)) {
-            anexoString += criarAnexoVisual({ anexo })
+            anexoString += criarAnexoVisual(anexo)
         }
-        return `<div style="${vertical}">${anexos}</div>`
+        return `<div style="${vertical}">${anexoString}</div>`
     }
 
     const acumulado = `
@@ -672,12 +673,12 @@ async function adicionarPessoa(id) {
             ${modelo('Status', caixaStatus)}
             ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
 
-            ${modelo('Foto do Colaborador', '<input name="foto" type="file" accept="image/*" capture="environment">')}
-            ${divAnexos('foto')}
             ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
+            ${modelo('Foto do Colaborador', '<input name="foto" type="file" accept="image/*" capture="environment">')}
+            ${divAnexos('foto')}
 
             <hr style="width: 100%;">
 
@@ -791,48 +792,54 @@ function unicoID() {
 }
 
 async function salvarColaborador(idColaborador) {
+    const liberado = verificarRegras();
+    if (!liberado) return popup(mensagem('Verifique os campos inválidos!'), 'Aviso', true);
 
-    const liberado = verificarRegras()
-    if (!liberado) return popup(mensagem('Verifique os campos inválidos!'), 'Aviso', true)
+    overlayAguarde();
 
-    overlayAguarde()
+    idColaborador = idColaborador || unicoID();
 
-    idColaborador = idColaborador || unicoID()
+    // Recupera colaborador existente para não sobrescrever anexos
+    let colaboradorExistente = await recuperarDado('dados_colaboradores', idColaborador) || {};
 
     function obVal(name) {
-        const el = document.querySelector(`[name="${name}"]`)
-        if (el) return el.value
+        const el = document.querySelector(`[name="${name}"]`);
+        return el ? el.value : '';
     }
 
-    let colaborador = {}
-    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin']
+    let colaborador = { ...colaboradorExistente };
 
-    for (const campo of camposFixos) colaborador[campo] = obVal(campo)
+    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin'];
+    for (const campo of camposFixos) colaborador[campo] = obVal(campo);
 
-    const camposRatio = ['status', 'documento', 'especialidade']
+    const camposRatio = ['status', 'documento', 'especialidade'];
     for (const campo of camposRatio) {
-        const valor = document.querySelector(`input[name="${campo}"]:checked`)?.value
-        colaborador[campo] = valor
+        colaborador[campo] = document.querySelector(`input[name="${campo}"]:checked`)?.value || '';
     }
 
-    const camposAnexos = ['contratoObra', 'exame', 'epi', 'foto']
-
+    const camposAnexos = ['contratoObra', 'exame', 'epi', 'foto'];
     for (const campo of camposAnexos) {
-        const input = document.querySelector(`[name="${campo}"]`)
-        const resposta = await importarAnexos(input)
+        const input = document.querySelector(`[name="${campo}"]`);
+        if (!input || !input.files || input.files.length === 0) continue;
 
-        if
-        colaborador[campo] 
+        const anexos = await importarAnexos(input);
 
+        if (!colaborador[campo]) colaborador[campo] = {};
+        for (const anexo of anexos) {
+            let idAnexo;
+            do {
+                idAnexo = ID5digitos();
+            } while (colaborador[campo][idAnexo]); // evita IDs duplicados
+
+            colaborador[campo][idAnexo] = anexo;
+        }
     }
 
-    await enviar(`dados_colaboradores/${idColaborador}`, colaborador)
-    await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
+    await enviar(`dados_colaboradores/${idColaborador}`, colaborador);
+    await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores');
 
-    criarLinha(colaborador, idColaborador, 'dados_colaboradores')
-
-    removerPopup()
-
+    criarLinha(colaborador, idColaborador, 'dados_colaboradores');
+    removerPopup();
 }
 
 function telaLogin() {
@@ -1288,17 +1295,24 @@ async function acompanhamento() {
 }
 
 function porcentagemHtml(valor) {
-    valor = conversor(valor)
-    const percentual = Math.max(0, Math.min(100, valor)); // limita de 0 a 100
+    valor = conversor(valor);
+    const percentual = isNaN(valor) ? 0 : Math.max(0, Math.min(100, valor)).toFixed(0); // limita 0-100
+
+    let cor;
+    if (percentual <= 50) cor = 'red';
+    else if (percentual < 100) cor = 'orange';
+    else cor = 'green';
+
     return `
     <div style="display:flex; align-items:center; gap:4px;">
         <span style="color:#888; font-size:14px;">${percentual}%</span>
-        <div class="barra">
-            <div style="width:${percentual}%; height:100%; background:#f8b84e;"></div>
+        <div class="barra" style="flex:1; height:8px; background:#ddd;">
+            <div style="width:${percentual}%; height:100%; background:${cor};"></div>
         </div>
     </div>
   `;
 }
+
 
 function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
@@ -1584,6 +1598,8 @@ async function atualizarToolbar(id, nomeEtapa) {
     }
 
     let etapas = ['Todas as tarefas']
+
+    etapasProvisorias = {} // Resetar esse objeto;
     for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
 
         const etapaAtual = dados.descricao
@@ -1662,7 +1678,6 @@ async function editarTarefa(id, idEtapa, idTarefa) {
 
     const acumulado = `
         <div class="painelCadastro">
-            ${modelo('Ordem', tarefa?.ordem || '')}
             ${modelo('Descrição', tarefa?.descricao || '')}
             ${campos}
             <hr style="width: 100%">
@@ -1691,18 +1706,18 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
 
     // CASO 1: NOVA ETAPA
     if (idEtapa === 'novo' && idTarefa !== 'novo') {
-
-        idEtapaAtual = ID5digitos()
+        idEtapaAtual = ID5digitos();
         objeto.etapas[idEtapaAtual] = {
             tarefas: {},
             ...novosDadosBase
         };
 
-        await enviar(`tarefas/${id}/etapas/${idEtapaAtual}`, objeto.etapas[idEtapaAtual]);
+        reorganizarOrdem(objeto);
+        await enviar(`tarefas/${id}`, objeto);
         await inserirDados({ [id]: objeto }, 'tarefas');
-        await verAndamento(id)
+        await verAndamento(id);
         removerPopup();
-        return; // encerra aqui, não continua para tarefas
+        return;
     }
 
     novosDadosBase = {
@@ -1711,24 +1726,22 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
         quantidade: valor('Quantidade'),
         resultado: valor('Resultado'),
         porcentagem: Number(valor('Porcentagem') || 0)
-    }
+    };
 
-    if (idTarefa === 'novo') { // CASO 2: NOVA TAREFA (etapa já existe)
+    if (idTarefa === 'novo') {
         idTarefa = ID5digitos();
         etapaAlterada = true;
-
-    } else if (idEtapaAtual !== idEtapa) { // CASO 3: MUDANÇA DE ETAPA (tarefa já existe)
-
+    } else if (idEtapaAtual !== idEtapa) {
         delete objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
         await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
-
         etapaAlterada = true;
     }
 
-    // SALVAR TAREFA
+    // Adiciona a tarefa antes de reorganizar
     objeto.etapas[idEtapaAtual].tarefas[idTarefa] = novosDadosBase;
-    await enviar(`tarefas/${id}/etapas/${idEtapaAtual}/tarefas/${idTarefa}`, novosDadosBase);
+    reorganizarOrdem(objeto);
 
+    await enviar(`tarefas/${id}`, objeto);
     modeloTR({ ...novosDadosBase, id, idTarefa, idEtapa: idEtapaAtual });
     await inserirDados({ [id]: objeto }, 'tarefas');
 
@@ -1736,6 +1749,20 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
     removerPopup();
 }
 
+function reorganizarOrdem(objeto) {
+    let etapaCount = 1;
+    for (const idEtapaKey of Object.keys(objeto.etapas)) {
+        objeto.etapas[idEtapaKey].ordem = `${etapaCount}.0`;
+
+        let tarefaCount = 1;
+        for (const idTarefaKey of Object.keys(objeto.etapas[idEtapaKey].tarefas)) {
+            objeto.etapas[idEtapaKey].tarefas[idTarefaKey].ordem = `${etapaCount}.${tarefaCount}`;
+            tarefaCount++;
+        }
+
+        etapaCount++;
+    }
+}
 
 function calcular() {
 
@@ -1827,28 +1854,36 @@ async function importarAnexos(arquivoInput) {
     });
 }
 
-function criarAnexoVisual(nome, link, funcao) {
+function criarAnexoVisual({ nome, link, funcao }) {
 
     let displayExcluir = 'flex'
 
     if (!funcao) displayExcluir = 'none'
 
-    // Formata o nome para exibição curta
-    const nomeFormatado = nome.length > 15
-        ? `${nome.slice(0, 6)}...${nome.slice(-6)}`
-        : nome;
-
     return `
         <div class="contornoAnexos" name="${link}">
-            <div onclick="abrirArquivo('${link}')" class="contornoInterno">
+            <div onclick="abrirArquivo('${link}', '${nome}')" class="contornoInterno">
                 <img src="imagens/anexo2.png">
-                <label title="${nome}">${nomeFormatado}</label>
+                <label title="${nome}">${nome}</label>
             </div>
             <img src="imagens/cancel.png" style="display: ${displayExcluir};" onclick="${funcao}">
         </div>`
 }
 
-function abrirArquivo(link) {
-    link = `https://leonny.dev.br/uploadsX/${link}`
+function abrirArquivo(link, nome) {
+    link = `https://leonny.dev.br/uploadsX/${link}`;
+    const imagens = ['png', 'jpg', 'jpeg'];
+
+    const extensao = nome.split('.').pop().toLowerCase(); // pega sem o ponto
+
+    if (imagens.includes(extensao)) {
+        const acumulado = `
+            <div class="fundoImagens">
+                <img src="${link}">
+            </div>
+        `
+        return popup(acumulado, nome, true);
+    }
+
     window.open(link, '_blank');
 }
