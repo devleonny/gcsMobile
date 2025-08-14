@@ -7,6 +7,8 @@ const nomeBaseCentral = 'Reconstrular'
 const nomeStore = 'Bases'
 let dados_distritos = {}
 let etapasProvisorias = {}
+let stream;
+const api = `https://leonny.dev.br`
 
 const dtFormatada = (data) => {
     if (!data) return '--'
@@ -99,7 +101,7 @@ function acessoLogin() {
     divAcesso.style.display = 'none'
 
     const inputs = divAcesso.querySelectorAll('input')
-    const url = 'https://leonny.dev.br/acesso'
+    const url = `${api}/acesso`
 
     if (inputs[0].value == '' || inputs[1].value == '') {
         popup(mensagem('Senha e/ou usuário não informado(s)'), 'ALERTA', true)
@@ -187,7 +189,7 @@ function salvarCadastro() {
             })
         }
 
-        fetch('https://leonny.dev.br/acesso', payload)
+        fetch(`${api}/acesso`, payload)
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(err => { throw err; });
@@ -668,7 +670,6 @@ async function adicionarPessoa(id) {
             ${modelo('Documento', caixaDocumentos)}
             ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
-            
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
             ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
@@ -679,8 +680,20 @@ async function adicionarPessoa(id) {
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
-            ${modelo('Foto do Colaborador', '<input name="foto" type="file" accept="image/*" capture="environment">')}
-            ${divAnexos('foto')}
+            ${modelo('Epi’s', '<input name="epi" type="file">')}
+            ${divAnexos('epi')}
+            ${modelo('Foto do Colaborador', `
+                    <div style="${vertical}; gap: 5px;">
+                        <img src="imagens/camera.png" class="cam" onclick="abrirCamera()">
+                        <div class="cameraDiv">
+                            <button onclick="tirarFoto()">Tirar Foto</button>
+                            <video autoplay playsinline></video>
+                            <canvas style="display: none;"></canvas>
+                        </div>
+                        <img name="foto" ${colaborador.foto ? `src="${api}/uploads/RECONST/${colaborador.foto}"` : ''} class="foto">
+
+                    </div>
+                `)}
 
             <hr style="width: 100%;">
 
@@ -692,6 +705,35 @@ async function adicionarPessoa(id) {
     popup(acumulado, 'Cadastro')
 
     verificarRegras()
+
+}
+
+async function abrirCamera() {
+    const cameraDiv = document.querySelector('.cameraDiv');
+    const video = cameraDiv.querySelector('video');
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        cameraDiv.style.display = 'flex';
+    } catch (err) {
+        popup(mensagem('Erro ao acessar a câmera: ' + err.message), 'Alerta', true);
+    }
+}
+
+async function tirarFoto() {
+    const cameraDiv = document.querySelector('.cameraDiv');
+    const canvas = cameraDiv.querySelector('canvas');
+    const fotoFinal = document.querySelector('[name="foto"]');
+    const video = cameraDiv.querySelector('video');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    fotoFinal.src = canvas.toDataURL('image/png');
+    fotoFinal.style.display = 'block';
+
+    stream.getTracks().forEach(track => track.stop());
+    cameraDiv.style.display = 'none'
 
 }
 
@@ -819,12 +861,12 @@ async function salvarColaborador(idColaborador) {
         colaborador[campo] = document.querySelector(`input[name="${campo}"]:checked`)?.value || '';
     }
 
-    const camposAnexos = ['contratoObra', 'exame', 'epi', 'foto'];
+    const camposAnexos = ['contratoObra', 'exame', 'epi'];
     for (const campo of camposAnexos) {
         const input = document.querySelector(`[name="${campo}"]`);
         if (!input || !input.files || input.files.length === 0) continue;
 
-        const anexos = await importarAnexos(input);
+        const anexos = await importarAnexos({ input });
 
         if (!colaborador[campo]) colaborador[campo] = {};
         for (const anexo of anexos) {
@@ -835,6 +877,18 @@ async function salvarColaborador(idColaborador) {
 
             colaborador[campo][idAnexo] = anexo;
         }
+    }
+
+    const foto = document.querySelector('[name="foto"]')
+    if (foto.src) {
+        const resposta = await importarAnexos({ foto: foto.src })
+
+        if (resposta[0].link) {
+            colaborador.foto = resposta[0].link
+        } else {
+            return popup(mensagem('Falha no envio da Foto: tente novamente.'), 'Alerta', true)
+        }
+
     }
 
     await enviar(`dados_colaboradores/${idColaborador}`, colaborador);
@@ -854,12 +908,12 @@ function telaLogin() {
     const acumulado = `
         
         <div style="${vertical}">
-            <div class="botaoSuperiorLogin" onclick="registroPonto()">
+            <div class="botaoSuperiorLogin" onclick="telaRegistroPonto()">
                 <img src="imagens/relogio.png">
                 <span>Registre o seu Ponto Aqui</span>
             </div>
             
-            <div id="acesso" class="login-container">
+            <div id="acesso" class="loginBloco">
 
                 <img src="imagens/acesso.png" style="width: 10vw;">
 
@@ -892,7 +946,7 @@ function telaLogin() {
 
 function registroPonto() {
 
-    
+
 
 }
 
@@ -1026,7 +1080,7 @@ function enviar(caminho, info) {
             servidor: 'RECONST'
         };
 
-        fetch("https://leonny.dev.br/salvar", {
+        fetch(`${api}/salvar`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1067,7 +1121,7 @@ async function receber(chave) {
     };
 
     return new Promise((resolve, reject) => {
-        fetch("https://leonny.dev.br/dados", obs)
+        fetch(`${api}/dados`, obs)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
@@ -1086,7 +1140,7 @@ async function receber(chave) {
 }
 
 async function deletar(chave) {
-    const url = `https://leonny.dev.br/deletar`;
+    const url = `${api}/deletar`;
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     const objeto = {
         chave,
@@ -1230,7 +1284,7 @@ async function configuracoes(usuario, campo, valor) {
     criarLinha(dados_usuario, usuario, 'dados_setores')
 
     return new Promise((resolve, reject) => {
-        fetch("https://leonny.dev.br/configuracoes", {
+        fetch(`${api}/configuracoes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ usuario, campo, valor, servidor: 'RECONST' })
@@ -1269,7 +1323,7 @@ async function sincronizarSetores() {
 
 async function listaSetores(timestamp) {
     try {
-        const response = await fetch("https://leonny.dev.br/setores", {
+        const response = await fetch(`${api}/setores`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ timestamp, servidor: 'RECONST' })
@@ -1314,7 +1368,7 @@ function porcentagemHtml(valor) {
     const percentual = isNaN(valor) ? 0 : Math.max(0, Math.min(100, valor)).toFixed(0); // limita 0-100
 
     let cor;
-    if (percentual <= 50) cor = 'red';
+    if (percentual < 50) cor = 'red';
     else if (percentual < 100) cor = 'orange';
     else cor = 'green';
 
@@ -1801,7 +1855,7 @@ async function enviarExcel() {
     formData.append('arquivo', input.files[0]);
 
     try {
-        const resposta = await fetch('https://leonny.dev.br/processar-tarefas', {
+        const resposta = await fetch(`${api}/processar-tarefas`, {
             method: 'POST',
             body: formData
         });
@@ -1846,27 +1900,40 @@ function ID5digitos() {
     return id;
 }
 
-async function importarAnexos(arquivoInput) {
-    return new Promise((resolve, reject) => {
-        const formData = new FormData();
+function base64ToFile(base64, filename = 'foto.png') {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
 
-        for (let i = 0; i < arquivoInput.files.length; i++) {
-            formData.append('arquivos', arquivoInput.files[i]);
+async function importarAnexos({ input, foto }) {
+    const formData = new FormData();
+
+    if (foto) {
+        const imagem = base64ToFile(foto);
+        formData.append('arquivos', imagem);
+    } else {
+        for (const file of input.files) {
+            formData.append('arquivos', file);
         }
+    }
 
-        fetch('https://leonny.dev.br/uploadX', {
+    try {
+        const response = await fetch(`${api}/upload/RECONST`, {
             method: 'POST',
             body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                resolve(data);
-            })
-            .catch(err => {
-                popup(mensagem(`Erro na API: ${err}`))
-                reject();
-            });
-    });
+        });
+        return await response.json();
+    } catch (err) {
+        popup(mensagem(`Erro na API: ${err}`));
+        throw err;
+    }
 }
 
 function criarAnexoVisual({ nome, link, funcao }) {
@@ -1886,7 +1953,7 @@ function criarAnexoVisual({ nome, link, funcao }) {
 }
 
 function abrirArquivo(link, nome) {
-    link = `https://leonny.dev.br/uploadsX/${link}`;
+    link = `${api}/uploads/RECONST/${link}`;
     const imagens = ['png', 'jpg', 'jpeg'];
 
     const extensao = nome.split('.').pop().toLowerCase(); // pega sem o ponto
