@@ -103,8 +103,23 @@ span {
     margin-top: 20vw;
 }
 
-.login-container {
+.botaoSuperiorLogin {
     margin-top: 15vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    background-color: #b8b8b8;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.botaoSuperiorLogin img {
+    width: 4vw;
+}
+
+.login-container {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,7 +127,8 @@ span {
     padding: 20px;
     background-color: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
     text-align: center;
 }
 

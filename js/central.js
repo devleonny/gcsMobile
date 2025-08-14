@@ -850,34 +850,47 @@ function telaLogin() {
     toolbar.style.display = 'none'
 
     const acumulado = `
-        <div id="acesso" class="login-container">
+        
+        <div style="${vertical}">
+            <div class="botaoSuperiorLogin" onclick="registroPonto()">
+                <img src="imagens/relogio.png">
+                <span>Registre o seu Ponto Aqui</span>
+            </div>
+            
+            <div id="acesso" class="login-container">
 
-            <img src="imagens/acesso.png" style="width: 10vw;">
+                <img src="imagens/acesso.png" style="width: 10vw;">
 
-            <div style="display: flex; flex-direction: column; align-items: start; justify-content: center;">
+                <div style="display: flex; flex-direction: column; align-items: start; justify-content: center;">
 
-                <label>Usuário</label>
-                <input type="text" placeholder="Usuário">
+                    <label>Usuário</label>
+                    <input type="text" placeholder="Usuário">
 
-                <label>Senha</label>
-                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-                    <input type="password" placeholder="Senha">
-                    <img src="imagens/olhoFechado.png" class="olho" onclick="exibirSenha(this)">
+                    <label>Senha</label>
+                    <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                        <input type="password" placeholder="Senha">
+                        <img src="imagens/olhoFechado.png" class="olho" onclick="exibirSenha(this)">
+                    </div>
+                    <button onclick="acessoLogin()">Entrar</button>
+
                 </div>
-                <button onclick="acessoLogin()">Entrar</button>
+                <br>
+
+                <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                    <label>Primeiro acesso?</label>
+                    <button style="background-color: #097fe6; white-space: nowrap;" onclick="cadastrar()">Cadastre-se</button>
+                </div>
 
             </div>
-            <br>
-
-            <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-                <label>Primeiro acesso?</label>
-                <button style="background-color: #097fe6; white-space: nowrap;" onclick="cadastrar()">Cadastre-se</button>
-            </div>
-
         </div>
     `
 
     tela.innerHTML = acumulado
+}
+
+function registroPonto() {
+
+    
 
 }
 
