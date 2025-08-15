@@ -1,0 +1,99 @@
+.folha {
+    margin: 1vw;
+    border-radius: 5px;
+    width: 90vw;
+    box-shadow: 0px 0px 3px #222;
+    border: solid 1px #222;
+}
+
+.tabCab table {
+    width: 100%;
+    border-collapse: collapse;
+    border: solid 1px #222;
+}
+
+.tabCab td {
+    background-color: white;
+    padding: 3px;
+}
+
+.tabCab table td:first-child {
+    font-weight: bold;
+    background-color: #5b707f;
+    color: white;
+    width: 20%;
+}
+
+.tabCab table td:nth-child(2) {
+    width: 80%;
+}
+
+.tabCab table td {
+    border: solid 1px #222;
+}
+
+.cabecalho {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    width: 100%;
+    background-color: #5b707f;
+    display: flex;
+    align-items: center;
+}
+
+.cabecalho img {
+    width: 10%;
+}
+
+.cabecalho h1 {
+    text-align: center;
+    width: 90%;
+    color: white;
+}
+
+.tabelaPonto {
+    background-color: white;
+    width: 100%;
+    border-collapse: collapse;
+    border: solid 1px #222;
+}
+
+.tabelaPonto td {
+    border: solid 1px #222;
+    text-align: center;
+}
+
+.tabelaPonto thead {
+    background-color: #5b707f;
+    color: white;
+    font-weight: bold;
+}
+
+.tabelaPonto th {
+    border: solid 1px #222;
+}
+
+.campos {
+    box-shadow: 0px 0px 3px #222;
+    border: solid 1px #222;
+    background-color: #5b707f;
+    padding: 10px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.campos span {
+    color: white;
+}
+
+.painelFiltros {
+    margin-top: 10px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 1vw;
+}
