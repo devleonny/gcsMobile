@@ -116,7 +116,7 @@ let refDescriptor = null;
 
 function mostrarStatus(msg, cls) {
     const liveStatus = document.getElementById('liveStatus');
-    if(!liveStatus) return
+    if (!liveStatus) return
     liveStatus.textContent = msg;
     liveStatus.className = 'status ' + (cls || '');
 }
@@ -178,7 +178,7 @@ function pararCam() {
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null;
     const video = document.getElementById('video');
-    if(!video) return
+    if (!video) return
     video.srcObject = null;
     mostrarStatus('Câmera parada', 'warn');
 }
@@ -203,17 +203,7 @@ async function baterPonto(nome) {
                 pararCam();
                 telaLogin();
 
-                const acumulado = `
-                    <div class="ticketPonto">
-                        <span>${nome}</span>
-                        <span><strong>${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</strong></span>
-                        <span>Registro realizado!</span>
-                    </div>
-                `;
-                popup(acumulado, 'Alerta');
-
-                //enviar(`dados_colaboradores/${usuarioLogado.idColaborador}/folhaPonto/${ano}/${mes}/${dia}`);
-                return; // para o loop se reconheceu
+                return enviarPonto(nome);
             } else {
                 mostrarStatus(`Negado (dist ${dist.toFixed(4)})`, 'err');
             }
@@ -223,4 +213,33 @@ async function baterPonto(nome) {
     }
 
     mostrarStatus('Tempo esgotado para reconhecimento', 'err');
+}
+
+async function enviarPonto(nome) {
+    try {
+        overlayAguarde()
+        const colaborador = JSON.parse(localStorage.getItem('usuarioLogado')) || {}
+        const data = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
+        const response = await fetch(`${api}/ponto`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idColaborador: colaborador.idColaborador, data, servidor: 'RECONST' })
+        });
+
+        const resposta = await response.json();
+        const acumulado = `
+            <div class="ticketPonto">
+                <span>${nome}</span>
+                <span><strong>${data}</strong></span>
+                <span>${resposta.mensagem}</span>
+            </div>
+        `;
+
+        popup(acumulado, 'Alerta');
+    } catch (err) {
+        popup(mensagem(`Erro na API: ${err}`));
+        throw err;
+    }
 }
