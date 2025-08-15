@@ -312,7 +312,6 @@ async function telaPrincipal() {
 
                     ${btn('pessoas', 'Colaboradores', 'telaPessoas()')}
                     ${btn('obras', 'Obras', 'telaObras()')}
-                    ${btn('kanban', 'Acompanhamento', 'acompanhamento()')}
                     ${btn('perfil', 'Usuários', 'usuarios()')}
                     ${btn('sair', 'Desconectar', 'deslogar()')}
 
@@ -330,7 +329,7 @@ async function telaPrincipal() {
 
     tela.innerHTML = acumulado
 
-    await sincronizarDados('dados_distritos')
+    await sincronizarDados('dados_distritos', true)
     dados_distritos = await recuperarDados('dados_distritos')
     await sincronizarSetores()
 
@@ -375,7 +374,7 @@ async function telaObras() {
     titulo.textContent = 'Gerenciar Obras'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarObra()')}
-        ${modeloTabela(['Cliente', 'Distrito', 'Cidade', 'Contacto', 'E-mail', ''], nomeBase)}
+        ${modeloTabela(['Cliente', 'Distrito', 'Cidade', 'Status', 'Acompanhamento', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -406,11 +405,29 @@ async function adicionarObra(idObra) {
             <div>${elemento}</div>
         </div>
     `
+    const caixaStatus = retornarCaixas('status')
+
+    function retornarCaixas(name) {
+
+        const opcoesStatus = ['Por Iniciar', 'Em Andamento', 'Finalizado']
+            .map(op => `
+            <div class="opcaoStatus">
+                <input value="${op}" type="radio" name="${name}" ${obra?.[name] == op ? 'checked' : ''}>
+                <span style="text-align: left;">${op}</span>
+            </div>
+            `).join('')
+
+        return `
+            <div name="${name}_bloco" style="${vertical}; gap: 5px;">
+                ${opcoesStatus}
+            </div>`
+
+    }
 
     const acumulado = `
         <div class="painelCadastro">
-
-            ${modelo('Distrito', `<select name="distrito" onchange="carregarSelects(this)"></select>`)}
+            ${modelo('Status', caixaStatus)}
+            ${modelo('Distrito', `<select name="distrito" onchange="carregarSelects({select: this})"></select>`)}
             ${modelo('Cidade', `<select name="cidade"></select>`)}
             ${modelo('Cliente', `<input value="${obra?.cliente || ''}" name="cliente" placeholder="Nome do Cliente">`)}
             ${modelo('Contacto cliente', `<input value="${obra?.contacto || ''}" name="contacto" placeholder="Contacto">`)}
@@ -424,11 +441,13 @@ async function adicionarObra(idObra) {
     `
 
     popup(acumulado, 'Cadastro')
-    await carregarSelects()
+
+    await carregarSelects({ ...obra })
 
 }
 
-async function carregarSelects(select) {
+async function carregarSelects({ select, cidade, distrito }) {
+
     const dados_distritos = await recuperarDados('dados_distritos');
     const selectDistrito = document.querySelector('[name="distrito"]');
     const selectCidade = document.querySelector('[name="cidade"]');
@@ -436,7 +455,7 @@ async function carregarSelects(select) {
 
     if (!select) {
         const opcoesDistrito = Object.entries({ ...campoVazio, ...dados_distritos }).reverse()
-            .map(([idDistrito, objDistrito]) => `<option value="${idDistrito}">${objDistrito.nome}</option>`)
+            .map(([idDistrito, objDistrito]) => `<option value="${idDistrito}" ${distrito == idDistrito ? 'selected' : ''}>${objDistrito.nome}</option>`)
             .join('');
         selectDistrito.innerHTML = opcoesDistrito;
     }
@@ -444,7 +463,7 @@ async function carregarSelects(select) {
     const selectAtual = select ? select.value : selectDistrito.value
     const cidades = dados_distritos?.[selectAtual]?.cidades || {};
     const opcoesCidade = Object.entries({ ...campoVazio, ...cidades }).reverse()
-        .map(([idCidade, objCidade]) => `<option value="${idCidade}">${objCidade.nome}</option>`)
+        .map(([idCidade, objCidade]) => `<option value="${idCidade}" ${cidade == idCidade ? 'selected' : ''}>${objCidade.nome}</option>`)
         .join('');
 
     selectCidade.innerHTML = opcoesCidade;
@@ -466,6 +485,8 @@ async function salvarObra(idObra) {
     const camposFixos = ['cliente', 'contacto', 'email', 'distrito', 'cidade']
 
     for (const campo of camposFixos) obra[campo] = obVal(campo)
+
+    obra.status = document.querySelector(`input[name="status"]:checked`)?.value || ''
 
     await enviar(`dados_obras/${idObra}`, obra)
     await inserirDados({ [idObra]: obra }, 'dados_obras')
@@ -506,18 +527,19 @@ async function telaPessoas() {
 
 function criarLinha(dados, id, nomeBase) {
 
-    const modelo = (texto2) => `
+    const modelo = (texto) => `
         <td>
             <div style="${horizontal}; gap: 5px;">
-                <span>${texto2}</span>
+                <span class="${texto.replace(' ', '_')}">${texto}</span>
             </div>
-        </td>
-    `
+        </td>`
+
     let tds = ''
     let funcao = ''
 
     if (nomeBase == 'dados_colaboradores') {
         funcao = `adicionarPessoa('${id}')`
+        console.log(dados?.status.replace('', '_'));
 
         tds = `
             ${modelo(dados?.nome || '--')}
@@ -525,7 +547,7 @@ function criarLinha(dados, id, nomeBase) {
             ${modelo(dados?.morada || '--')}
             ${modelo(dtFormatada(dados.dataNascimento))}
             ${modelo(dados?.apolice || '--')}
-            ${modelo(dados?.status || '--')}
+            ${modelo(dados?.status || '--', true)}
             ${modelo(dados?.especialidade || '--')}
         `
     } else if (nomeBase == 'dados_obras') {
@@ -537,8 +559,10 @@ function criarLinha(dados, id, nomeBase) {
             ${modelo(dados?.cliente || '--')}
             ${modelo(distrito?.nome || '--')}
             ${modelo(cidades?.nome || '--')}
-            ${modelo(dados?.contacto || '--')}
-            ${modelo(dados?.email || '--')}
+            ${modelo(dados?.status || '--')}
+            <td class="detalhes">
+                <img src="imagens/kanban.png" onclick="verAndamento('${id}')">
+            </td>
         `
     } else if (nomeBase == 'dados_setores') {
         funcao = `gerenciarUsuario('${id}')`
@@ -548,12 +572,6 @@ function criarLinha(dados, id, nomeBase) {
             ${modelo(dados?.setor || '--')}
             ${modelo(dados?.permissao || '--')}
         `
-    } else if (nomeBase == 'tarefas') {
-        funcao = `verAndamento('${id}')`
-        tds = `
-            ${modelo(dados?.data || '--')}
-            ${modelo(dados?.obra || '--')}
-            `
     }
 
     const linha = `
@@ -661,11 +679,12 @@ async function adicionarPessoa(id) {
     const acumulado = `
         <div class="painelCadastro">
 
-            ${modelo('Nome Completo', `<input ${regras} value="${colaborador?.nome || ''}" name="nome" placeholder="Nome Completo">`)}
+            ${modelo('Nome Completo', `<textarea ${regras} name="nome" placeholder="Nome Completo">${colaborador?.nome || ''}</textarea>`)}
             ${modelo('Data de Nascimento', `<input ${regras} value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
-            ${modelo('Morada', `<input ${regras} value="${colaborador?.morada || ''}" name="morada" placeholder="Morada">`)}
+            ${modelo('Morada', `<textarea ${regras} name="morada" placeholder="Morada">${colaborador?.morada || ''}</textarea>`)}
             ${modelo('Apólice de Seguro', `<input ${regras} value="${colaborador?.apolice || ''}" name="apolice" placeholder="Número da Apólice">`)}
             ${modelo('Telefone', `<input ${regras} value="${colaborador?.telefone || ''}" name="telefone" placeholder="Telefone">`)}
+            ${modelo('E-mail', `<textarea ${regras} name="email" placeholder="E-mail">${colaborador?.email || ''}</textarea>`)}
             ${modelo('Obra Alocada', `<select name="obraAlocada">${opcoesObras}</select>`)}
             ${modelo('Documento', caixaDocumentos)}
             ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 11 dígitos">`)}
@@ -673,7 +692,6 @@ async function adicionarPessoa(id) {
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
             ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
-
             ${modelo('Epi’s', '<input name="epi" type="file">')}
             ${divAnexos('epi')}
             ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
@@ -793,7 +811,7 @@ function verificarRegras() {
     }
 
     //Campos Flexíveis
-    const camposFlex = ['nome', 'dataNascimento', 'morada', 'numeroDocumento', 'apolice']
+    const camposFlex = ['nome', 'dataNascimento', 'email', 'morada', 'numeroDocumento', 'apolice']
     for (const campo of camposFlex) {
         const el = input(campo)
         if (el.value == '') {
@@ -853,7 +871,7 @@ async function salvarColaborador(idColaborador) {
 
     let colaborador = { ...colaboradorExistente };
 
-    const camposFixos = ['nome', 'dataNascimento', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin'];
+    const camposFixos = ['nome', 'dataNascimento', 'email', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin'];
     for (const campo of camposFixos) colaborador[campo] = obVal(campo);
 
     const camposRatio = ['status', 'documento', 'especialidade'];
@@ -1341,28 +1359,6 @@ async function listaSetores(timestamp) {
     }
 }
 
-async function acompanhamento() {
-
-    esconderMenus()
-    const nomeBase = 'tarefas'
-    titulo.textContent = 'Gerenciar Tarefas'
-    const acumulado = `
-        <div class="btnRodape">
-            <input type="file" id="arquivoExcel" accept=".xls,.xlsx">
-            <button onclick="enviarExcel()">Importar</button>
-        </div>
-
-        ${modeloTabela(['Data', 'Obra', ''], nomeBase)}
-    `
-    const telaInterna = document.querySelector('.telaInterna')
-
-    telaInterna.innerHTML = acumulado
-
-    const tarefas = await recuperarDados(nomeBase)
-    for (const [idTarefa, tarefa] of Object.entries(tarefas).reverse()) criarLinha(tarefa, idTarefa, nomeBase)
-
-}
-
 function porcentagemHtml(valor) {
     valor = conversor(valor);
     const percentual = isNaN(valor) ? 0 : Math.max(0, Math.min(100, valor)).toFixed(0); // limita 0-100
@@ -1431,21 +1427,21 @@ async function excluir(id, idEtapa, idTarefa) {
     removerPopup()
     overlayAguarde()
 
-    let objeto = await recuperarDado('tarefas', id)
+    let objeto = await recuperarDado('dados_obras', id)
 
     if (idTarefa) {
 
         delete objeto.etapas[idEtapa].tarefas[idTarefa]
-        await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`)
+        await deletar(`dados_obras/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`)
 
     } else {
 
         delete objeto.etapas[idEtapa]
-        await deletar(`tarefas/${id}/etapas/${idEtapa}`)
+        await deletar(`dados_obras/${id}/etapas/${idEtapa}`)
 
     }
 
-    await inserirDados({ [id]: objeto }, 'tarefas')
+    await inserirDados({ [id]: objeto }, 'dados_obras')
 
     document.getElementById('bodyTarefas').innerHTML = ''
     await verAndamento(id)
@@ -1459,24 +1455,19 @@ async function verAndamento(id) {
     titulo.textContent = 'Lista de Tarefas'
 
     const acumulado = `
-        <div class="botoesCima">
-            <img src="imagens/voltar.png" onclick="acompanhamento()">
-            <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
+
+        <div class="botoesCima">        
+            <div class="btnExcel">
+                <input type="file" id="arquivoExcel" accept=".xls,.xlsx">
+                <button onclick="enviarExcel('${id}')">Importar</button>
+            </div>
+            <img src="imagens/voltar.png" onclick="telaObras()">
         </div>
         <div class="acompanhamento">
 
             <div style="${horizontal}; justify-content: space-between; gap: 2vw;">
                 <input placeholder="Pesquisa" oninput="pesquisar(this, 'bodyTarefas')">
                 <select id="etapas" onchange="atualizarToolbar('${id}', this.value); carregarLinhas('${id}', this.value)"></select>
-
-                <div style="${horizontal}; gap: 5px;">
-
-                    <input name="obra" placeholder="Nome da Obra">
-                    <button onclick="atualizarNomeObra('${id}', this)">Alterar</button>
-
-                    <div class="alteracaoNomeObra"></div>
-
-                </div>
 
                 <div style="${vertical};">
                     <div style="${horizontal}; gap: 1vw;">
@@ -1488,6 +1479,7 @@ async function verAndamento(id) {
                         <span>Ocultar etapa concluídas</span>
                     </div>
                 </div>
+                <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
             </div>
 
             <div id="resumo" style="${horizontal}; justify-content: space-between;"></div>
@@ -1505,31 +1497,6 @@ async function verAndamento(id) {
 
     await atualizarToolbar(id)
     await carregarLinhas(id)
-
-}
-
-async function atualizarNomeObra(id, button) {
-
-    const alteracaoNomeObra = document.querySelector('.alteracaoNomeObra')
-    button.style.display = 'none'
-
-    alteracaoNomeObra.innerHTML = `<img src="gifs/loading.gif">`
-    alteracaoNomeObra.style.display = 'flex'
-
-    const nomeObra = document.querySelector('[name="obra"]')
-    const objeto = await recuperarDado('tarefas', id)
-    objeto.obra = nomeObra.value
-    await enviar(`tarefas/${id}/obra`, nomeObra.value)
-    await inserirDados({ [id]: objeto }, 'tarefas')
-
-    alteracaoNomeObra.innerHTML = `
-        <img src="imagens/concluido.png">
-    `
-
-    setTimeout(() => {
-        button.style.display = ''
-        alteracaoNomeObra.style.display = 'none'
-    }, 2000);
 
 }
 
@@ -1557,7 +1524,6 @@ function filtrar() {
         tr.style.display = mostrar ? '' : 'none';
     });
 }
-
 
 async function caixa(id, button) {
 
@@ -1591,14 +1557,15 @@ async function caixa(id, button) {
 }
 
 async function carregarLinhas(id, nomeEtapa) {
-    const tarefa = await recuperarDado('tarefas', id)
+    let obra = await recuperarDado('dados_obras', id)
+    let tarefa = obra.etapas || {}
 
     if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
     const tbody = document.getElementById('bodyTarefas')
     if (nomeEtapa) tbody.innerHTML = ''
 
-    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
+    for (const [idEtapa, dados] of Object.entries(tarefa)) {
 
         const etapaAtual = dados.descricao
 
@@ -1645,9 +1612,10 @@ function pesquisar(input, idTbody) {
 
 
 async function atualizarToolbar(id, nomeEtapa) {
-    const tarefa = await recuperarDado('tarefas', id)
 
-    document.querySelector('[name="obra"]').value = tarefa?.obra || ''
+    let obra = await recuperarDado('dados_obras', id)
+    if (!obra.etapas) obra.etapas = {}
+    let tarefa = obra.etapas
 
     if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
@@ -1669,7 +1637,7 @@ async function atualizarToolbar(id, nomeEtapa) {
     let etapas = ['Todas as tarefas']
 
     etapasProvisorias = {} // Resetar esse objeto;
-    for (const [idEtapa, dados] of Object.entries(tarefa.etapas)) {
+    for (let [idEtapa, dados] of Object.entries(obra.etapas)) {
 
         const etapaAtual = dados.descricao
         etapas.push(etapaAtual)
@@ -1718,7 +1686,8 @@ async function editarTarefa(id, idEtapa, idTarefa) {
             ${texto == 'Etapa' ? elemento : `<input name="${texto}" ${campo ? 'type="number"' : ''} value="${elemento}" oninput="calcular()">`}
         </div>
     `
-    const objeto = await recuperarDado('tarefas', id)
+    const objeto = await recuperarDado('dados_obras', id)
+
     let campos = ''
     let tarefa = {}
     let funcao = ''
@@ -1764,7 +1733,9 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
     const valor = (name) => document.querySelector(`[name="${name}"]`)?.value || '';
     let idEtapaAtual = valor('Etapa');
 
-    const objeto = await recuperarDado('tarefas', id);
+    let obra = await recuperarDado('dados_obras', id)
+    if (!obra.etapas) obra.etapas = {}
+    let objeto = obra
 
     let novosDadosBase = {
         ordem: valor('Ordem'),
@@ -1782,8 +1753,8 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
         };
 
         reorganizarOrdem(objeto);
-        await enviar(`tarefas/${id}`, objeto);
-        await inserirDados({ [id]: objeto }, 'tarefas');
+        await enviar(`dados_obras/${id}/etapas`, objeto.etapas);
+        await inserirDados({ [id]: objeto }, 'dados_obras');
         await verAndamento(id);
         removerPopup();
         return;
@@ -1802,7 +1773,7 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
         etapaAlterada = true;
     } else if (idEtapaAtual !== idEtapa) {
         delete objeto.etapas[idEtapa]?.tarefas?.[idTarefa];
-        await deletar(`tarefas/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
+        await deletar(`dados_obras/${id}/etapas/${idEtapa}/tarefas/${idTarefa}`);
         etapaAlterada = true;
     }
 
@@ -1810,9 +1781,12 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
     objeto.etapas[idEtapaAtual].tarefas[idTarefa] = novosDadosBase;
     reorganizarOrdem(objeto);
 
-    await enviar(`tarefas/${id}`, objeto);
+    console.log(objeto);
+    
+
+    await enviar(`dados_obras/${id}/etapas`, objeto.etapas);
     modeloTR({ ...novosDadosBase, id, idTarefa, idEtapa: idEtapaAtual });
-    await inserirDados({ [id]: objeto }, 'tarefas');
+    await inserirDados({ [id]: objeto }, 'dados_obras');
 
     etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
     removerPopup();
@@ -1820,11 +1794,16 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
 
 function reorganizarOrdem(objeto) {
     let etapaCount = 1;
-    for (const idEtapaKey of Object.keys(objeto.etapas)) {
+
+    const etapasOrdenadas = Object.keys(objeto.etapas);
+
+    for (const idEtapaKey of etapasOrdenadas) {
         objeto.etapas[idEtapaKey].ordem = `${etapaCount}.0`;
 
         let tarefaCount = 1;
-        for (const idTarefaKey of Object.keys(objeto.etapas[idEtapaKey].tarefas)) {
+        const tarefasOrdenadas = Object.keys(objeto.etapas[idEtapaKey].tarefas || {});
+
+        for (const idTarefaKey of tarefasOrdenadas) {
             objeto.etapas[idEtapaKey].tarefas[idTarefaKey].ordem = `${etapaCount}.${tarefaCount}`;
             tarefaCount++;
         }
@@ -1847,7 +1826,7 @@ function calcular() {
     document.querySelector(`[name="Porcentagem"]`).value = porcentagem
 }
 
-async function enviarExcel() {
+async function enviarExcel(idObra) {
     const input = document.querySelector('#arquivoExcel');
     if (!input.files.length) return popup(mensagem('Você ainda não selecionou nenhum arquivo'), 'Alerta')
 
@@ -1855,14 +1834,15 @@ async function enviarExcel() {
     formData.append('arquivo', input.files[0]);
 
     try {
-        const resposta = await fetch(`${api}/processar-tarefas`, {
+        const resposta = await fetch(`${api}/processar-tarefas/${idObra}`, {
             method: 'POST',
             body: formData
         });
 
         const dados = await resposta.json();
         if (resposta.ok) {
-            popup(mensagem('Arquivo enviado com sucesso!'), 'Alerta')
+            await sincronizarDados('dados_obras')
+            await verAndamento(idObra)
         } else {
             popup(mensagem(`Erro: ${dados.erro}`), 'Alerta')
         }

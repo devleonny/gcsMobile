@@ -95,6 +95,62 @@ span {
     background-color: #f7c5c5;
 }
 
+.Não_Ativo {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px red;
+    border-radius: 5px;
+    background-color: #f7c5c5;
+}
+
+.Finalizado {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px green;
+    border-radius: 5px;
+    background-color: #ade9ad;
+}
+
+.Em_Andamento {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px #ff9100;
+    border-radius: 5px;
+    background-color: #ffeacf;
+}
+
+.Por_Iniciar {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px red;
+    border-radius: 5px;
+    background-color: #f7c5c5;
+}
+
+.Ativo {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px green;
+    border-radius: 5px;
+    background-color: #ade9ad;
+}
+
+.Baixa_Médica {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px #0011ac;
+    border-radius: 5px;
+    background-color: #d2d7ff;
+}
+
+.Impedido {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border: solid 1px #ff9100;
+    border-radius: 5px;
+    background-color: #ffeacf;
+}
+
 .mensagemTela {
     display: flex;
     align-items: center;
@@ -172,12 +228,17 @@ select {
     border-radius: 3px;
 }
 
-input {
+input,
+textarea {
     display: block;
     padding: 1vw;
     margin: 1vw 0;
     border-radius: 5px;
     border: 1px solid #888;
+}
+
+textarea {
+    width: 100%;
 }
 
 input:focus {
@@ -678,9 +739,17 @@ screen and (min-aspect-ratio: 13/9) {
 
     .btnRodape {
         width: auto;
-        position: fixed;
         right: 3vw;
         bottom: 3vh;
+        font-size: 1.8vw;
+    }
+
+    .btnExcel {
+        gap: 2vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: auto;
         font-size: 1.8vw;
     }
 

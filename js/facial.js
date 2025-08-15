@@ -80,7 +80,7 @@ async function verificarColaborador(pinSalvo, nomeSalvo) {
     }
 
     removerOverlay()
-    await validarFacial(fotoUrl)
+    await validarFacial(fotoUrl, resposta.nome)
 
 }
 
@@ -116,22 +116,26 @@ function mostrarStatus(msg, cls) {
     liveStatus.className = 'status ' + (cls || '');
 }
 
-async function validarFacial(fotoUrl) {
+async function validarFacial(fotoUrl, nome) {
     const acumulado = `
-        <div class="wrap">
-            <div class="card">
-                <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                    <div class="row">
-                        <button onclick="iniciarCam()" class="btn">Iniciar câmera</button>
-                        <button onclick="pararCam()" class="btn ghost" id="stopBtn" disabled>Parar</button>
-                    </div>
-                    <button onclick="baterPonto()" class="btn" id="checkInBtn" disabled>Bater ponto</button>
-                </div>
-                <video id="video" autoplay muted playsinline></video>
-                <canvas style="display:none;"></canvas>
-                <div id="liveStatus" class="status muted">Câmera parada</div>
+        
+        <div class="card">
+            <div style="${horizontal}; justify-content: space-between; margin-bottom: 2vw;">
+                <span>Olá, ${nome}!</span>
+                <img src="imagens/voltar.png" class="voltar" onclick="telaLogin()">
             </div>
+            <div class="row" style="justify-content:space-between;margin-bottom:8px">
+                <div class="row">
+                    <button onclick="iniciarCam()" class="btn">Iniciar câmera</button>
+                    <button onclick="pararCam()" class="btn ghost" id="stopBtn" disabled>Parar</button>
+                </div>
+                <button onclick="baterPonto()" class="btn" id="checkInBtn" disabled>Bater ponto</button>
+            </div>
+            <video id="video" autoplay muted playsinline></video>
+            <canvas style="display:none;"></canvas>
+            <div id="liveStatus" class="status muted">Câmera parada</div>
         </div>
+
     `;
     tela.innerHTML = acumulado;
 
@@ -206,6 +210,8 @@ async function baterPonto() {
         pararCam()
         telaLogin()
         popup(mensagem('Registro realizado com sucesso!'), 'Alerta')
+
+        enviar(`dados_colaboradores/${usuarioLogado.idColaborador}/folhaPonto/${ano}/${mes}/${dia}`)
     } else {
         mostrarStatus(`Negado (dist ${dist.toFixed(4)})`, 'err');
     }

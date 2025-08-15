@@ -13,22 +13,22 @@
 }
 
 .wrap {
-    max-width: 1000px;
+    min-width: 90%;
     margin: 24px auto;
     padding: 0 16px
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px
-}
-
 .card {
+    margin-top: 15vh;
     background: var(--card);
     border: 1px solid var(--ring);
     border-radius: 16px;
     padding: 16px
+}
+
+.card span {
+    color: white;
+    font-size: 5vw;
 }
 
 .row {
@@ -41,7 +41,7 @@
 .btn {
     appearance: none;
     border: 0;
-    border-radius: 12px;
+    border-radius: 3px;
     background: #2563eb;
     color: #fff;
     padding: 10px 14px;
@@ -90,40 +90,19 @@ canvas {
     color: var(--err)
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse
+.voltar {
+    width: 5vw;
 }
 
-th,
-td {
-    padding: 10px;
-    border-bottom: 1px solid var(--ring);
-    text-align: left
-}
+/* Ajustes para modo horizontal (landscape) */
+@media screen and (orientation: landscape),
+screen and (min-aspect-ratio: 13/9) {
 
-th {
-    color: #cbd5e1;
-    font-weight: 600
-}
+    .card span {
+        font-size: 2vw;
+    }
 
-.pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 12px
-}
-
-.pill.ok {
-    background: rgba(34, 197, 94, .15);
-    color: var(--ok)
-}
-
-.pill.err {
-    background: rgba(239, 68, 68, .15);
-    color: var(--err)
-}
-
-.slider {
-    width: 160px
+    .voltar {
+        width: 3vw;
+    }
 }
