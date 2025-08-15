@@ -880,6 +880,13 @@ async function salvarColaborador(idColaborador) {
         colaborador[campo] = document.querySelector(`input[name="${campo}"]:checked`)?.value || '';
     }
 
+    // Verificação do PIN;
+    const resposta = await colaboradorPin(colaborador.pin)
+    if (resposta?.mensagem !== 'Pin não localizado') {
+        obVal('pin').classList.add('invalido')
+        return popup(mensagem('O PIN escolhido já está em uso'), 'Alerta', true)
+    }
+
     const camposAnexos = ['contratoObra', 'exame', 'epi'];
     for (const campo of camposAnexos) {
         const input = document.querySelector(`[name="${campo}"]`);

@@ -94,6 +94,15 @@ canvas {
     width: 5vw;
 }
 
+.ticketPonto {
+    gap: 5px;
+    padding: 2vw;
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+}
+
 /* Ajustes para modo horizontal (landscape) */
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {

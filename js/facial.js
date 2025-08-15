@@ -205,7 +205,7 @@ async function baterPonto(nome) {
         telaLogin()
 
         const acumulado = `
-            <div class="mensagem">
+            <div class="ticketPonto">
                 <span>${nome}</span>
                 <span><strong>${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</strong></span>
                 <span>Registro realizado!</span>

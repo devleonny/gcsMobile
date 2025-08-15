@@ -20,15 +20,6 @@ html {
     width: 7vw;
 }
 
-.mensagem {
-    gap: 5px;
-    padding: 2vw;
-    display: flex;
-    align-items: start;
-    justify-content: start;
-    flex-direction: column;
-}
-
 .cameraDiv {
     display: none;
     justify-content: start;
