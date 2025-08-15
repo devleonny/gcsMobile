@@ -514,7 +514,7 @@ async function telaPessoas() {
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Apólice', 'Status', 'Especialidade', ''], nomeBase)}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'E-mail', 'Status', 'Especialidade', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -539,14 +539,13 @@ function criarLinha(dados, id, nomeBase) {
 
     if (nomeBase == 'dados_colaboradores') {
         funcao = `adicionarPessoa('${id}')`
-        console.log(dados?.status.replace('', '_'));
 
         tds = `
             ${modelo(dados?.nome || '--')}
             ${modelo(dados?.telefone || '--')}
             ${modelo(dados?.morada || '--')}
             ${modelo(dtFormatada(dados.dataNascimento))}
-            ${modelo(dados?.apolice || '--')}
+            ${modelo(dados?.email || '--')}
             ${modelo(dados?.status || '--', true)}
             ${modelo(dados?.especialidade || '--')}
         `
@@ -682,7 +681,7 @@ async function adicionarPessoa(id) {
             ${modelo('Nome Completo', `<textarea ${regras} name="nome" placeholder="Nome Completo">${colaborador?.nome || ''}</textarea>`)}
             ${modelo('Data de Nascimento', `<input ${regras} value="${colaborador?.dataNascimento || ''}" type="date" name="dataNascimento">`)}
             ${modelo('Morada', `<textarea ${regras} name="morada" placeholder="Morada">${colaborador?.morada || ''}</textarea>`)}
-            ${modelo('Apólice de Seguro', `<input ${regras} value="${colaborador?.apolice || ''}" name="apolice" placeholder="Número da Apólice">`)}
+            ${modelo('Apólice de Seguro', `<input value="0010032495" name="apolice" placeholder="Número da Apólice" readOnly>`)}
             ${modelo('Telefone', `<input ${regras} value="${colaborador?.telefone || ''}" name="telefone" placeholder="Telefone">`)}
             ${modelo('E-mail', `<textarea ${regras} name="email" placeholder="E-mail">${colaborador?.email || ''}</textarea>`)}
             ${modelo('Obra Alocada', `<select name="obraAlocada">${opcoesObras}</select>`)}
@@ -733,6 +732,8 @@ async function abrirCamera() {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
         cameraDiv.style.display = 'flex';
+        setTimeout(pararCam, 5 * 60 * 1000);
+
     } catch (err) {
         popup(mensagem('Erro ao acessar a câmera: ' + err.message), 'Alerta', true);
     }
@@ -898,7 +899,7 @@ async function salvarColaborador(idColaborador) {
     }
 
     const foto = document.querySelector('[name="foto"]')
-    if (foto.src) {
+    if (foto.src && !foto.src.includes(api)) {
         const resposta = await importarAnexos({ foto: foto.src })
 
         if (resposta[0].link) {
@@ -920,7 +921,7 @@ function telaLogin() {
 
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     if (acesso) return telaPrincipal()
-    
+
     toolbar.style.display = 'none'
 
     const acumulado = `
@@ -1379,13 +1380,13 @@ function porcentagemHtml(valor) {
 }
 
 
-function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
+function modeloTR({ descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
     const idLinha = idTarefa ? idTarefa : idEtapa
     const esquema = `('${id}', '${idEtapa}' ${idTarefa ? `, '${idTarefa}'` : ''})`
     const tr = `
         <tr id="${idLinha}" data-etapa="${!idTarefa ? 'sim' : ''}" data-concluido="${porcentagem >= 100 ? 'sim' : ''}" style="background-color: ${cor ? cor : ''};">
-            <td>${ordem}</td>
+            <td></td>
             <td>
                 <div style="${horizontal}; justify-content: space-between;">
                     <span>${descricao}</span>
@@ -1399,7 +1400,7 @@ function modeloTR({ ordem, descricao, unidade, porcentagem, quantidade, cor, id,
                     <img class="btnAcmp" src="imagens/fechar.png" onclick="confirmarExclusao${esquema}">
                 </div>
             </td>
-        <tr>
+        </tr>
     `
 
     const trExistente = document.getElementById(idLinha)
@@ -1447,7 +1448,7 @@ async function excluir(id, idEtapa, idTarefa) {
     await verAndamento(id)
 
     removerOverlay()
-
+    ordenacaoAutomatica()
 }
 
 async function verAndamento(id) {
@@ -1497,6 +1498,8 @@ async function verAndamento(id) {
 
     await atualizarToolbar(id)
     await carregarLinhas(id)
+
+    ordenacaoAutomatica()
 
 }
 
@@ -1558,20 +1561,20 @@ async function caixa(id, button) {
 
 async function carregarLinhas(id, nomeEtapa) {
     let obra = await recuperarDado('dados_obras', id)
-    let tarefa = obra.etapas || {}
+    const etapas = obra.etapas || {}
 
     if (nomeEtapa && nomeEtapa.includes('Todas')) nomeEtapa = false
 
     const tbody = document.getElementById('bodyTarefas')
     if (nomeEtapa) tbody.innerHTML = ''
 
-    for (const [idEtapa, dados] of Object.entries(tarefa)) {
+    for (const [idEtapa, dados] of Object.entries(etapas)) {
 
         const etapaAtual = dados.descricao
 
         if (nomeEtapa && nomeEtapa !== etapaAtual) continue
 
-        const tarefas = Object.entries(dados?.tarefas || [])
+        const tarefas = Object.entries(dados?.tarefas || {})
         modeloTR({ ...dados, id, idEtapa, cor: '#F5F5F5' })
 
         for (const [idTarefa, tarefa] of tarefas) {
@@ -1752,7 +1755,6 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
             ...novosDadosBase
         };
 
-        reorganizarOrdem(objeto);
         await enviar(`dados_obras/${id}/etapas`, objeto.etapas);
         await inserirDados({ [id]: objeto }, 'dados_obras');
         await verAndamento(id);
@@ -1779,10 +1781,6 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
 
     // Adiciona a tarefa antes de reorganizar
     objeto.etapas[idEtapaAtual].tarefas[idTarefa] = novosDadosBase;
-    reorganizarOrdem(objeto);
-
-    console.log(objeto);
-    
 
     await enviar(`dados_obras/${id}/etapas`, objeto.etapas);
     modeloTR({ ...novosDadosBase, id, idTarefa, idEtapa: idEtapaAtual });
@@ -1790,26 +1788,29 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
 
     etapaAlterada ? await verAndamento(id) : await atualizarToolbar(id);
     removerPopup();
+
+    ordenacaoAutomatica()
 }
 
-function reorganizarOrdem(objeto) {
-    let etapaCount = 1;
+function ordenacaoAutomatica() {
+    const bodyTarefas = document.getElementById('bodyTarefas')
+    const trs = bodyTarefas.querySelectorAll('tr')
 
-    const etapasOrdenadas = Object.keys(objeto.etapas);
+    let ordemEtapas = 0
+    let ordemTarefas = 1
+    for (const tr of trs) {
+        const tds = tr.querySelectorAll('td')
 
-    for (const idEtapaKey of etapasOrdenadas) {
-        objeto.etapas[idEtapaKey].ordem = `${etapaCount}.0`;
-
-        let tarefaCount = 1;
-        const tarefasOrdenadas = Object.keys(objeto.etapas[idEtapaKey].tarefas || {});
-
-        for (const idTarefaKey of tarefasOrdenadas) {
-            objeto.etapas[idEtapaKey].tarefas[idTarefaKey].ordem = `${etapaCount}.${tarefaCount}`;
-            tarefaCount++;
+        if (tr.dataset.etapa && tr.dataset.etapa == 'sim') {
+            ordemEtapas++
+            tds[0].textContent = `${ordemEtapas}.0`
+            ordemTarefas = 1
+        } else {
+            tds[0].textContent = `${ordemEtapas}.${ordemTarefas}`
+            ordemTarefas++
         }
-
-        etapaCount++;
     }
+
 }
 
 function calcular() {

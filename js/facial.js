@@ -63,7 +63,11 @@ async function verificarColaborador(pinSalvo, nomeSalvo) {
 
     const resposta = await colaboradorPin(pinSalvo ? pinSalvo : pin.value)
 
-    if (resposta.mensagem) return popup(mensagem(resposta.mensagem), 'Alerta', true)
+    if (resposta.mensagem) {
+        localStorage.removeItem('usuarioLogado')
+        telaRegistroPonto()
+        return popup(mensagem(resposta.mensagem), 'Alerta', true)
+    }
 
     if (pinSalvo && !resposta.nome == nomeSalvo) {
         localStorage.removeItem('usuarioLogado')
@@ -125,7 +129,7 @@ async function validarFacial(fotoUrl, nome) {
                 <img src="imagens/voltar.png" class="voltar" onclick="telaLogin(); pararCam()">
             </div>
             <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                <button onclick="baterPonto()" class="btn" id="checkInBtn" disabled>Bater ponto</button>
+                <button onclick="baterPonto('${nome}')" class="btn" id="checkInBtn" disabled>Bater ponto</button>
             </div>
             <video id="video" autoplay muted playsinline></video>
             <canvas style="display:none;"></canvas>
@@ -167,6 +171,8 @@ async function iniciarCam() {
         mostrarStatus('Câmera ativa', 'ok');
         document.getElementById('stopBtn').disabled = false;
         document.getElementById('checkInBtn').disabled = !refDescriptor;
+
+        setTimeout(pararCam, 5 * 60 * 1000);
     } catch {
         mostrarStatus('Falha ao iniciar câmera', 'err');
     }
@@ -178,26 +184,17 @@ function pararCam() {
     const video = document.getElementById('video');
     video.srcObject = null;
     mostrarStatus('Câmera parada', 'warn');
-    document.getElementById('stopBtn').disabled = true;
     document.getElementById('checkInBtn').disabled = true;
 }
 
-async function baterPonto() {
-    if (!refDescriptor) {
-        mostrarStatus('Sem referência facial', 'err');
-        return;
-    }
-    if (!stream) {
-        mostrarStatus('Câmera não iniciada', 'err');
-        return;
-    }
+async function baterPonto(nome) {
+    if (!refDescriptor) return mostrarStatus('Sem referência facial', 'err');
+
+    if (!stream) return mostrarStatus('Câmera não iniciada', 'err');
 
     mostrarStatus('Verificando…', 'warn');
     const liveDesc = await grabLiveDescriptor();
-    if (!liveDesc) {
-        mostrarStatus('Rosto não detectado no vídeo', 'err');
-        return;
-    }
+    if (!liveDesc) return mostrarStatus('Rosto não detectado no vídeo', 'err');
 
     const dist = faceapi.euclideanDistance(refDescriptor, liveDesc);
     const ok = dist <= 0.5;
@@ -206,7 +203,15 @@ async function baterPonto() {
         localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado))
         pararCam()
         telaLogin()
-        popup(mensagem('Registro realizado com sucesso!'), 'Alerta')
+
+        const acumulado = `
+            <div class="mensagem">
+                <span>${nome}</span>
+                <span><strong>${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</strong></span>
+                <span>Registro realizado!</span>
+            </div>
+        `
+        popup(acumulado, 'Alerta')
 
         enviar(`dados_colaboradores/${usuarioLogado.idColaborador}/folhaPonto/${ano}/${mes}/${dia}`)
     } else {
