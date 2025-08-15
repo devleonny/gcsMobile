@@ -547,7 +547,6 @@ input[type="file"] {
     border-radius: 3px;
     padding: 2vw;
     background-color: white;
-    width: 90vw;
     height: 70vh;
     color: #222;
     overflow-y: auto;
@@ -640,7 +639,6 @@ input[type="file"] {
 .telaInterna {
     color: white;
     padding: 2vw 1vw;
-    height: 80vh;
 }
 
 .camposCadastro {
@@ -789,7 +787,10 @@ screen and (min-aspect-ratio: 13/9) {
         font-size: 2.0vw;
     }
 
-    .toolbar span,
+    .toolbar span {
+        font-size: 2.5vw;
+    }
+
     .tabela th {
         font-size: 1.2vw;
     }

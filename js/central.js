@@ -920,7 +920,7 @@ function telaLogin() {
 
     const acesso = JSON.parse(localStorage.getItem('acesso'))
     if (acesso) return telaPrincipal()
-
+    
     toolbar.style.display = 'none'
 
     const acumulado = `
