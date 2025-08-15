@@ -690,7 +690,6 @@ async function adicionarPessoa(id) {
             ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
-            ${modelo('Senha de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
             ${modelo('Epi’s', '<input name="epi" type="file">')}
             ${divAnexos('epi')}
             ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
@@ -711,9 +710,12 @@ async function adicionarPessoa(id) {
 
                     </div>
                 `)}
-
+            <br>
             <hr style="width: 100%;">
-
+            ${modelo('PIN de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
+            <hr style="width: 100%;">
+            <br>
+            
             ${btnPadrao('Salvar', `salvarColaborador(${id ? `'${id}'` : ''})`)}
 
         </div>
@@ -883,7 +885,7 @@ async function salvarColaborador(idColaborador) {
     // Verificação do PIN;
     const resposta = await colaboradorPin(colaborador.pin)
     if (resposta?.mensagem !== 'Pin não localizado') {
-        obVal('pin').classList.add('invalido')
+        document.querySelector('[name="pin"]').classList.add('invalido')
         return popup(mensagem('O PIN escolhido já está em uso'), 'Alerta', true)
     }
 

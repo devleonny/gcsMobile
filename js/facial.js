@@ -116,6 +116,7 @@ let refDescriptor = null;
 
 function mostrarStatus(msg, cls) {
     const liveStatus = document.getElementById('liveStatus');
+    if(!liveStatus) return
     liveStatus.textContent = msg;
     liveStatus.className = 'status ' + (cls || '');
 }
@@ -127,9 +128,6 @@ async function validarFacial(fotoUrl, nome) {
             <div style="${horizontal}; justify-content: space-between; margin-bottom: 2vw;">
                 <span>Olá, ${nome}!</span>
                 <img src="imagens/voltar.png" class="voltar" onclick="telaLogin(); pararCam()">
-            </div>
-            <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                <button onclick="baterPonto('${nome}')" class="btn" id="checkInBtn" disabled>Bater ponto</button>
             </div>
             <video id="video" autoplay muted playsinline></video>
             <canvas style="display:none;"></canvas>
@@ -153,7 +151,7 @@ async function validarFacial(fotoUrl, nome) {
             mostrarStatus('Nenhum rosto detectado na foto', 'err');
         } else {
             mostrarStatus('Referência pronta', 'ok');
-            document.getElementById('checkInBtn').disabled = !stream;
+            await baterPonto(nome)
         }
     };
 
@@ -169,8 +167,6 @@ async function iniciarCam() {
         video.srcObject = stream;
         video.onloadedmetadata = () => video.play();
         mostrarStatus('Câmera ativa', 'ok');
-        document.getElementById('stopBtn').disabled = false;
-        document.getElementById('checkInBtn').disabled = !refDescriptor;
 
         setTimeout(pararCam, 5 * 60 * 1000);
     } catch {
@@ -182,40 +178,49 @@ function pararCam() {
     if (stream) stream.getTracks().forEach(t => t.stop());
     stream = null;
     const video = document.getElementById('video');
+    if(!video) return
     video.srcObject = null;
     mostrarStatus('Câmera parada', 'warn');
-    document.getElementById('checkInBtn').disabled = true;
 }
 
 async function baterPonto(nome) {
     if (!refDescriptor) return mostrarStatus('Sem referência facial', 'err');
-
     if (!stream) return mostrarStatus('Câmera não iniciada', 'err');
 
-    mostrarStatus('Verificando…', 'warn');
-    const liveDesc = await grabLiveDescriptor();
-    if (!liveDesc) return mostrarStatus('Rosto não detectado no vídeo', 'err');
+    let tentativa = 60;
 
-    const dist = faceapi.euclideanDistance(refDescriptor, liveDesc);
-    const ok = dist <= 0.5;
+    while (0 < tentativa) {
+        mostrarStatus(`Verificando… (${tentativa}s)`, 'warn');
+        tentativa--
 
-    if (ok) {
-        localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado))
-        pararCam()
-        telaLogin()
+        const liveDesc = await grabLiveDescriptor();
+        if (liveDesc) {
+            const dist = faceapi.euclideanDistance(refDescriptor, liveDesc);
+            const ok = dist <= 0.5;
 
-        const acumulado = `
-            <div class="ticketPonto">
-                <span>${nome}</span>
-                <span><strong>${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</strong></span>
-                <span>Registro realizado!</span>
-            </div>
-        `
-        popup(acumulado, 'Alerta')
+            if (ok) {
+                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+                pararCam();
+                telaLogin();
 
-        enviar(`dados_colaboradores/${usuarioLogado.idColaborador}/folhaPonto/${ano}/${mes}/${dia}`)
-    } else {
-        mostrarStatus(`Negado (dist ${dist.toFixed(4)})`, 'err');
+                const acumulado = `
+                    <div class="ticketPonto">
+                        <span>${nome}</span>
+                        <span><strong>${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</strong></span>
+                        <span>Registro realizado!</span>
+                    </div>
+                `;
+                popup(acumulado, 'Alerta');
+
+                //enviar(`dados_colaboradores/${usuarioLogado.idColaborador}/folhaPonto/${ano}/${mes}/${dia}`);
+                return; // para o loop se reconheceu
+            } else {
+                mostrarStatus(`Negado (dist ${dist.toFixed(4)})`, 'err');
+            }
+        }
+
+        await new Promise(r => setTimeout(r, 1000)); // espera 1s entre tentativas
     }
 
+    mostrarStatus('Tempo esgotado para reconhecimento', 'err');
 }
