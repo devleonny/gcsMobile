@@ -11,6 +11,8 @@ html {
     flex-direction: column;
 }
 
+
+
 .foto {
     border-radius: 5px;
     width: 100%;
@@ -176,33 +178,43 @@ span {
     margin-top: 20vw;
 }
 
-.botaoSuperiorLogin {
+.loginBloco {
     margin-top: 15vh;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.botaoSuperiorLogin {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1vw;
     background-color: #b8b8b8;
-    border-top-right-radius: 10px;
-    border-top-left-radius: 10px;
+    padding: 1vw;
+    gap: 3vw;
 }
 
 .botaoSuperiorLogin img {
-    width: 4vw;
+    width: 10vw;
 }
 
-.loginBloco {
+.baixoLogin {
+    gap: 20px;
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
     flex-direction: column;
-    padding: 20px;
+    justify-content: center;
     background-color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-bottom-right-radius: 10px;
-    border-bottom-left-radius: 10px;
-    text-align: center;
+    padding: 1vw;
+}
+
+.cadeado {
+    width: 15vw;
 }
 
 .overlay {
@@ -254,15 +266,10 @@ button {
     background-color: #249f41;
 }
 
-.loginBloco {
-    padding: 20px;
-    background-color: rgb(255, 255, 255);
-}
-
 .janela {
     min-width: 90vw;
     overflow: auto;
-    max-height: 90vh;
+    max-height: 80vh;
 }
 
 .janela_fora {
@@ -520,7 +527,7 @@ input[type="file"] {
 }
 
 .barra {
-    width: 5vw;
+    width: 15vw;
     flex: 1;
     background: #eee;
     height: 8px;
@@ -547,7 +554,7 @@ input[type="file"] {
     border-radius: 3px;
     padding: 2vw;
     background-color: white;
-    height: 70vh;
+    height: 80vh;
     color: #222;
     overflow-y: auto;
     padding-bottom: 50vh;
@@ -562,7 +569,7 @@ input[type="file"] {
 }
 
 .edicao img {
-    width: 2vw;
+    width: 7vw;
 }
 
 .botoesCima {
@@ -574,7 +581,7 @@ input[type="file"] {
 }
 
 .botoesCima img {
-    width: 3vw;
+    width: 13vw;
 }
 
 .btnAcmp {
@@ -617,13 +624,13 @@ input[type="file"] {
 
 .bloco label {
     color: #222;
-    font-size: 1.2vw;
+    font-size: 4vw;
     white-space: nowrap;
 }
 
 .bloco span {
     color: #fd6828;
-    font-size: 3vw;
+    font-size: 8vw;
 }
 
 .linha {
@@ -672,7 +679,7 @@ input[type="file"] {
 
 .menu-btn div {
     width: 25px;
-    height: 3px;
+    height: 2px;
     background: white;
     margin: 5px 0;
     transition: 0.4s;
@@ -685,9 +692,60 @@ input[type="file"] {
     width: 10vw;
 }
 
+.painel-1-tarefas {
+    display: grid;
+    gap: 2vw;
+    margin-bottom: 20px;
+}
+
+.tabTarefas {
+    max-width: 80vw;
+    overflow: auto;
+}
+
+.tabTarefas td {
+    padding: 8px;
+    border: solid 1px #a7a7a7;
+}
+
+.tabTarefas table,
+.tabTarefas span {
+    min-width: max-content;
+    border-collapse: collapse;
+    font-size: 5.0vw;
+    display: table-row;
+}
+
 /* Ajustes para modo horizontal (landscape) */
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
+
+    .tabTarefas table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        font-size: 1.2vw;
+        display: table-row;
+    }
+
+    .tabTarefas span {
+        font-size: 1.2vw;
+    }
+
+    .bloco label {
+        font-size: 1.2vw;
+    }
+
+    .bloco span {
+        font-size: 2vw;
+    }
+
+    .painel-1-tarefas {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 2vw;
+    }
 
     input {
         padding: 0.8vw;
@@ -699,10 +757,12 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .loginBloco {
-        flex-direction: row;
-        gap: 2vw;
         max-width: 80vw;
         max-height: 80vh;
+    }
+
+    .baixoLogin {
+        flex-direction: row;
     }
 
     span {
@@ -743,11 +803,8 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .btnExcel {
-        gap: 2vw;
+        gap: 10vw;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        width: auto;
         font-size: 1.8vw;
     }
 
@@ -765,7 +822,8 @@ screen and (min-aspect-ratio: 13/9) {
         width: 3vw;
     }
 
-    .mensagem img {
+    .mensagem img,
+    .cadeado {
         width: 7vw;
     }
 
@@ -803,11 +861,14 @@ screen and (min-aspect-ratio: 13/9) {
         padding: 5vw;
     }
 
-    .atualizar {
+    .atualizar,
+    .botoesCima img,
+    .botaoSuperiorLogin img {
         width: 5vw;
     }
 
     .olho,
+    .edicao img,
     .cam {
         width: 3vw;
     }

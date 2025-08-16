@@ -310,7 +310,7 @@ async function telaPrincipal() {
                 
                 <div class="botoesMenu">
 
-                    ${btn('pessoas', 'Colaboradores', 'telaPessoas()')}
+                    ${btn('pessoas', 'Colaboradores', 'telaColaboradores()')}
                     ${btn('obras', 'Obras', 'telaObras()')}
                     ${btn('perfil', 'Usuários', 'usuarios()')}
                     ${btn('sair', 'Desconectar', 'deslogar()')}
@@ -507,14 +507,14 @@ function esconderMenus() {
     sideMenu.classList.toggle('active');
 }
 
-async function telaPessoas() {
+async function telaColaboradores() {
 
     esconderMenus()
     const nomeBase = 'dados_colaboradores'
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'E-mail', 'Status', 'Especialidade', ''], nomeBase)}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -545,9 +545,11 @@ function criarLinha(dados, id, nomeBase) {
             ${modelo(dados?.telefone || '--')}
             ${modelo(dados?.morada || '--')}
             ${modelo(dtFormatada(dados.dataNascimento))}
-            ${modelo(dados?.email || '--')}
             ${modelo(dados?.status || '--', true)}
             ${modelo(dados?.especialidade || '--')}
+            <td class="detalhes">
+                <img src="imagens/relogio.png" onclick="mostrarFolha('${id}')">
+            </td>
         `
     } else if (nomeBase == 'dados_obras') {
         funcao = `adicionarObra('${id}')`
@@ -935,47 +937,44 @@ function telaLogin() {
 
     const acumulado = `
         
-        <div style="${vertical}">
+        <div id="acesso" class="loginBloco">
+
             <div class="botaoSuperiorLogin" onclick="telaRegistroPonto()">
                 <img src="imagens/relogio.png">
                 <span>Registre o seu Ponto Aqui</span>
             </div>
-            
-            <div id="acesso" class="loginBloco">
 
-                <img src="imagens/acesso.png" style="width: 10vw;">
+            <div class="baixoLogin">
 
-                <div style="display: flex; flex-direction: column; align-items: start; justify-content: center;">
+                <br>
+                <img src="imagens/acesso.png" class="cadeado">
+
+                <div style="padding: 20px; display: flex; flex-direction: column; align-items: start; justify-content: center;">
 
                     <label>Usuário</label>
                     <input type="text" placeholder="Usuário">
 
                     <label>Senha</label>
-                    <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                    <div style="${horizontal}; gap: 10px;">
                         <input type="password" placeholder="Senha">
                         <img src="imagens/olhoFechado.png" class="olho" onclick="exibirSenha(this)">
                     </div>
+
+                    <br>
                     <button onclick="acessoLogin()">Entrar</button>
 
                 </div>
-                <br>
-
                 <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
                     <label>Primeiro acesso?</label>
                     <button style="background-color: #097fe6; white-space: nowrap;" onclick="cadastrar()">Cadastre-se</button>
                 </div>
-
+                <br>
             </div>
+
         </div>
     `
 
     tela.innerHTML = acumulado
-}
-
-function registroPonto() {
-
-
-
 }
 
 // BASE DE DADOS
@@ -1475,7 +1474,7 @@ async function verAndamento(id) {
         </div>
         <div class="acompanhamento">
 
-            <div style="${horizontal}; justify-content: space-between; gap: 2vw;">
+            <div class="painel-1-tarefas">
                 <input placeholder="Pesquisa" oninput="pesquisar(this, 'bodyTarefas')">
                 <select id="etapas" onchange="atualizarToolbar('${id}', this.value); carregarLinhas('${id}', this.value)"></select>
 
@@ -1492,13 +1491,15 @@ async function verAndamento(id) {
                 <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
             </div>
 
-            <div id="resumo" style="${horizontal}; justify-content: space-between;"></div>
+            <div id="resumo" class="painel-1-tarefas"></div>
 
             <br>
 
-            <table class="tabela">
-                <tbody id="bodyTarefas"></tbody>
-            </table>
+            <div class="tabTarefas">
+                <table>
+                    <tbody id="bodyTarefas"></tbody>
+                </table>
+            </div>
 
         </div>
     `

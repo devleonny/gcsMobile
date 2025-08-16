@@ -1,15 +1,18 @@
 .folha {
+    padding: 1vw;
     margin: 1vw;
     border-radius: 5px;
-    width: 90vw;
-    box-shadow: 0px 0px 3px #222;
+    width: 70vw;
     border: solid 1px #222;
+    background: linear-gradient(to bottom, #5b707f 20%, white 0%);
 }
 
 .tabCab table {
+    color: black;
     width: 100%;
     border-collapse: collapse;
     border: solid 1px #222;
+    font-size: 1.4vw;
 }
 
 .tabCab td {
@@ -18,6 +21,7 @@
 }
 
 .tabCab table td:first-child {
+    text-align: right;
     font-weight: bold;
     background-color: #5b707f;
     color: white;
@@ -52,10 +56,12 @@
 }
 
 .tabelaPonto {
+    color: black;
     background-color: white;
     width: 100%;
     border-collapse: collapse;
     border: solid 1px #222;
+    font-size: 1.4vw;
 }
 
 .tabelaPonto td {
@@ -74,7 +80,6 @@
 }
 
 .campos {
-    box-shadow: 0px 0px 3px #222;
     border: solid 1px #222;
     background-color: #5b707f;
     padding: 10px;
@@ -96,4 +101,30 @@
     align-items: center;
     justify-content: end;
     gap: 1vw;
+}
+
+.painelFiltros img {
+    width: 5vw;
+}
+
+.painelFiltros button {
+    background-color: #5b707f;
+    border-radius: 3px;
+    border: solid 1px #222;
+}
+
+.positivo {
+    padding-left: 5px;
+    padding-right: 5px;
+    border: solid 1px green;
+    border-radius: 5px;
+    background-color: #ade9ad;
+}
+
+.negativo {
+    padding-left: 5px;
+    padding-right: 5px;
+    border: solid 1px red;
+    border-radius: 5px;
+    background-color: #f7c5c5;
 }

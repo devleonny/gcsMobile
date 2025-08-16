@@ -39,16 +39,19 @@ async function telaRegistroPonto() {
     }
 
     const acumulado = `
-        <div style="${vertical}">
+        <div id="acesso" class="loginBloco">
+
             <div class="botaoSuperiorLogin" onclick="telaLogin()">
                 <img src="imagens/cracha.png">
                 <span>Voltar para a tela de Acesso</span>
             </div>
-            <div class="loginBloco">
-                <span>Informe o seu PIN de 4 dígitos</span>
-                <input type="text" maxlength="4" name="pin" placeholder="Máximo de 4 dígitos">
-                <button onclick="verificarColaborador()">Avançar</butto>
+
+            <div class="baixoLogin">
+            <span>Informe o seu PIN de 4 dígitos</span>
+            <input type="text" maxlength="4" name="pin" placeholder="Máximo de 4 dígitos">
+            <button onclick="verificarColaborador()">Avançar</butto>
             </div>
+
         </div>
     `
 
