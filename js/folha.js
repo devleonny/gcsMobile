@@ -149,6 +149,7 @@ async function criarFolha(idColaborador) {
 
     function estilo(hora, tipo) {
         let estilo = ''
+
         const [h, m] = hora.split(':').map(Number)
 
         if (h === 0 && m === 0 || hora == '') return ''
@@ -187,8 +188,8 @@ async function criarFolha(idColaborador) {
         const indiceSem = data.getDay()
         const diaDaSemana = semana[indiceSem]
         const entradas = folha?.[ano]?.[mesString]?.[dia] || ['00:00', '00:00']
-        const hora1 = entradas[0]
-        const hora2 = entradas[1]
+        const hora1 = entradas[0] || '00:00'
+        const hora2 = entradas[1] || '00:00'
         const resultado = calcularHoras(hora1, hora2, '08:00')
         const [h, m] = resultado.total.split(':').map(Number)
         const fds = indiceSem == 0 || indiceSem == 6
@@ -228,6 +229,7 @@ async function criarFolha(idColaborador) {
 }
 
 function calcularHoras(hora1, hora2, esperado) {
+
     const [h1, m1] = hora1.split(':').map(Number);
     const [h2, m2] = hora2.split(':').map(Number);
     const [he, me] = esperado.split(':').map(Number);
