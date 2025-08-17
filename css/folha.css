@@ -1,10 +1,24 @@
+.contornoFolha {
+    margin: 1vw;
+    border: solid 1px #222;
+}
+
+.sucesso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    color: green;
+}
+
+.sucesso img {
+    width: 3vw;
+}
+
 .folha {
     padding: 1vw;
-    margin: 1vw;
-    border-radius: 5px;
-    width: 70vw;
-    border: solid 1px #222;
     background: linear-gradient(to bottom, #5b707f 20%, white 0%);
+    width: -webkit-fill-available;
 }
 
 .tabCab table {
@@ -12,28 +26,33 @@
     width: 100%;
     border-collapse: collapse;
     border: solid 1px #222;
-    font-size: 1.4vw;
+    font-size: 5vw;
 }
 
 .tabCab td {
-    background-color: white;
+    border: solid 1px #222;
     padding: 3px;
+    background-color: white;
+}
+
+.tabCab span {
+    margin-left: 2vw;
+    margin-right: 2vw;
 }
 
 .tabCab table td:first-child {
     text-align: right;
-    font-weight: bold;
     background-color: #5b707f;
+    width: 40%;
+}
+
+.tabCab table td:first-child span {
+    font-weight: bold;
     color: white;
-    width: 20%;
 }
 
 .tabCab table td:nth-child(2) {
     width: 80%;
-}
-
-.tabCab table td {
-    border: solid 1px #222;
 }
 
 .cabecalho {
@@ -56,17 +75,23 @@
 }
 
 .tabelaPonto {
+    width: 90vw;
+    overflow: auto;
+}
+
+.tabelaPonto table {
     color: black;
     background-color: white;
     width: 100%;
     border-collapse: collapse;
     border: solid 1px #222;
-    font-size: 1.4vw;
+    font-size: 5vw;
 }
 
 .tabelaPonto td {
     border: solid 1px #222;
     text-align: center;
+    padding: 5px;
 }
 
 .tabelaPonto thead {
@@ -76,6 +101,7 @@
 }
 
 .tabelaPonto th {
+    padding: 5px;
     border: solid 1px #222;
 }
 
@@ -104,7 +130,7 @@
 }
 
 .painelFiltros img {
-    width: 5vw;
+    width: 20vw;
 }
 
 .painelFiltros button {
@@ -127,4 +153,19 @@
     border: solid 1px red;
     border-radius: 5px;
     background-color: #f7c5c5;
+}
+
+@media screen and (orientation: landscape),
+screen and (min-aspect-ratio: 13/9) {
+
+    .painelFiltros img {
+        width: 5vw;
+    }
+
+    .tabCab table,
+    .tabelaPonto table {
+        font-size: 1.4vw;
+    }
+
+
 }

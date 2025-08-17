@@ -179,7 +179,7 @@ span {
 }
 
 .loginBloco {
-    margin-top: 15vh;
+    margin-top: 5vh;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -260,10 +260,11 @@ input:focus {
 button {
     padding: 10px 20px;
     color: white;
-    border: none;
-    border-radius: 5px;
     cursor: pointer;
     background-color: #249f41;
+    border-radius: 3px;
+    border: solid 1px #222;
+    white-space: nowrap;
 }
 
 .janela {
@@ -572,18 +573,6 @@ input[type="file"] {
     width: 7vw;
 }
 
-.botoesCima {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-    gap: 2vw;
-    padding-bottom: 5px;
-}
-
-.botoesCima img {
-    width: 13vw;
-}
-
 .btnAcmp {
     border-radius: 5px;
     padding: 3px;
@@ -698,34 +687,31 @@ input[type="file"] {
     margin-bottom: 20px;
 }
 
-.tabTarefas {
-    max-width: 80vw;
-    overflow: auto;
-}
 
 .tabTarefas td {
     padding: 8px;
     border: solid 1px #a7a7a7;
 }
 
-.tabTarefas table,
-.tabTarefas span {
+.tabTarefas table {
+    display: table-row;
     min-width: max-content;
     border-collapse: collapse;
-    font-size: 5.0vw;
-    display: table-row;
 }
 
-/* Ajustes para modo horizontal (landscape) */
+.tabTarefas span {
+    font-size: 4vw;
+}
+
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
     .tabTarefas table {
-        width: 100%;
+        width: -webkit-fill-available;
         table-layout: fixed;
         border-collapse: collapse;
         font-size: 1.2vw;
-        display: table-row;
+        display: table;
     }
 
     .tabTarefas span {
@@ -862,7 +848,6 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .atualizar,
-    .botoesCima img,
     .botaoSuperiorLogin img {
         width: 5vw;
     }

@@ -206,7 +206,7 @@ function salvarCadastro() {
                         popup(mensagem('Seu cadastro foi realizado! Alguém do setor de SUPORTE precisa autorizar sua entrada!'), 'ALERTA')
                         break;
                     default:
-                        popup(mensagem('Servidor Offline... fale com o Setor de Programação'), 'AVISO', true);
+                        popup(mensagem('Servidor Offline... fale com o Setor de SUPORTE'), 'AVISO', true);
                 }
 
             })
@@ -227,7 +227,7 @@ function popup(elementoHTML, titulo, naoRemoverAnteriores) {
                 
                 <div class="toolbarPopup">
 
-                    <span style="width: 90%;">${titulo || 'Popup'}</span>
+                    <div style="width: 90%;">${titulo || 'Popup'}</div>
                     <span style="width: 10%" onclick="removerPopup()">×</span>
 
                 </div>
@@ -941,7 +941,7 @@ function telaLogin() {
 
             <div class="botaoSuperiorLogin" onclick="telaRegistroPonto()">
                 <img src="imagens/relogio.png">
-                <span>Registre o seu Ponto Aqui</span>
+                <span>Registo de Ponto</span>
             </div>
 
             <div class="baixoLogin">
@@ -1194,26 +1194,6 @@ async function deletar(chave) {
     });
 }
 
-function offline(motivo) {
-
-    const motivos = {
-        1: 'Você está offline!',
-        2: 'O servidor caiu... tente novamente.'
-    }
-
-    let acumulado = `
-    <div class="telaOffline">
-        <div class="mensagemTela">
-            <img src="gifs/offline.gif" class="dino">
-            <label>${motivos[motivo]}</label>
-            ${btn('atualizar', 'Reconectar', `telaPrincipal()`)}
-        </div>
-    </div>
-    `
-
-    tela.innerHTML = acumulado
-}
-
 function pesquisarGenerico(coluna, texto, filtro, id) {
 
     filtro[coluna] = String(texto).toLowerCase().replace('.', '')
@@ -1387,7 +1367,6 @@ function porcentagemHtml(valor) {
   `;
 }
 
-
 function modeloTR({ descricao, unidade, porcentagem, quantidade, cor, id, idEtapa, idTarefa }) {
 
     const idLinha = idTarefa ? idTarefa : idEtapa
@@ -1397,7 +1376,7 @@ function modeloTR({ descricao, unidade, porcentagem, quantidade, cor, id, idEtap
             <td></td>
             <td>
                 <div style="${horizontal}; justify-content: space-between;">
-                    <span>${descricao}</span>
+                    <span ${!idTarefa ? 'style="font-weight: bold;"' : ''}>${descricao}</span>
                     <span>${quantidade ? `${quantidade} ${unidade}` : ''}</span>
                 </div>
             </td>
@@ -1465,13 +1444,6 @@ async function verAndamento(id) {
 
     const acumulado = `
 
-        <div class="botoesCima">        
-            <div class="btnExcel">
-                <input type="file" id="arquivoExcel" accept=".xls,.xlsx">
-                <button onclick="enviarExcel('${id}')">Importar</button>
-            </div>
-            <img src="imagens/voltar.png" onclick="telaObras()">
-        </div>
         <div class="acompanhamento">
 
             <div class="painel-1-tarefas">
@@ -1489,6 +1461,9 @@ async function verAndamento(id) {
                     </div>
                 </div>
                 <button style="background-color: #247EFF;" onclick="caixa('${id}', this)">+ Adicionar</button>
+                <input type="file" id="arquivoExcel" accept=".xls,.xlsx" style="display:none" onchange="enviarExcel('${id}')">
+                <button style="background-color: #249f41;" onclick="document.getElementById('arquivoExcel').click()">Importar Excel</button>
+                <button style="background-color: #222;" onclick="telaObras()">Voltar</button>
             </div>
 
             <div id="resumo" class="painel-1-tarefas"></div>
@@ -1751,7 +1726,6 @@ async function salvarTarefa(id, idEtapa, idTarefa) {
     let objeto = obra
 
     let novosDadosBase = {
-        ordem: valor('Ordem'),
         descricao: valor('Descrição'),
     };
 

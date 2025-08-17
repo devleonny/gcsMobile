@@ -1,4 +1,4 @@
-let usuarioLogado = {}
+let usuarioAtual = {}
 async function loadModels() {
     const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
@@ -32,12 +32,6 @@ async function grabLiveDescriptor() {
 
 async function telaRegistroPonto() {
 
-    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'))
-
-    if (usuarioLogado && usuarioLogado.pin && usuarioLogado.nome) {
-        return verificarColaborador(usuarioLogado.pin, usuarioLogado.nome)
-    }
-
     const acumulado = `
         <div id="acesso" class="loginBloco">
 
@@ -59,35 +53,24 @@ async function telaRegistroPonto() {
 
 }
 
-async function verificarColaborador(pinSalvo, nomeSalvo) {
+async function verificarColaborador() {
 
     overlayAguarde()
     const pin = document.querySelector('[name="pin"]')
 
-    const resposta = await colaboradorPin(pinSalvo ? pinSalvo : pin.value)
+    const resposta = await colaboradorPin(pin.value)
 
     if (resposta.mensagem) {
-        localStorage.removeItem('usuarioLogado')
         telaRegistroPonto()
         return popup(mensagem(resposta.mensagem), 'Alerta', true)
     }
 
-    if (pinSalvo && !resposta.nome == nomeSalvo) {
-        localStorage.removeItem('usuarioLogado')
-        await telaRegistroPonto()
-        popup(mensagem('Usuário logado sofreu altereções e será necessário reinformar o PIN.'), 'Alerta')
-    }
+    usuarioAtual = resposta
 
     const fotoUrl = `${api}/uploads/RECONST/${resposta.foto}`
 
-    usuarioLogado = {
-        pin: pinSalvo ? pinSalvo : pin.value,
-        idColaborador: resposta.idColaborador,
-        nome: resposta.nome
-    }
-
     removerOverlay()
-    await validarFacial(fotoUrl, resposta.nome)
+    await validarFacial(fotoUrl)
 
 }
 
@@ -124,12 +107,12 @@ function mostrarStatus(msg, cls) {
     liveStatus.className = 'status ' + (cls || '');
 }
 
-async function validarFacial(fotoUrl, nome) {
+async function validarFacial(fotoUrl) {
     const acumulado = `
         
         <div class="card">
             <div style="${horizontal}; justify-content: space-between; margin-bottom: 2vw;">
-                <span>Olá, ${nome}!</span>
+                <span>Olá, ${usuarioAtual.nome}!</span>
                 <img src="imagens/voltar.png" class="voltar" onclick="telaLogin(); pararCam()">
             </div>
             <video id="video" autoplay muted playsinline></video>
@@ -154,7 +137,7 @@ async function validarFacial(fotoUrl, nome) {
             mostrarStatus('Nenhum rosto detectado na foto', 'err');
         } else {
             mostrarStatus('Referência pronta', 'ok');
-            await baterPonto(nome)
+            await baterPonto()
         }
     };
 
@@ -186,7 +169,7 @@ function pararCam() {
     mostrarStatus('Câmera parada', 'warn');
 }
 
-async function baterPonto(nome) {
+async function baterPonto() {
     if (!refDescriptor) return mostrarStatus('Sem referência facial', 'err');
     if (!stream) return mostrarStatus('Câmera não iniciada', 'err');
 
@@ -202,11 +185,10 @@ async function baterPonto(nome) {
             const ok = dist <= 0.5;
 
             if (ok) {
-                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
                 pararCam();
                 telaLogin();
 
-                return enviarPonto(nome);
+                return enviarPonto();
             } else {
                 mostrarStatus(`Negado (dist ${dist.toFixed(4)})`, 'err');
             }
@@ -218,29 +200,39 @@ async function baterPonto(nome) {
     mostrarStatus('Tempo esgotado para reconhecimento', 'err');
 }
 
-async function enviarPonto(nome) {
+async function enviarPonto() {
     try {
         overlayAguarde()
-        const colaborador = JSON.parse(localStorage.getItem('usuarioLogado')) || {}
         const data = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
         const response = await fetch(`${api}/ponto`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ idColaborador: colaborador.idColaborador, data, servidor: 'RECONST' })
+            body: JSON.stringify({ idColaborador: usuarioAtual.idColaborador, data, servidor: 'RECONST' })
         });
 
         const resposta = await response.json();
         const acumulado = `
             <div class="ticketPonto">
-                <span>${nome}</span>
+                <span>${usuarioAtual.nome}</span>
                 <span><strong>${data}</strong></span>
                 <span>${resposta.mensagem}</span>
             </div>
         `;
 
-        popup(acumulado, 'Alerta');
+        const sucesso = resposta.mensagem.includes('Realizado')
+        const imagem = sucesso ? 'concluido' : 'cancel'
+        const texto = sucesso ? 'Registada Entrada' : 'Registo Indisponível'
+
+        const titulo = `
+            <div class="sucesso">
+                <img src="imagens/${imagem}.png">
+                <span>${texto}</span>
+            </div>
+        `
+
+        popup(acumulado, titulo);
     } catch (err) {
         popup(mensagem(`Erro na API: ${err}`));
         throw err;
