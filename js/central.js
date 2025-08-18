@@ -514,7 +514,7 @@ async function telaColaboradores() {
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Dt Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase)}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -708,7 +708,7 @@ async function adicionarPessoa(id) {
                             <video autoplay playsinline></video>
                             <canvas style="display: none;"></canvas>
                         </div>
-                        <img name="foto" ${colaborador.foto ? `src="${api}/uploads/RECONST/${colaborador.foto}"` : ''} class="foto">
+                        <img name="foto" ${colaborador?.foto ? `src="${api}/uploads/RECONST/${colaborador.foto}"` : ''} class="foto">
 
                     </div>
                 `)}
@@ -1159,8 +1159,7 @@ async function receber(chave) {
                 resolve(data);
             })
             .catch(err => {
-                console.log(err);
-                offline(2)
+                popup(mensagem(`Erro de conexão: ${err}`))
                 resolve({})
             });
     })

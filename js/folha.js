@@ -81,7 +81,7 @@ async function mostrarFolha(idColaborador) {
         <div class="painelFiltros">
             ${modelo('Ano', `<select name="ano" onchange="criarFolha('${idColaborador}')">${optionsSelect(anos)}</select>`)}
             ${modelo('Mês', `<select name="mes" onchange="criarFolha('${idColaborador}')">${optionsSelect(meses)}</select>`)}
-            <img src="imagens/pdf.png" onclick="gerarPDF('${colaborador.nome}')">
+            <img src="imagens/pdf.png" onclick="gerarPDF('${idColaborador}', '${colaborador.nome}')">
             <button onclick="telaColaboradores()">Voltar</button>
         </div>
 
@@ -197,7 +197,7 @@ async function criarFolha(idColaborador) {
         minutosRealizados += minutosDiarios
         const estiloDiferenca = resultado.diferenca.includes('-') ? 'negativo' : 'positivo'
 
-        if(!fds) diasUteis++
+        if (!fds) diasUteis++
 
         trs += `
         <tr>
@@ -276,60 +276,45 @@ function cloneWithInlineStyles(node) {
     return clone;
 }
 
-async function gerarPDF(nome) {
+async function gerarPDF(idColaborador, nome) {
 
     overlayAguarde()
-
-    const alvo = document.querySelector('.folha');
-    const inline = cloneWithInlineStyles(alvo);
-    const mesSelect = document.querySelector('[name="mes"]').value
-    const mes = meses[mesSelect]
+    const mes = document.querySelector('[name="mes"]').value
     const ano = document.querySelector('[name="ano"]').value
 
-    const html = `
-        <!doctype html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                @page { size: A4 landscape; }
-                html, body { margin: 0; padding: 0; }
-            </style>
-        </head>
-        <body>${inline.outerHTML}</body>
-        </html>
-    `;
-    try {
-        await gerarPdfOnline(html, `${nome} - ${ano} - ${mes}`);
-        removerOverlay()
-    } catch (err) {
-        popup(mensagem(`Falha no dowload: ${err}`))
-    }
-}
-
-
-async function gerarPdfOnline(htmlString, nome) {
     return new Promise((resolve, reject) => {
-        let encoded = new TextEncoder().encode(htmlString);
-        let compressed = pako.gzip(encoded);
 
-        fetch(`${api}/pdf`, {
+        fetch(`${api}/documentos`, {
             method: "POST",
-            headers: { "Content-Type": "application/octet-stream" },
-            body: compressed
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                dados: {
+                    ano,
+                    mes,
+                    mesTexto: meses[mes],
+                    idColaborador
+                },
+                documento: 'folha',
+                servidor: 'RECONST'
+            })
         })
             .then(response => response.blob())
             .then(blob => {
                 const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `${nome}.pdf`;
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `${nome} - ${ano} - ${meses[mes]}.pdf`;
+                document.body.appendChild(link);
                 link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                removerOverlay()
                 resolve()
             })
             .catch(err => {
                 console.error("Erro ao gerar PDF:", err)
+                popup(mensagem(`Falha no processo: ${err}`), 'Alerta')
                 reject()
             });
     })
-
 }
