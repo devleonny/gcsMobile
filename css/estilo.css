@@ -1,6 +1,6 @@
 body,
 html {
-    background: linear-gradient(45deg, #249f41, #151749);
+    background: linear-gradient(45deg, #151749, #249f41);
     font-family: 'Poppins', sans-serif;
     height: 100vh;
     width: 100vw;
@@ -164,6 +164,15 @@ span {
 
 .dino {
     width: 30vw;
+}
+
+.botoes {
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    padding: 1vw;
+    gap: 1vw;
 }
 
 .botoesMenu {
@@ -446,8 +455,6 @@ button {
     width: 90%;
     border-radius: 3px;
     padding: 10px;
-    background-color: #222;
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -862,6 +869,11 @@ screen and (min-aspect-ratio: 13/9) {
 
     .contornoInterno label {
         font-size: 1.2vw;
+    }
+
+    .botoes {
+        align-items: center;
+        flex-direction: row;
     }
 
 }

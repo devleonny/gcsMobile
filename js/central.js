@@ -16,7 +16,7 @@ const dtFormatada = (data) => {
     return `${dia}/${mes}/${ano}`
 }
 
-const modeloTabela = (colunas, base) => {
+const modeloTabela = (colunas, base, btnExtras) => {
 
     const ths = colunas
         .map(col => `<th>${col}</th>`).join('')
@@ -26,9 +26,12 @@ const modeloTabela = (colunas, base) => {
     return `
     <div class="blocoTabela">
         <div class="painelBotoes">
-            <div class="pesquisa">
-                <input oninput="pesquisar(this, 'body')" placeholder="Pesquisar" style="width: 100%;">
-                <img src="imagens/pesquisar2.png">
+            <div class="botoes">
+                <div class="pesquisa">
+                    <input oninput="pesquisar(this, 'body')" placeholder="Pesquisar" style="width: 100%;">
+                    <img src="imagens/pesquisar2.png">
+                </div>
+                ${btnExtras || ''}
             </div>
             <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarDados('${base}')">
         </div>
@@ -42,14 +45,14 @@ const modeloTabela = (colunas, base) => {
     </div>
 `}
 
-const mensagem = (mensagem) => `
+const mensagem = (mensagem, imagem) => `
     <div class="mensagem">
-        <img src="gifs/alerta.gif">
+        <img src="gifs/${imagem || 'alerta'}.gif">
         <label>${mensagem}</label>
     </div>
     `
 const btnRodape = (texto, funcao) => `
-    <div class="btnRodape" onclick="${funcao}">${texto}</div>
+    <button class="btnRodape" onclick="${funcao}">${texto}</button>
 `
 const btnPadrao = (texto, funcao) => `
         <span class="btnPadrao" onclick="${funcao}">${texto}</span>
@@ -510,11 +513,15 @@ function esconderMenus() {
 async function telaColaboradores() {
 
     esconderMenus()
+    const btnExtras = `
+        <button onclick="confimacaoZipPdf()">Baixar Folhas em .zip</button> 
+        <button>Enviar por E-mail</button>
+    `
     const nomeBase = 'dados_colaboradores'
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase)}
+        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase, btnExtras)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -692,8 +699,6 @@ async function adicionarPessoa(id) {
             ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
-            ${modelo('Epi’s', '<input name="epi" type="file">')}
-            ${divAnexos('epi')}
             ${modelo('Contrato de Obra', `<input name="contratoObra" type="file">`)}
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
