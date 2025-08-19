@@ -520,7 +520,7 @@ async function telaColaboradores() {
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase, btnExtras)}
+        ${modeloTabela(['Nome Completo', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase, btnExtras)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
@@ -530,6 +530,8 @@ async function telaColaboradores() {
     for (const [id, colaborador] of Object.entries(dados_colaboradores).reverse()) criarLinha(colaborador, id, nomeBase)
 
 }
+
+telaColaboradores()
 
 function criarLinha(dados, id, nomeBase) {
 
@@ -546,13 +548,21 @@ function criarLinha(dados, id, nomeBase) {
     if (nomeBase == 'dados_colaboradores') {
         funcao = `adicionarPessoa('${id}')`
 
+        const especialidades = (dados?.especialidade || [])
+            .map(op => `<span>${op}</span>`)
+            .join('')
+
         tds = `
             ${modelo(dados?.nome || '--')}
             ${modelo(dados?.telefone || '--')}
             ${modelo(dados?.morada || '--')}
             ${modelo(dtFormatada(dados.dataNascimento))}
             ${modelo(dados?.status || '--', true)}
-            ${modelo(dados?.especialidade || '--')}
+            <td>
+                <div style="${vertical}; gap: 2px;">
+                    ${especialidades}
+                </div>
+            </td>
             <td class="detalhes">
                 <img src="imagens/relogio.png" onclick="mostrarFolha('${id}')">
             </td>
@@ -647,13 +657,24 @@ async function adicionarPessoa(id) {
 
     function retornarCaixas(name) {
 
-        const opcoesStatus = listas[name]
-            .map(op => `
+        let opcoesStatus = ''
+        const espc = name == 'especialidade'
+
+        for (const op of listas[name]) {
+            let checked = false
+            if ((espc && colaborador.especialidade.includes(op)) || colaborador?.[name] == op) {
+                checked = true
+            }
+            opcoesStatus += `
             <div class="opcaoStatus">
-                <input ${regras} value="${op}" type="radio" name="${name}" ${colaborador?.[name] == op ? 'checked' : ''}>
+                <input ${regras} value="${op}" 
+                type="${espc ? 'checkbox' : 'radio'}" 
+                name="${name}" 
+                ${checked ? 'checked' : ''}>
                 <span style="text-align: left;">${op}</span>
             </div>
-            `).join('')
+            `
+        }
 
         return `
             <div name="${name}_bloco" style="${vertical}; gap: 5px;">
@@ -718,7 +739,7 @@ async function adicionarPessoa(id) {
                 `)}
             <br>
             <hr style="width: 100%;">
-            ${modelo('PIN de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" name="pin" placeholder="Máximo de 4 números">`)}
+            ${modelo('PIN de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" ${colaborador.pin ? `data-existente="${colaborador.pin}"` : ''} name="pin" placeholder="Máximo de 4 números">`)}
             <hr style="width: 100%;">
             <br>
             
@@ -880,20 +901,34 @@ async function salvarColaborador(idColaborador) {
 
     let colaborador = { ...colaboradorExistente };
 
-    const camposFixos = ['nome', 'dataNascimento', 'email', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte', 'pin'];
+    const camposFixos = ['nome', 'dataNascimento', 'email', 'morada', 'apolice', 'telefone', 'numeroDocumento', 'segurancaSocial', 'obraAlocada', 'numeroContribuinte'];
     for (const campo of camposFixos) colaborador[campo] = obVal(campo);
 
-    const camposRatio = ['status', 'documento', 'especialidade'];
+    const camposRatio = ['status', 'documento'];
     for (const campo of camposRatio) {
         colaborador[campo] = document.querySelector(`input[name="${campo}"]:checked`)?.value || '';
     }
 
-    // Verificação do PIN;
-    const resposta = await colaboradorPin(colaborador.pin)
-    if (resposta?.mensagem !== 'Pin não localizado') {
-        document.querySelector('[name="pin"]').classList.add('invalido')
-        return popup(mensagem('O PIN escolhido já está em uso'), 'Alerta', true)
+    const especialidades = document.querySelectorAll(`input[name="especialidade"]:checked`)
+    colaborador.especialidade = []
+    for (const especialidade of especialidades) {
+        colaborador.especialidade.push(especialidade.value)
     }
+
+    // Verificação do PIN;
+    const inputPin = document.querySelector('[name="pin"]')
+    const pinExistente = inputPin.dataset.existente
+
+    if (pinExistente && pinExistente !== inputPin.value) {
+
+        const resposta = await colaboradorPin(colaborador.pin)
+        if (resposta?.mensagem !== 'Pin não localizado') {
+            inputPin.classList.add('invalido')
+            return popup(mensagem('O PIN escolhido já está em uso'), 'Alerta', true)
+        }
+
+    }
+    colaborador.pin = inputPin.value
 
     const camposAnexos = ['contratoObra', 'exame', 'epi'];
     for (const campo of camposAnexos) {
