@@ -36,6 +36,7 @@
 }
 
 .folha-epi th {
+    font-size: 1.2vw;
     background-color: #5b707f;
     color: white;
     border: solid 1px #222;

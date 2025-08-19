@@ -633,6 +633,7 @@ async function salvarEpi(idColaborador) {
 
     colaborador.epi = epi
 
+    await enviar(`dados_colaboradores/${idColaborador}/epi`, epi)
     await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
     await adicionarPessoa(idColaborador)
 
@@ -772,7 +773,7 @@ async function gerenciarUsuario(id) {
 
 async function adicionarPessoa(id) {
 
-    const colaborador = await recuperarDado('dados_colaboradores', id)
+    const colaborador = await recuperarDado('dados_colaboradores', id) || {}
     const dados_obras = await recuperarDados('dados_obras')
     const dados_distritos = await recuperarDados('dados_distritos')
 
@@ -796,9 +797,12 @@ async function adicionarPessoa(id) {
 
         for (const op of listas[name]) {
             let checked = false
-            if ((espc && colaborador.especialidade.includes(op)) || colaborador?.[name] == op) {
+
+            const especialidades = colaborador?.especialidade || []
+            if ((espc && especialidades.includes(op)) || colaborador?.[name] == op) {
                 checked = true
             }
+
             opcoesStatus += `
             <div class="opcaoStatus">
                 <input ${regras} value="${op}" 
@@ -847,7 +851,7 @@ async function adicionarPessoa(id) {
     if (colaborador.epi) {
 
         let camposEpi = ''
-        for (const [equipamento, dados] of Object.entries(colaborador.epi.equipamentos)) {
+        for (const [equipamento, dados] of Object.entries(colaborador?.epi?.equipamentos || {})) {
             camposEpi += `
                 <div style="${vertical}; gap: 2px;">
                     <span><strong>${equipamento.toUpperCase()}</strong></span>

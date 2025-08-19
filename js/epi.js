@@ -15,7 +15,6 @@ async function abrirEPI(idColaborador) {
     const colaborador = await recuperarDado('dados_colaboradores', idColaborador)
     const equipColaborador = colaborador?.epi?.equipamentos || {}
     const dt = colaborador?.epi?.data || false
-    console.log(equipColaborador);
     const tdG = (el) => `<td style="text-align: center;">${el || ''}</div>`
 
     let equipamentos = ''
