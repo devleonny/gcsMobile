@@ -304,6 +304,11 @@ button {
     background-color: #d2d2d2;
 }
 
+.painelCadastro table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
 .toolbarPopup {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;

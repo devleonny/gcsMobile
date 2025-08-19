@@ -9,7 +9,6 @@ let dados_distritos = {}
 let etapasProvisorias = {}
 let stream;
 const api = `https://leonny.dev.br`
-let obrasAux = {}
 
 const dtFormatada = (data) => {
     if (!data) return '--'
@@ -526,13 +525,51 @@ async function telaColaboradores() {
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
-    obrasAux = await recuperarDados('dados_obras')
     const dados_colaboradores = await recuperarDados(nomeBase)
     for (const [id, colaborador] of Object.entries(dados_colaboradores).reverse()) criarLinha(colaborador, id, nomeBase)
 
 }
 
-function criarLinha(dados, id, nomeBase) {
+function formularioEPI() {
+
+    const opcoes = (ini, fim) => {
+        let stringOpcoes = ''
+        for (let i = ini; i <= fim; i++) stringOpcoes += `<option>${i}</option>`
+        return stringOpcoes
+    }
+
+    const tr = (texto) => `
+        <tr>
+            <td style="text-align: left;">${texto}</td>
+            <td><input type="checkbox"></td>
+            <td><select>${opcoes(1, 10)}</select></td>
+            <td><select>${opcoes(37, 47)}</select></td>
+        </tr>
+    `
+
+    const acumulado = `
+        <div class="painelCadastro">
+
+            <table>
+                <tbody>
+                    ${tr('Botas de segurança com biqueira reforçada')}
+                    ${tr('Capacete de proteção')}
+                    ${tr('Colete fluorescente')}
+                    ${tr('Luvas (par)')}
+                    ${tr('Mascara com filtro de particulas')}
+                    ${tr('Óculos de protecção')}
+                    ${tr('Prodteção auditiva')}
+                </tbory>
+            </table>
+
+            <button>Salvar</button>
+        </div>
+    `
+
+    popup(acumulado, 'Formulário de EPI', true)
+}
+
+async function criarLinha(dados, id, nomeBase) {
 
     const modelo = (texto) => `
         <td>
@@ -551,10 +588,10 @@ function criarLinha(dados, id, nomeBase) {
             .map(op => `<span>• ${op}</span>`)
             .join('')
 
-        const obraAlocada = obrasAux?.[dados.obraAlocada] || false
+        const obraAlocada = await recuperarDado('dados_obras', dados.obraAlocada) || false
         let infoObra = '<span>Sem Obra</span>'
 
-        if (obraAlocada) {
+        if (obraAlocada && dados_distritos[obraAlocada.distrito]) {
             const distrito = dados_distritos[obraAlocada.distrito]
             const cidade = distrito.cidades[obraAlocada.cidade]
 
@@ -718,9 +755,6 @@ async function adicionarPessoa(id) {
         return `<div style="${vertical}">${anexoString}</div>`
     }
 
-    //EPI mecânica
-    let blocoEpi = ''
-
     const acumulado = `
         <div class="painelCadastro">
 
@@ -740,7 +774,11 @@ async function adicionarPessoa(id) {
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
-            ${modelo('Epi’s', blocoEpi)}
+            ${modelo('Epi’s', `
+                
+                <button onclick="formularioEPI()">Registrar EPI's</button>
+                `)}
+            <br>
             ${modelo('Foto do Colaborador', `
                     <div style="${vertical}; gap: 5px;">
                         <img src="imagens/camera.png" class="cam" onclick="abrirCamera()">
