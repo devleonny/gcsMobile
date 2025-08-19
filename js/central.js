@@ -9,6 +9,7 @@ let dados_distritos = {}
 let etapasProvisorias = {}
 let stream;
 const api = `https://leonny.dev.br`
+let obrasAux = {}
 
 const dtFormatada = (data) => {
     if (!data) return '--'
@@ -520,12 +521,12 @@ async function telaColaboradores() {
     titulo.textContent = 'Gerenciar Colaboradores'
     const acumulado = `
         ${btnRodape('Adicionar', 'adicionarPessoa()')}
-        ${modeloTabela(['Nome Completo', 'Telefone', 'Morada', 'Data de Nascimento', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase, btnExtras)}
+        ${modeloTabela(['Nome Completo', 'Telefone', 'Obra Alocada', 'Status', 'Especialidade', 'Folha de Ponto', ''], nomeBase, btnExtras)}
     `
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
-
+    obrasAux = await recuperarDados('dados_obras')
     const dados_colaboradores = await recuperarDados(nomeBase)
     for (const [id, colaborador] of Object.entries(dados_colaboradores).reverse()) criarLinha(colaborador, id, nomeBase)
 
@@ -547,14 +548,31 @@ function criarLinha(dados, id, nomeBase) {
         funcao = `adicionarPessoa('${id}')`
 
         const especialidades = (dados?.especialidade || [])
-            .map(op => `<span>${op}</span>`)
+            .map(op => `<span>• ${op}</span>`)
             .join('')
+
+        const obra = obrasAux?.[dados.obraAlocada] || false
+        let infoObra = '--'
+
+        if (obra && dados_distritos[obra.distrito]) {
+            const distrito = dados_distritos[obra.distrito]
+            const cidade = distrito.cidades[obra.cidade]
+
+            console.log(obra);
+            
+            infoObra = `
+            <div style="${vertical}; gap: 2px;">
+                <span><strong>${obra.cliente}</strong></span>
+                <span>• ${distrito.nome}</span>
+                <span>• ${cidade.nome}</span>
+            </div>
+            `
+        }
 
         tds = `
             ${modelo(dados?.nome || '--')}
             ${modelo(dados?.telefone || '--')}
-            ${modelo(dados?.morada || '--')}
-            ${modelo(dtFormatada(dados.dataNascimento))}
+            <td>${infoObra}</td>
             ${modelo(dados?.status || '--', true)}
             <td>
                 <div style="${vertical}; gap: 2px;">
