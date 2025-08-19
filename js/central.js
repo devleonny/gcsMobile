@@ -530,53 +530,130 @@ async function telaColaboradores() {
 
 }
 
-function formularioEPI() {
+function visibilidade(input, value) {
+    const campos = ['quantidade', 'tamanho']
+    for (const campo of campos) {
+        document.querySelector(`[name="${value}_${campo}"]`).style.display = input.checked ? '' : 'none'
+    }
+}
 
-    const opcoes = (ini, fim) => {
-        let stringOpcoes = ''
-        for (let i = ini; i <= fim; i++) stringOpcoes += `<option>${i}</option>`
+async function formularioEPI(idColaborador) {
+
+    const colaborador = await recuperarDado('dados_colaboradores', idColaborador)
+    const equipamentos = colaborador?.epi?.equipamentos || {}
+
+    const opcoes = (ini, fim, valorAtual) => {
+        let stringOpcoes = '<option></option>'
+        for (let i = ini; i <= fim; i++) stringOpcoes += `<option ${valorAtual == i ? 'selected' : ''}>${i}</option>`
         return stringOpcoes
     }
 
-    const tr = (texto) => `
+    const senhas = (texto, limite) => `
+        <div style="${vertical}; gap: 5px;">
+            <label>${texto}</label>
+            <input type="password" ${limite ? `maxlenght="${limite}" id="pin" data-pin="${colaborador.pin}" placeholder="Limite de ${limite} dígitos"` : 'id="supervisor" placeholder="Senha de acesso ao App"'}>
+        </div>
+    `
+
+    const tr = (texto, value) => {
+
+        const equipamento = equipamentos[value] || false
+        const visibilidade = `style="display: ${equipamento ? '' : 'none'}"`
+        return `
         <tr>
             <td style="text-align: left;">${texto}</td>
-            <td><input type="checkbox"></td>
-            <td><select>${opcoes(1, 10)}</select></td>
-            <td><select>${opcoes(37, 47)}</select></td>
+            <td>
+                <input onchange="visibilidade(this, '${value}')" 
+                type="checkbox" 
+                class="megaInput" 
+                value="${value}" 
+                name="camposEpi"
+                ${equipamentos[value] ? 'checked' : ''}>
+            </td>
+            <td><select ${visibilidade} name="${value}_quantidade">${opcoes(1, 10, equipamento?.quantidade)}</select></td>
+            <td><select ${visibilidade} name="${value}_tamanho">${opcoes(37, 47, equipamento?.tamanho)}</select></td>
         </tr>
-    `
+    `}
+
+    const cab = ['Equipamento', '', 'Quantidade', 'Tamanho']
+        .map(op => `<th>${op}</th>`)
+        .join('')
 
     const acumulado = `
         <div class="painelCadastro">
 
             <table>
+                <thead>${cab}</thead>
                 <tbody>
-                    ${tr('Botas de segurança com biqueira reforçada')}
-                    ${tr('Capacete de proteção')}
-                    ${tr('Colete fluorescente')}
-                    ${tr('Luvas (par)')}
-                    ${tr('Mascara com filtro de particulas')}
-                    ${tr('Óculos de protecção')}
-                    ${tr('Prodteção auditiva')}
+                    ${tr('Botas de segurança com biqueira reforçada', 'botas')}
+                    ${tr('Capacete de proteção', 'capacete')}
+                    ${tr('Colete fluorescente', 'colete')}
+                    ${tr('Luvas (par)', 'luvas')}
+                    ${tr('Mascara com filtro de particulas', 'mascara')}
+                    ${tr('Óculos de protecção', 'oculos')}
+                    ${tr('Proteção auditiva', 'protecaoAuditiva')}
                 </tbory>
             </table>
+            <br>
 
-            <button>Salvar</button>
+            ${senhas('Pin Colaborador', 4)}
+
+            ${senhas('Senha Supervisor')}
+
+            <br>
+            <button onclick="salvarEpi('${idColaborador}')">Inserir</button>
         </div>
     `
 
     popup(acumulado, 'Formulário de EPI', true)
 }
 
-async function criarLinha(dados, id, nomeBase) {
+async function salvarEpi(idColaborador) {
 
-    const modelo = (texto) => `
+    overlayAguarde()
+
+    const pinInput = document.getElementById('pin')
+
+    if (pinInput.dataset.pin !== pinInput.value) return popup(mensagem('Pins não conferem'), 'Alerta', true)
+
+    let colaborador = await recuperarDado('dados_colaboradores', idColaborador)
+    const inputsAtivos = document.querySelectorAll('input[name="camposEpi"]:checked')
+    let epi = {
+        data: new Date().getTime(),
+        equipamentos: {}
+    }
+
+    for (const input of inputsAtivos) {
+        const campo = input.value
+        epi.equipamentos[campo] = {
+            quantidade: Number(document.querySelector(`[name="${campo}_quantidade"]`).value),
+            tamanho: Number(document.querySelector(`[name="${campo}_tamanho"]`).value)
+        }
+    }
+
+    colaborador.epi = epi
+
+    await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
+    await adicionarPessoa(idColaborador)
+
+    removerPopup()
+
+}
+
+async function criarLinha(dados, id, nomeBase) {
+    
+    const modelo = (texto, exclamacao) => {
+
+        const algoPendente = (!dados.epi || !dados.exame || !dados.contrato) ? '<img src="imagens/exclamacao.png">' : ''
+
+        return `
         <td>
-            <div style="${horizontal}; gap: 5px;">
+            <div class="camposTd">
+                ${exclamacao ? algoPendente : ''}
                 <span class="${texto.replace(' ', '_')}">${texto}</span>
             </div>
         </td>`
+    }
 
     let tds = ''
     let funcao = ''
@@ -589,14 +666,14 @@ async function criarLinha(dados, id, nomeBase) {
             .join('')
 
         const obraAlocada = await recuperarDado('dados_obras', dados.obraAlocada) || false
-        let infoObra = '<span>Sem Obra</span>'
 
+        let dadosObra = '<span>Sem Obra</span>'
         if (obraAlocada && dados_distritos[obraAlocada.distrito]) {
             const distrito = dados_distritos[obraAlocada.distrito]
             const cidade = distrito.cidades[obraAlocada.cidade]
 
-            infoObra = `
-            <div style="${vertical}; gap: 2px;">
+            dadosObra = `
+            
                 <span><strong>${obraAlocada.cliente}</strong></span>
                 <span>• ${distrito.nome}</span>
                 <span>• ${cidade.nome}</span>
@@ -604,11 +681,17 @@ async function criarLinha(dados, id, nomeBase) {
             `
         }
 
+        const infoObra = `
+            <div style="${vertical}; gap: 2px;">
+                ${dadosObra}
+            </div>
+        `
+
         tds = `
-            ${modelo(dados?.nome || '--')}
+            ${modelo(dados?.nome || '--', true)}
             ${modelo(dados?.telefone || '--')}
             <td>${infoObra}</td>
-            ${modelo(dados?.status || '--', true)}
+            ${modelo(dados?.status || '--')}
             <td>
                 <div style="${vertical}; gap: 2px;">
                     ${especialidades}
@@ -755,6 +838,39 @@ async function adicionarPessoa(id) {
         return `<div style="${vertical}">${anexoString}</div>`
     }
 
+    // EPI
+    let blocoEPI = `
+    <div style="${vertical}; margin-bottom: 1vw;">
+        <button onclick="formularioEPI('${id}')">Inserir EPI</button>
+    </div>
+    `
+    if (colaborador.epi) {
+
+        let camposEpi = ''
+        for (const [equipamento, dados] of Object.entries(colaborador.epi.equipamentos)) {
+            camposEpi += `
+                <div style="${vertical}; gap: 2px;">
+                    <span><strong>${equipamento.toUpperCase()}</strong></span>
+                    <span>• Quantidade: ${dados.quantidade}</span>
+                    <span>• Tamanho: ${dados.tamanho}</span>
+                </div>
+            `
+        }
+
+        blocoEPI += `
+        <div class="epis">
+            <div style="${horizontal}; justify-content: space-between; width: 100%;">
+                <div style="${vertical}">
+                    ${camposEpi}
+                </div>
+                <img src="imagens/pdf.png" onclick="abrirEPI('${id}')">
+            </div>
+            <hr style="width: 100%;">
+            <span>Inserido em: ${new Date(colaborador.epi.data).toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</span>
+        </div>
+    `
+    }
+
     const acumulado = `
         <div class="painelCadastro">
 
@@ -774,11 +890,12 @@ async function adicionarPessoa(id) {
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
-            ${modelo('Epi’s', `
-                
-                <button onclick="formularioEPI()">Registrar EPI's</button>
-                `)}
+
+            <hr style="width: 100%;">
+            ${modelo('Epi’s', blocoEPI)}
+            <hr style="width: 100%;">
             <br>
+
             ${modelo('Foto do Colaborador', `
                     <div style="${vertical}; gap: 5px;">
                         <img src="imagens/camera.png" class="cam" onclick="abrirCamera()">
@@ -792,9 +909,12 @@ async function adicionarPessoa(id) {
                     </div>
                 `)}
             <br>
-            <hr style="width: 100%;">
-            ${modelo('PIN de Acesso', `<input ${regras} value="${colaborador?.pin || ''}" ${colaborador.pin ? `data-existente="${colaborador.pin}"` : ''} name="pin" placeholder="Máximo de 4 números">`)}
-            <hr style="width: 100%;">
+
+            <div style="${horizontal}; gap: 10px;">
+                ${modelo('PIN de Acesso', `<input ${regras} type="password" value="${colaborador?.pin || ''}" ${colaborador.pin ? `data-existente="${colaborador.pin}"` : ''} name="pin" placeholder="Máximo de 4 números">`)}
+                ${modelo('Repetir PIN', `<input type="password">`)}
+            </div>
+
             <br>
             
             ${btnPadrao('Salvar', `salvarColaborador(${id ? `'${id}'` : ''})`)}
