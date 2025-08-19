@@ -1,3 +1,5 @@
+const { resolve } = require("path")
+
 const tela = document.getElementById('tela')
 const toolbar = document.querySelector('.toolbar')
 const titulo = toolbar.querySelector('span')
@@ -97,7 +99,7 @@ function cadastrar() {
 
 }
 
-function acessoLogin() {
+async function acessoLogin() {
 
     overlayAguarde()
     const divAcesso = document.getElementById('acesso')
@@ -121,38 +123,64 @@ function acessoLogin() {
             }
         }
 
-        const payload = {
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requisicao)
+            })
+            if (!response.ok) {
+                const err = await response.json()
+                throw err
+            }
+
+            const data = await response.json()
+
+            if (data.permissao == 'novo') {
+                popup(mensagem('Alguém do setor de SUPORTE precisa autorizar sua entrada', 'concluido'), 'ALERTA', true)
+            } else if (data.permissao !== 'novo') {
+                localStorage.setItem('acesso', JSON.stringify(data));
+                telaPrincipal()
+                removerOverlay()
+            }
+
+            divAcesso.style.display = 'flex'
+
+        } catch (e) {
+            popup(mensagem(e), 'ALERTA', true);
+        }
+
+    }
+}
+
+async function verificarSupervisor(usuario, senha) {
+    const requisicao = {
+        tipoAcesso: 'login',
+        servidor: 'RECONST',
+        dados: { usuario, senha }
+    }
+
+    try {
+        const response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requisicao)
+        })
+
+        if (!response.ok) {
+            const err = await response.json()
+            throw err
         }
 
-        fetch(url, payload)
+        const data = await response.json()
 
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err; });
-                }
-                return response.json();
-            })
-            .then(data => {
-
-                if (data.permissao == 'novo') {
-                    popup(mensagem('Alguém do setor de SUPORTE precisa autorizar sua entrada!'), 'ALERTA', true)
-                } else if (data.permissao !== 'novo') {
-                    localStorage.setItem('acesso', JSON.stringify(data));
-                    telaPrincipal()
-                    removerOverlay()
-                }
-
-                divAcesso.style.display = 'flex'
-
-            })
-            .catch(data => {
-                popup(mensagem(data.erro), 'ALERTA', true);
-                divAcesso.style.display = 'flex'
-            });
-
+        if (data.permissao) {
+            return 'Senha válida'
+        } else {
+            return 'Senha Supervisão inválida'
+        }
+    } catch (e) {
+        return 'Não foi possível no momento'
     }
 }
 
@@ -525,6 +553,7 @@ async function telaColaboradores() {
     const telaInterna = document.querySelector('.telaInterna')
 
     telaInterna.innerHTML = acumulado
+    dados_distritos = await recuperarDados('dados_distritos')
     const dados_colaboradores = await recuperarDados(nomeBase)
     for (const [id, colaborador] of Object.entries(dados_colaboradores).reverse()) criarLinha(colaborador, id, nomeBase)
 
@@ -633,6 +662,10 @@ async function salvarEpi(idColaborador) {
 
     colaborador.epi = epi
 
+    const senha = document.getElementById('senha')
+
+    //29
+
     await enviar(`dados_colaboradores/${idColaborador}/epi`, epi)
     await inserirDados({ [idColaborador]: colaborador }, 'dados_colaboradores')
     await adicionarPessoa(idColaborador)
@@ -642,7 +675,7 @@ async function salvarEpi(idColaborador) {
 }
 
 async function criarLinha(dados, id, nomeBase) {
-    
+
     const modelo = (texto, exclamacao) => {
 
         const algoPendente = (!dados.epi || !dados.exame || !dados.contrato) ? '<img src="imagens/exclamacao.png">' : ''
@@ -898,7 +931,6 @@ async function adicionarPessoa(id) {
             <hr style="width: 100%;">
             ${modelo('Epi’s', blocoEPI)}
             <hr style="width: 100%;">
-            <br>
 
             ${modelo('Foto do Colaborador', `
                     <div style="${vertical}; gap: 5px;">
@@ -914,10 +946,12 @@ async function adicionarPessoa(id) {
                 `)}
             <br>
 
-            <div style="${horizontal}; gap: 10px;">
+            <div class="painelPin">
                 ${modelo('PIN de Acesso', `<input ${regras} type="password" value="${colaborador?.pin || ''}" ${colaborador.pin ? `data-existente="${colaborador.pin}"` : ''} name="pin" placeholder="Máximo de 4 números">`)}
-                ${modelo('Repetir PIN', `<input type="password">`)}
+                ${modelo('Repetir PIN', `<input ${regras} name="pinEspelho" value="${colaborador?.pin}" type="password" placeholder="Repita o PIN">`)}
+                <button onclick="resetarPin()">Novo Pin</button>
             </div>
+            <div class="rodapeAlerta"></div>
 
             <br>
             
@@ -930,6 +964,11 @@ async function adicionarPessoa(id) {
 
     verificarRegras()
 
+}
+
+function resetarPin() {
+    document.querySelector('[name="pin"]').value = ''
+    document.querySelector('[name="pinEspelho"]').value = ''
 }
 
 async function abrirCamera() {
@@ -972,6 +1011,7 @@ function verificarRegras() {
         'numeroContribuinte': { limite: 9, tipo: 1 },
         'segurancaSocial': { limite: 11, tipo: 1 },
         'pin': { limite: 4, tipo: 1 },
+        'pinEspelho': { limite: 4, tipo: 1 },
         'telefone': { limite: 9, tipo: 1 },
     }
 
@@ -1003,6 +1043,27 @@ function verificarRegras() {
         }
 
         if (!regra.liberado) liberado = false
+    }
+
+    //Pins
+    const pin = document.querySelector('[name="pin"]')
+    const pinEspelho = document.querySelector('[name="pinEspelho"]')
+    const rodapeAlerta = document.querySelector('.rodapeAlerta')
+    const mensagem = (img, msg) => `
+        <div class="rodapeAlerta">
+            <img src="imagens/${img}.png">
+            <span>${msg}</span>
+        </div>
+        `
+
+    if (pin.value !== pinEspelho.value) {
+        rodapeAlerta.innerHTML = mensagem('cancel', 'Os Pins não são iguais')
+        pin.classList.add('invalido')
+        pinEspelho.classList.add('invalido')
+    } else {
+        pin.classList.remove('invalido')
+        pinEspelho.classList.remove('invalido')
+        rodapeAlerta.innerHTML = mensagem('concluido', 'Pins iguais')
     }
 
     //Campos Fixos

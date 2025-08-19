@@ -321,6 +321,17 @@ button {
     padding: 8px;
 }
 
+.rodapeAlerta {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 10px;
+}
+
+.rodapeAlerta img {
+    width: 3vw;
+}
+
 .camposTd {
     display: flex;
     align-items: center;
@@ -329,7 +340,15 @@ button {
 }
 
 .camposTd img {
-    width: 3vw;
+    width: 7vw;
+}
+
+.painelPin {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    flex-direction: column;
+    gap: 10px
 }
 
 .epis {
@@ -345,7 +364,7 @@ button {
 }
 
 .epis img {
-    width: 5vw;
+    width: 15vw;
 }
 
 .megaInput {
@@ -902,6 +921,7 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .atualizar,
+    .epis img,
     .botaoSuperiorLogin img {
         width: 5vw;
     }
@@ -923,6 +943,14 @@ screen and (min-aspect-ratio: 13/9) {
     .botoes {
         align-items: center;
         flex-direction: row;
+    }
+
+    .painelPin {
+        flex-direction: row;
+    }
+
+    .camposTd img {
+        width: 3vw;
     }
 
 }

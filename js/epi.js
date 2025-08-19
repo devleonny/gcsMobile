@@ -29,7 +29,7 @@ async function abrirEPI(idColaborador) {
                 ${tdG(equip?.tamanho || '')}
                 ${tdG()}
                 ${tdG()}
-                ${tdG()}
+                ${tdG(dt ? new Date(dt).toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' }) : '')}
             </tr>
         `
     }
