@@ -515,7 +515,6 @@ async function telaColaboradores() {
     esconderMenus()
     const btnExtras = `
         <button onclick="confimacaoZipPdf()">Baixar Folhas em .zip</button> 
-        <button>Enviar por E-mail</button>
     `
     const nomeBase = 'dados_colaboradores'
     titulo.textContent = 'Gerenciar Colaboradores'
@@ -695,7 +694,7 @@ async function adicionarPessoa(id) {
             ${modelo('E-mail', `<textarea ${regras} name="email" placeholder="E-mail">${colaborador?.email || ''}</textarea>`)}
             ${modelo('Obra Alocada', `<select name="obraAlocada">${opcoesObras}</select>`)}
             ${modelo('Documento', caixaDocumentos)}
-            ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 11 dígitos">`)}
+            ${modelo('Número de Contribuinte', `<input ${regras} value="${colaborador?.numeroContribuinte || ''}" name="numeroContribuinte" placeholder="Máximo de 9 dígitos">`)}
             ${modelo('Segurança Social', `<input ${regras} value="${colaborador?.segurancaSocial || ''}" name="segurancaSocial" placeholder="Máximo de 11 dígitos">`)}
             ${modelo('Especialidade', caixaEspecialidades)}
             ${modelo('Status', caixaStatus)}
@@ -771,7 +770,7 @@ function verificarRegras() {
     let liberado = true
     let limites = {
         'nome': { tipo: 'A' },
-        'numeroContribuinte': { limite: 11, tipo: 1 },
+        'numeroContribuinte': { limite: 9, tipo: 1 },
         'segurancaSocial': { limite: 11, tipo: 1 },
         'pin': { limite: 4, tipo: 1 },
         'telefone': { limite: 9, tipo: 1 },
