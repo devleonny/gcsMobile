@@ -551,18 +551,16 @@ function criarLinha(dados, id, nomeBase) {
             .map(op => `<span>• ${op}</span>`)
             .join('')
 
-        const obra = obrasAux?.[dados.obraAlocada] || false
-        let infoObra = '--'
+        const obraAlocada = obrasAux?.[dados.obraAlocada] || false
+        let infoObra = '<span>Sem Obra</span>'
 
-        if (obra && dados_distritos[obra.distrito]) {
-            const distrito = dados_distritos[obra.distrito]
-            const cidade = distrito.cidades[obra.cidade]
+        if (obraAlocada) {
+            const distrito = dados_distritos[obraAlocada.distrito]
+            const cidade = distrito.cidades[obraAlocada.cidade]
 
-            console.log(obra);
-            
             infoObra = `
             <div style="${vertical}; gap: 2px;">
-                <span><strong>${obra.cliente}</strong></span>
+                <span><strong>${obraAlocada.cliente}</strong></span>
                 <span>• ${distrito.nome}</span>
                 <span>• ${cidade.nome}</span>
             </div>
@@ -720,6 +718,9 @@ async function adicionarPessoa(id) {
         return `<div style="${vertical}">${anexoString}</div>`
     }
 
+    //EPI mecânica
+    let blocoEpi = ''
+
     const acumulado = `
         <div class="painelCadastro">
 
@@ -739,8 +740,7 @@ async function adicionarPessoa(id) {
             ${divAnexos('contratoObra')}
             ${modelo('Exame médico', '<input name="exame" type="file">')}
             ${divAnexos('exame')}
-            ${modelo('Epi’s', '<input name="epi" type="file">')}
-            ${divAnexos('epi')}
+            ${modelo('Epi’s', blocoEpi)}
             ${modelo('Foto do Colaborador', `
                     <div style="${vertical}; gap: 5px;">
                         <img src="imagens/camera.png" class="cam" onclick="abrirCamera()">
