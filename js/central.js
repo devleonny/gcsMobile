@@ -531,8 +531,6 @@ async function telaColaboradores() {
 
 }
 
-telaColaboradores()
-
 function criarLinha(dados, id, nomeBase) {
 
     const modelo = (texto) => `
