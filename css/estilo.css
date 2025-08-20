@@ -24,6 +24,12 @@ html {
     margin: 5px;
 }
 
+.imgFundo {
+    width: 90vw;
+    background-color: #0000005e;
+    border-radius: 5px;
+}
+
 .contornoInterno {
     width: 100%;
     justify-content: start;
@@ -183,7 +189,7 @@ button {
     cursor: pointer;
     background-color: #249f41;
     border-radius: 3px;
-    border: solid 1px #222;
+    border: solid 1px #616161;
     white-space: nowrap;
 }
 
@@ -215,6 +221,8 @@ button {
     gap: 5px;
     padding: 10vw;
     background-color: #d2d2d2;
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
 .painelCadastro table {
@@ -581,6 +589,7 @@ input[type="file"] {
     background-color: #22222246;
     padding: 3px;
     border-radius: 5px;
+    border: solid 1px #616161;
 }
 
 .botaoImg img {

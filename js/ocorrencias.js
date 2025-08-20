@@ -2,9 +2,9 @@ let anexosProvisorios = {}
 let sistemas = {}
 let tipos = {}
 let prioridades = {}
-let dados_empresas = {}
-let correcoes = {}
 let empresas = {}
+let correcoes = {}
+let dados_clientes = {}
 
 const labelBotao = (name, nomebase, id, nome) => {
 
@@ -143,7 +143,7 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
                     ${modeloCampos('Dt Limt Execução', dtAuxOcorrencia(ocorrencia?.dataLimiteExecucao))}
                     ${modeloCampos('Número', idOcorrencia)}
                     ${modeloCampos('Tipo', tipos?.[ocorrencia?.tipo]?.nome || '...')}
-                    ${modeloCampos('Und Manutenção', dados_empresas?.[ocorrencia?.unidade]?.nome || '...')}
+                    ${modeloCampos('Und Manutenção', dados_clientes?.[ocorrencia?.unidade]?.nome || '...')}
                     ${modeloCampos('Sistema', sistemas?.[ocorrencia?.sistema]?.nome || '...')}
                     ${modeloCampos('Prioridade', prioridades?.[ocorrencia?.prioridade]?.nome || '...')}
                     ${modeloCampos('Descrição ', ocorrencia?.descricao || '...')}
@@ -178,8 +178,8 @@ async function telaOcorrencias() {
     sistemas = await recuperarDados('sistemas')
     tipos = await recuperarDados('tipos')
     prioridades = await recuperarDados('prioridades')
-    dados_empresas = await recuperarDados('dados_empresas')
     correcoes = await recuperarDados('correcoes')
+    dados_clientes = await recuperarDados('dados_clientes')
 
     titulo.textContent = empresas[acesso.empresa].nome
 
@@ -231,7 +231,7 @@ async function atualizarOcorrencias() {
     const resposta = await baixarOcorrencias()
     await sincronizarSetores()
     await inserirDados(resposta.ocorrencias, 'dados_ocorrencias', resposta.resetar)
-    await inserirDados(resposta.clientes, 'dados_empresas', resposta.resetar)
+    await inserirDados(resposta.clientes, 'dados_clientes', resposta.resetar)
     titulo.textContent = resposta.empresa
     acesso = await recuperarDado('lista_setores', acesso.usuario)
 
@@ -293,24 +293,18 @@ async function telaEquipamentos() {
 async function formularioOcorrencia(idOcorrencia) {
 
     const oc = idOcorrencia ? await recuperarDado('dados_ocorrencias', idOcorrencia) : {}
-    const cliente = await recuperarDado('dados_clientes', oc.unidade)
-    const solicitante = await recuperarDado('dados_setores', oc.usuario)
-    const sistema = await recuperarDados('sistemas', oc.sistema)
-    const prioridade = await recuperarDado('prioridades', oc.prioridade)
-    const tipo = await recuperarDado('tipos', oc.tipo)
-
     const funcao = idOcorrencia ? `salvarOcorrencia('${idOcorrencia}')` : 'salvarOcorrencia()'
 
     const acumulado = `
         <div class="painelCadastro">
 
-            ${modelo('Unidade de Manutenção', labelBotao('unidade', 'dados_clientes', oc?.unidade, cliente?.nome))}
-            ${modelo('Sistema', labelBotao('sistema', 'sistemas', oc?.sistema, sistema?.nome))}
-            ${modelo('Prioridade', labelBotao('prioridade', 'prioridades', oc?.prioridade, prioridade?.nome))}
-            ${modelo('Tipo', labelBotao('tipo', 'tipos', oc?.tipo, tipo?.nome))}
-            ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', oc?.solicitante, solicitante?.nome_completo))}
+            ${modelo('Unidade de Manutenção', labelBotao('unidade', 'dados_clientes', oc?.unidade, dados_clientes[oc?.unidade]?.nome))}
+            ${modelo('Sistema', labelBotao('sistema', 'sistemas', oc?.sistema, sistemas[oc?.sistema]?.nome))}
+            ${modelo('Prioridade', labelBotao('prioridade', 'prioridades', oc?.prioridade, prioridades[oc?.prioridade]?.nome))}
+            ${modelo('Tipo', labelBotao('tipo', 'tipos', oc?.tipo, tipos[oc?.tipo]?.nome))}
+            ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', oc?.solicitante, dados_setores[oc?.solicitante]?.nome_completo))}
             ${modelo('Descrição', `<textarea rows="7" style="width: 100%;" name="descricao" class="campos">${oc?.descricao || ''}</textarea>`)}
-            ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores'))}
+            ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', oc?.executor, dados_setores[oc?.executor]?.nome_completo))}
             ${modelo('Data / Hora', `<label class="campos">${new Date().toLocaleString('pt-BR')}</label>`)}
             ${modelo('Data Limite para a Execução', `<input name="dataLimiteExecucao" class="campos" type="date" value="${oc?.dataLimiteExecucao || ''}">`)}
             ${modelo('Anexos', `
@@ -329,13 +323,159 @@ async function formularioOcorrencia(idOcorrencia) {
                 ${await gerarCorrecoes(idOcorrencia, oc.correcoes, true)}`
             : ''}
 
-            <button onclick="${funcao}">Salvar</button>
+        </div>
+        <div style="${horizontal}; justify-content: start; background-color: #a0a0a0ff; padding: 5px; gap: 1vw;">
+            ${botao('Salvar', funcao)}
         </div>
    `
 
     popup(acumulado, 'Gerenciar ocorrência')
 
     carregarRoteiro(idOcorrencia, Object.keys(oc?.correcoes || {})[0])
+
+}
+
+async function formularioCorrecao(idOcorrencia, idCorrecao) {
+
+    const dados_setores = await recuperarDados('dados_setores')
+    const ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+    const correcoes = await recuperarDados('correcoes')
+    const correcao = ocorrencia?.correcoes?.[idCorrecao] || {}
+    const funcao = idCorrecao ? `salvarCorrecao('${idOcorrencia}', '${idCorrecao}')` : `salvarCorrecao('${idOcorrencia}')`
+
+    let equipamentos = ''
+    for (const [id, equip] of Object.entries(correcao?.equipamentos || {})) equipamentos += await maisLabel(equip)
+
+    const acumulado = `
+        <div class="painelCadastro">
+
+            ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcoes?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}
+            ${modelo('Data/Hora', `
+                    <input name="dataInicio" class="campos" type="date" value="${correcao?.dataInicio || ''}">
+                    <input name="horaInicio" class="campos" type="time" value="${correcao?.horaInicio || ''}">
+                `)}
+            ${modelo('Término', `
+                    <input name="dataTermino" class="campos" type="date" value="${correcao?.dataTermino || ''}">
+                    <input name="horaTermino" class="campos" type="time" value="${correcao?.horaTermino || ''}">
+                `)}
+        
+            ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', correcao?.solicitante, dados_setores[correcao?.solicitante]?.nome_completo))}
+            ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', correcao?.executor, dados_setores[correcao?.executor]?.nome_completo))}
+            ${modelo('Descrição', `<textarea name="descricao" rows="7" class="campos">${correcao?.descricao || ''}</textarea>`)}
+
+            <div style="${horizontal}; gap: 5px;">
+                <label>Equipamentos usados</label>
+                <img src="imagens/baixar.png" style="width: 1.5vw; cursor: pointer;" onclick="maisLabel()">
+            </div>
+            
+            <div style="${vertical}; gap: 2px;" id="equipamentos">
+                ${equipamentos}
+            </div>
+
+            ${modelo('Anexos', `
+                    <label class="campos">
+                        Clique aqui
+                        <input type="file" style="display: none;" onchange="anexosOcorrencias(this, '${idOcorrencia}', '${idCorrecao ? idCorrecao : 'novo'}')">
+                    </label>
+                `)}
+            <div id="anexos" style="${vertical};">
+                ${Object.entries(correcao?.anexos || {}).map(([idAnexo, anexo]) => criarAnexoVisual(anexo.nome, anexo.link, `removerAnexo(this, '${idAnexo}', '${idOcorrencia}', '${idCorrecao}')`)).join('')}
+            </div>
+
+        </div>
+        <div style="${horizontal}; justify-content: start; background-color: #a0a0a0ff; padding: 5px; gap: 1vw;">
+            ${botao('Salvar', funcao)}
+        </div>
+   `
+
+    popup(acumulado, 'CORREÇÃO')
+
+}
+
+async function maisLabel({ codigo, quantidade, unidade } = {}) {
+
+    let div = document.getElementById('equipamentos')
+    const opcoes = ['UND', 'METRO', 'CX'].map(op => `<option ${unidade == op ? `selected` : ''}>${op}</option>`).join('')
+    const temporario = ID5digitos()
+    let nome = 'Clique aqui'
+    if (codigo) {
+        const produto = await recuperarDado('equipamentos', codigo)
+        nome = produto.descricao
+    }
+
+    const label = `
+        <div style="${horizontal}; gap: 5px; width: 100%;">
+            <input class="campos" type="number" placeholder="quantidade" value="${quantidade || ''}">
+            <select class="campos">${opcoes}</select>
+            <label class="campos" name="${temporario}" ${codigo ? `id="${codigo}"` : ''} onclick="caixaOpcoes('${temporario}', 'equipamentos')">${nome}</label>
+            <img src="imagens/cancel.png" style="width: 1.5vw; cursor: pointer;" onclick="this.parentElement.remove()">
+        </div> 
+    `
+    if (codigo) return label
+
+    div.insertAdjacentHTML('beforeend', label)
+}
+
+async function salvarCorrecao(idOcorrencia, idCorrecao) {
+
+    overlayAguarde()
+
+    if (!idCorrecao) idCorrecao = ID5digitos()
+
+    let ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+
+    if (!ocorrencia.correcoes) ocorrencia.correcoes = {}
+
+    if (!ocorrencia.correcoes[idCorrecao]) ocorrencia.correcoes[idCorrecao] = {}
+
+    let correcao = ocorrencia.correcoes[idCorrecao]
+
+    Object.assign(correcao, {
+        solicitante: obter('solicitante', 'id'),
+        executor: obter('executor', 'id'),
+        tipoCorrecao: obter('tipoCorrecao', 'id'),
+        usuario: acesso.usuario,
+        dataInicio: obter('dataInicio', 'value'),
+        horaInicio: obter('horaInicio', 'value'),
+        dataTermino: obter('dataTermino', 'value'),
+        horaTermino: obter('horaTermino', 'value'),
+        dataRegistro: new Date().toLocaleString('pt-BR'),
+        descricao: obter('descricao', 'value')
+    })
+
+    correcao.anexos = {
+        ...correcao.anexos,
+        ...anexosProvisorios
+    }
+
+    const equipamentos = document.getElementById('equipamentos')
+
+    if (equipamentos) {
+
+        const divs = equipamentos.querySelectorAll('div')
+        correcao.equipamentos = {}
+
+        for (const div of divs) {
+
+            const campos = div.querySelectorAll('.campos')
+            const idEquip = ID5digitos()
+            correcao.equipamentos[idEquip] = {
+                quantidade: Number(campos[0].value),
+                unidade: campos[1].value,
+                codigo: campos[2].id
+            }
+        }
+    }
+
+    ocorrencia.tipoCorrecao = correcao.tipoCorrecao // Atualiza no objeto principal também;
+
+    await enviar(`dados_ocorrencias/${idOcorrencia}/correcoes/${idCorrecao}`, correcao)
+    await enviar(`dados_ocorrencias/${idOcorrencia}/tipoCorrecao`, correcao.tipoCorrecao)
+    await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+    await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+
+    anexosProvisorios = {}
+    removerPopup()
 
 }
 

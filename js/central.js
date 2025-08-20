@@ -310,34 +310,33 @@ async function telaPrincipal() {
     toolbar.style.display = 'flex'
     acesso = JSON.parse(localStorage.getItem('acesso'))
     const acumulado = `
+        <div class="menu-container">
 
-    <div class="menu-container">
+            <div class="side-menu" id="sideMenu">
 
-        <div class="side-menu" id="sideMenu">
+                <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
 
-            <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
+                <div style="${vertical}; justify-content: space-between; height: 100%;">
+                    
+                    <div class="botoesMenu">
 
-            <div style="${vertical}; justify-content: space-between; height: 100%;">
-                
-                <div class="botoesMenu">
+                        ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
+                        ${btn('kanban', 'Dashboard', 'telaColaboradores()')}
+                        ${btn('empresa', 'Unidades', 'telaUnidades()')}
+                        ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
+                        ${btn('perfil', 'Usuários', 'telaUsuarios()')}
+                        ${btn('ajustar', 'Cadastros', 'telaCadastros()')}
+                        ${btn('sair', 'Desconectar', 'deslogar()')}
 
-                    ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
-                    ${btn('kanban', 'Dashboard', 'telaColaboradores()')}
-                    ${btn('empresa', 'Unidades', 'telaUnidades()')}
-                    ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
-                    ${btn('perfil', 'Usuários', 'telaUsuarios()')}
-                    ${btn('ajustar', 'Cadastros', 'telaCadastros()')}
-                    ${btn('sair', 'Desconectar', 'deslogar()')}
+                    </div>
 
                 </div>
+            </div>
 
+            <div class="telaInterna">
+                <img src="imagens/BG.png" class="imgFundo">
             </div>
         </div>
-
-        <div class="telaInterna">
-            <img src="imagens/BG.png">
-        </div>
-    </div>
     `
 
     tela.innerHTML = acumulado
