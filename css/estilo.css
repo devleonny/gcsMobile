@@ -11,31 +11,6 @@ html {
     flex-direction: column;
 }
 
-.foto {
-    border-radius: 5px;
-    width: 100%;
-}
-
-.cam {
-    width: 7vw;
-}
-
-.cameraDiv {
-    display: none;
-    justify-content: start;
-    align-items: start;
-    flex-direction: column;
-    gap: 2px
-}
-
-.fundoImagens {
-    height: max-content;
-    max-height: 70vh;
-    overflow-y: auto;
-    background-color: #d2d2d2;
-    padding: 2vw;
-}
-
 .contornoAnexos {
     display: flex;
     align-items: center;
@@ -80,75 +55,11 @@ span {
     right: 5px;
 }
 
-.telaOffline {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100vw;
-    height: 60vh;
-}
-
 .invalido {
     padding: 1vw;
     border: solid 1px red;
     border-radius: 5px;
     background-color: #f7c5c5;
-}
-
-.Não_Ativo {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px red;
-    border-radius: 5px;
-    background-color: #f7c5c5;
-}
-
-.Finalizado {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px green;
-    border-radius: 5px;
-    background-color: #ade9ad;
-}
-
-.Em_Andamento {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px #ff9100;
-    border-radius: 5px;
-    background-color: #ffeacf;
-}
-
-.Por_Iniciar {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px red;
-    border-radius: 5px;
-    background-color: #f7c5c5;
-}
-
-.Ativo {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px green;
-    border-radius: 5px;
-    background-color: #ade9ad;
-}
-
-.Baixa_Médica {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px #0011ac;
-    border-radius: 5px;
-    background-color: #d2d7ff;
-}
-
-.Impedido {
-    padding-left: 1vw;
-    padding-right: 1vw;
-    border: solid 1px #ff9100;
-    border-radius: 5px;
-    background-color: #ffeacf;
 }
 
 .mensagemTela {
@@ -160,10 +71,6 @@ span {
     background-color: white;
     padding: 2vw;
     border-radius: 3px;
-}
-
-.dino {
-    width: 30vw;
 }
 
 .botoes {
@@ -265,7 +172,7 @@ input:focus {
 }
 
 button {
-    padding: 10px 20px;
+    padding: 1vw 2vw;
     color: white;
     cursor: pointer;
     background-color: #249f41;
@@ -341,30 +248,6 @@ button {
 
 .camposTd img {
     width: 7vw;
-}
-
-.painelPin {
-    display: flex;
-    justify-content: center;
-    align-items: end;
-    flex-direction: column;
-    gap: 10px
-}
-
-.epis {
-    background-color: white;
-    display: flex;
-    align-items: start;
-    justify-content: start;
-    flex-direction: column;
-    gap: 2px;
-    border-radius: 3px;
-    padding: 1vw;
-    border: solid 1px #222;
-}
-
-.epis img {
-    width: 15vw;
 }
 
 .megaInput {
@@ -609,58 +492,10 @@ input[type="file"] {
     overflow: hidden;
 }
 
-.caixa {
-    position: absolute;
-    background-color: white;
-    padding: 2vw;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    z-index: 200;
-}
-
-.caixa span {
-    font-size: 1.8vw;
-}
-
-.acompanhamento {
-    border-radius: 3px;
-    padding: 2vw;
-    background-color: white;
-    height: 80vh;
-    color: #222;
-    overflow-y: auto;
-    padding-bottom: 50vh;
-    box-shadow: 0px 0px 3px #222;
-}
-
-.edicao {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-
-.edicao img {
-    width: 7vw;
-}
-
 .btnAcmp {
     border-radius: 5px;
     padding: 3px;
     background-color: #dbdbdb;
-}
-
-.alteracaoNomeObra {
-    display: none;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-
-.alteracaoNomeObra img {
-    width: 4vw;
 }
 
 .aviso {
@@ -733,6 +568,19 @@ input[type="file"] {
     color: white;
 }
 
+.botaoImg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #22222246;
+    padding: 3px;
+    border-radius: 5px;
+}
+
+.botaoImg img {
+    width: 3vw;
+}
+
 .menu-btn {
     background: none;
     border: none;
@@ -754,26 +602,12 @@ input[type="file"] {
     width: 10vw;
 }
 
-.painel-1-tarefas {
-    display: grid;
-    gap: 2vw;
-    margin-bottom: 20px;
-}
-
-
-.tabTarefas td {
-    padding: 8px;
-    border: solid 1px #a7a7a7;
-}
-
-.tabTarefas table {
-    display: table-row;
-    min-width: max-content;
-    border-collapse: collapse;
-}
-
-.tabTarefas span {
-    font-size: 4vw;
+.painel-superior-cadastros {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 1vw;
 }
 
 @media screen and (orientation: landscape),

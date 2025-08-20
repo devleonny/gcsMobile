@@ -1,0 +1,75 @@
+.img-logo-td {
+    width: 20vw;
+}
+
+.tabela1 {
+    width: 100%;
+    border-collapse: collapse;
+    color: #222;
+}
+
+.tabela1 td {
+    border: solid 1px #222;
+    width: 50%;
+    text-align: center;
+    font-size: 1.2vw;
+}
+
+.fechar {
+    cursor: pointer;
+    color: #444444;
+    float: right;
+    font-size: 3vw;
+    font-weight: bold;
+}
+
+.fechar:hover {
+    color: red;
+}
+
+.campos {
+    font-size: 1.5vw;
+    text-align: left;
+    cursor: pointer;
+    padding: 5px;
+    max-width: 20vw;
+    background-color: #b5b5b5;
+    border-radius: 5px;
+}
+
+.campos:hover {
+    background-color: #249f41;
+    color: white;
+}
+
+.atalhos {
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    gap: 1px;
+    cursor: pointer;
+    background-color: #c7c7c7ff;
+    padding: 3px;
+}
+
+.atalhos label {
+    margin-left: 2vw;
+}
+
+.atalhos:hover {
+    color: white;
+    background-color: #323940;
+}
+
+.gavetaOpcoes {
+    gap: 5px;
+    background-color: #d2d2d2;
+    width: 100%;
+    max-height: 40vh;
+    height: max-content;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
