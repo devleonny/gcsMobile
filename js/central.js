@@ -9,7 +9,7 @@ let acesso = {}
 let app = 'clone'
 const api = `https://api.gcs.app.br`
 const esquemaLinhas = {
-    'dados_clientes': ['cnpj', 'cidade', 'nome'],
+    'dados_clientes': ['nome', 'cnpj', 'cidade'],
     'dados_composicoes': ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'],
     'dados_setores': ['nome_completo', 'usuario', 'setor', 'permissao'],
     default: ['nome']
@@ -495,16 +495,16 @@ function telaLogin() {
         
         <div id="acesso" class="loginBloco">
 
-            <div class="botaoSuperiorLogin" onclick="telaRegistroPonto()">
-                <img src="imagens/relogio.png">
-                <span>Registo de Ponto</span>
+            <div class="botaoSuperiorLogin">
+                <span>Painel de acesso ao GCS</span>
             </div>
 
             <div class="baixoLogin">
 
                 <br>
-                <img src="imagens/acesso.png" class="cadeado">
 
+                <img src="imagens/GrupoCostaSilva.png" class="cadeado">
+                
                 <div style="padding: 20px; display: flex; flex-direction: column; align-items: start; justify-content: center;">
 
                     <label>Usuário</label>
@@ -545,7 +545,7 @@ async function inserirDados(dados, nomeBase, resetar) {
             db.close();
             resolve(precisaCriar ? versaoAtual + 1 : versaoAtual);
         };
-        req.onerror = (e) => reject(e.target.mensagemr);
+        req.onerror = (e) => reject(e.target.mensagem);
     });
 
     const db = await new Promise((resolve, reject) => {
@@ -557,7 +557,7 @@ async function inserirDados(dados, nomeBase, resetar) {
             }
         };
         req.onsuccess = () => resolve(req.result);
-        req.onerror = (e) => reject(e.target.mensagemr);
+        req.onerror = (e) => reject(e.target.mensagem);
     });
 
     const tx = db.transaction(nomeStore, 'readwrite');
@@ -570,7 +570,7 @@ async function inserirDados(dados, nomeBase, resetar) {
         const antigo = await new Promise((resolve, reject) => {
             const req = store.get(nomeBase);
             req.onsuccess = () => resolve(req.result?.dados || {});
-            req.onerror = (e) => reject(e.target.mensagemr);
+            req.onerror = (e) => reject(e.target.mensagem);
         });
 
         dadosMesclados = { ...antigo, ...dados };
@@ -599,7 +599,7 @@ async function recuperarDados(nomeBase) {
         const db = await new Promise((resolve, reject) => {
             const request = indexedDB.open(nomeBaseCentral);
             request.onsuccess = () => resolve(request.result);
-            request.onerror = (e) => reject(e.target.mensagemr);
+            request.onerror = (e) => reject(e.target.mensagem);
         });
 
         if (!db.objectStoreNames.contains(nomeStore)) {
@@ -612,7 +612,7 @@ async function recuperarDados(nomeBase) {
         const item = await new Promise((resolve, reject) => {
             const req = store.get(base);
             req.onsuccess = () => resolve(req.result);
-            req.onerror = (e) => reject(e.target.mensagemr);
+            req.onerror = (e) => reject(e.target.mensagem);
         });
 
         db.close();
@@ -628,7 +628,7 @@ async function recuperarDado(nomeBase, id) {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(nomeBaseCentral);
             request.onsuccess = () => resolve(request.result);
-            request.onerror = (e) => reject(e.target.mensagemr);
+            request.onerror = (e) => reject(e.target.mensagem);
         });
     };
 
@@ -641,7 +641,7 @@ async function recuperarDado(nomeBase, id) {
         const registro = await new Promise((resolve, reject) => {
             const req = store.get(base);
             req.onsuccess = () => resolve(req.result);
-            req.onerror = (e) => reject(e.target.mensagemr);
+            req.onerror = (e) => reject(e.target.mensagem);
         });
 
         return registro?.dados?.[id] || null;
@@ -672,7 +672,7 @@ function enviar(caminho, info) {
         })
             .then(data => resolve(data))
             .catch((erro) => {
-                console.mensagemr(erro);
+                console.mensagem(erro);
                 salvar_offline(objeto, 'enviar');
                 resolve();
             });
@@ -772,7 +772,7 @@ async function configuracoes(usuario, campo, valor) {
                 resolve(data);
             })
             .catch(err => {
-                console.mensagemr(err)
+                console.mensagem(err)
                 reject()
             });
     })
@@ -791,6 +791,9 @@ async function sincronizarSetores() {
 
     await inserirDados(nuvem, 'dados_setores')
     dados_setores = await recuperarDados('dados_setores')
+
+    acesso = dados_setores[acesso.usuario]
+    localStorage.setItem('acesso', JSON.stringify(acesso))
 
 }
 
@@ -947,7 +950,7 @@ async function cxOpcoes(name, nomeBase, funcaoAux) {
             <div name="camposOpcoes" class="atalhos" onclick="selecionar('${name}', '${cod}', '${dado[campos[0]]}' ${funcaoAux ? `, '${funcaoAux}'` : ''})">
                 ${labels}
             </div>`
-    }//29
+    }
 
     const acumulado = `
         <div style="${horizontal}; justify-content: left; background-color: #b1b1b1;">
@@ -961,6 +964,7 @@ async function cxOpcoes(name, nomeBase, funcaoAux) {
         <div class="gavetaOpcoes">
             ${opcoesDiv}
         </div>
+        <div class="rodapeTabela"></div>
     `
 
     popup(acumulado, 'Selecione o item', true)
@@ -1011,4 +1015,14 @@ async function mobi7({ base, usuarioMobi7, dtInicial, dtFinal }) {
             .catch(error => reject(error));
 
     })
+}
+
+function inicialMaiuscula(string) {
+    if (string == undefined) {
+        return ''
+    }
+    string.includes('_') ? string = string.split('_').join(' ') : ''
+
+    if (string.includes('lpu')) return string.toUpperCase()
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }

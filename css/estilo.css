@@ -107,9 +107,14 @@ span {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #b8b8b8;
+    background-color: #B12425;
     padding: 1vw;
     gap: 3vw;
+}
+
+.botaoSuperiorLogin span {
+    font-size: 2vw;
+    color: white;
 }
 
 .botaoSuperiorLogin img {
@@ -156,6 +161,7 @@ select {
 
 input,
 textarea {
+    background-color: #f0efef;
     display: block;
     padding: 1vw;
     margin: 1vw 0;
@@ -715,8 +721,7 @@ screen and (min-aspect-ratio: 13/9) {
         width: 3vw;
     }
 
-    .mensagem img,
-    .cadeado {
+    .mensagem img {
         width: 7vw;
     }
 
@@ -754,11 +759,10 @@ screen and (min-aspect-ratio: 13/9) {
         padding: 5vw;
     }
 
-    .atualizar,
-    .epis img,
-    .botaoSuperiorLogin img {
+    .atualizar {
         width: 5vw;
     }
+
 
     .olho,
     .edicao img,
