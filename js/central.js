@@ -11,7 +11,7 @@ const api = `https://api.gcs.app.br`
 const esquemaLinhas = {
     'dados_clientes': ['nome', 'cnpj', 'cidade'],
     'dados_composicoes': ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'],
-    'dados_setores': ['nome_completo', 'usuario', 'setor', 'permissao'],
+    'dados_setores': ['nome_completo', 'setor', 'permissao'],
     default: ['nome']
 }
 const modelo = (valor1, valor2) => `
@@ -485,7 +485,7 @@ function unicoID() {
 
 function telaLogin() {
 
-    const acesso = JSON.parse(localStorage.getItem('acesso'))
+    acesso = JSON.parse(localStorage.getItem('acesso'))
     if (acesso) return telaPrincipal()
 
     toolbar.style.display = 'none'

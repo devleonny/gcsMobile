@@ -25,7 +25,7 @@ html {
 }
 
 .imgFundo {
-    width: 90vw;
+    width: 60vw;
     background-color: #0000005e;
     border-radius: 5px;
 }
@@ -84,8 +84,8 @@ span {
     align-items: start;
     justify-content: start;
     flex-direction: column;
-    padding: 1vw;
-    gap: 1vw;
+    padding: 5px;
+    gap: 5px;
 }
 
 .botoesMenu {
@@ -316,16 +316,16 @@ button {
 
 .recorteTabela {
     height: max-content;
-    max-height: 70vh;
+    max-height: 90vh;
     max-width: 80vw;
     overflow: auto;
 }
 
 .tabela {
-    min-width: max-content;
-    width: 90vw;
+    width: 70vw;
     background-color: white;
     border-collapse: collapse;
+    font-size: 5vw;
 }
 
 .tabela thead input {
@@ -335,7 +335,6 @@ button {
 .tabela th {
     border: solid 1px #d2d2d2;
     color: #222;
-    font-size: 5vw;
     padding: 8px;
 }
 
@@ -343,6 +342,11 @@ button {
     text-align: center;
     padding: 3px;
     border: 1px solid #d2d2d2;
+}
+
+.tabela span {
+    margin-left: 10px;
+    text-align: left;
 }
 
 .tabela thead {

@@ -5,23 +5,23 @@
 }
 
 .tabela1 {
-    width: 90vw;
+    max-width: 90vw;
     height: max-content;
-    max-height: 70vh;
+    max-height: 60vh;
     overflow: auto;
 }
 
 .tabela1 table {
-    width: 100%;
+    min-width: 70vw;
+    width: max-content;
     border-collapse: collapse;
     color: #222;
 }
 
 .tabela1 td {
     border: solid 1px #222;
-    width: 50%;
     text-align: center;
-    font-size: 1.2vw;
+    font-size: 3vw;
 }
 
 .fechar {
@@ -89,6 +89,9 @@
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
+    .tabela1 td {
+        font-size: 1.2vw;
+    }
 
 
 }
