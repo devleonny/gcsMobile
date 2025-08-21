@@ -51,10 +51,12 @@ async function telaCadastros() {
     const telaInterna = document.querySelector('.telaInterna')
     const bases = ['empresas', 'tipos', 'sistemas', 'prioridades', 'correcoes']
     const acumulado = `
-        <div class="painel-superior-cadastros">
-            ${bases.map(base => `<button onclick="carregarBasesAuxiliares('${base}')">${inicialMaiuscula(base)}</button>`).join('')}
+        <div class="painel-cadastro">
+            <div class="painel-superior-cadastros">
+                ${bases.map(base => `<button onclick="carregarBasesAuxiliares('${base}')">${inicialMaiuscula(base)}</button>`).join('')}
+            </div>
+            <div class="telaInferior"></div>
         </div>
-        <div class="telaInferior"></div>
     `
 
     telaInterna.innerHTML = acumulado

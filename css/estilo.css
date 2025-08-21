@@ -321,6 +321,7 @@ button {
 }
 
 .blocoTabela {
+    width: 90vw;
     display: flex;
     align-items: start;
     justify-content: start;
@@ -328,9 +329,9 @@ button {
 }
 
 .recorteTabela {
+    width: 100%;
     height: max-content;
-    max-height: 80vh;
-    max-width: 80vw;
+    max-height: 70vh;
     overflow: auto;
 }
 
@@ -779,7 +780,6 @@ screen and (min-aspect-ratio: 13/9) {
 
     .recorteTabela {
         max-height: 50vh;
-        max-width: 90vw;
     }
 
     .aguarde img,

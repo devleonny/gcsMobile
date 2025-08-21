@@ -31,6 +31,11 @@ const botaoImg = (img, funcao) => `
         <img src="imagens/${img}.png" onclick="${funcao}">
     </div>
 `
+const teste = (el) => `
+<div style="background-color: #d2d2d2;">
+    ${el}
+</div>
+`
 const dtFormatada = (data) => {
     if (!data) return '--'
     const [ano, mes, dia] = data.split('-')
@@ -83,6 +88,7 @@ const btn = (img, valor, funcao) => `
         <div>${valor}</div>
     </div>
 `
+
 telaLogin()
 
 function exibirSenha(img) {
@@ -363,7 +369,7 @@ async function telaUsuarios() {
 
     esconderMenus()
     titulo.textContent = 'Usuários'
-    const colunas = ['Nome', 'Usuário', 'Setor', 'Permissão', '']
+    const colunas = ['Nome', 'Setor', 'Permissão', '']
     await carregarElementosPagina('dados_setores', colunas)
 
 }
@@ -439,7 +445,7 @@ async function atualizarDados(base) {
     await sincronizarDados(base)
 
     const dados = await recuperarDados(base)
-    for (const [id, objeto] of Object.entries(dados).reverse()) criarLinha(objeto, id)
+    for (const [id, objeto] of Object.entries(dados).reverse()) criarLinha(objeto, id, base)
     removerOverlay()
 
 }
@@ -549,6 +555,7 @@ function telaLogin() {
 async function inserirDados(dados, nomeBase, resetar) {
 
     const versao = await new Promise((resolve, reject) => {
+
         const req = indexedDB.open(nomeBaseCentral);
         req.onsuccess = () => {
             const db = req.result;
@@ -557,7 +564,9 @@ async function inserirDados(dados, nomeBase, resetar) {
             db.close();
             resolve(precisaCriar ? versaoAtual + 1 : versaoAtual);
         };
-        req.onerror = (e) => reject(e.target.mensagem);
+        req.onerror = (e) => {
+            reject(e.target.error);
+        };
     });
 
     const db = await new Promise((resolve, reject) => {
@@ -568,8 +577,12 @@ async function inserirDados(dados, nomeBase, resetar) {
                 db.createObjectStore(nomeStore, { keyPath: 'id' });
             }
         };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = (e) => reject(e.target.mensagem);
+        req.onsuccess = () => {
+            resolve(req.result);
+        };
+        req.onerror = (e) => {
+            reject(e.target.error);
+        };
     });
 
     const tx = db.transaction(nomeStore, 'readwrite');
@@ -578,15 +591,17 @@ async function inserirDados(dados, nomeBase, resetar) {
     let dadosMesclados = {}
 
     if (!resetar) {
-
         const antigo = await new Promise((resolve, reject) => {
             const req = store.get(nomeBase);
-            req.onsuccess = () => resolve(req.result?.dados || {});
-            req.onerror = (e) => reject(e.target.mensagem);
+            req.onsuccess = () => {
+                resolve(req.result?.dados || {});
+            };
+            req.onerror = (e) => {
+                reject(e.target.error);
+            };
         });
 
         dadosMesclados = { ...antigo, ...dados };
-
     } else {
         dadosMesclados = dados
     }
@@ -598,8 +613,12 @@ async function inserirDados(dados, nomeBase, resetar) {
     await store.put({ id: nomeBase, dados: dadosMesclados });
 
     await new Promise((resolve, reject) => {
-        tx.oncomplete = resolve;
-        tx.onerror = reject;
+        tx.oncomplete = () => {
+            resolve();
+        };
+        tx.onerror = (e) => {
+            reject(e.target.error);
+        };
     });
 
     db.close();
@@ -802,6 +821,7 @@ async function sincronizarSetores() {
     let nuvem = await listaSetores(timestamp)
 
     await inserirDados(nuvem, 'dados_setores')
+
     dados_setores = await recuperarDados('dados_setores')
 
     acesso = dados_setores[acesso.usuario]
