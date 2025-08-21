@@ -11,6 +11,10 @@ html {
     flex-direction: column;
 }
 
+#tela {
+    margin-top: 7vh;
+}
+
 .contornoAnexos {
     display: flex;
     align-items: center;
@@ -24,10 +28,18 @@ html {
     margin: 5px;
 }
 
-.imgFundo {
-    width: 60vw;
+.planoFundo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80vh;
+    width: 90vw;
     background-color: #0000005e;
     border-radius: 5px;
+}
+
+.planoFundo img {
+    width: 60vw;
 }
 
 .contornoInterno {
@@ -191,6 +203,7 @@ button {
     border-radius: 3px;
     border: solid 1px #616161;
     white-space: nowrap;
+    font-size: 5vw;
 }
 
 .janela {
@@ -221,7 +234,7 @@ button {
     gap: 5px;
     padding: 10vw;
     background-color: #d2d2d2;
-    max-height: 50vh;
+    max-height: 40vh;
     overflow-y: auto;
 }
 
@@ -316,13 +329,13 @@ button {
 
 .recorteTabela {
     height: max-content;
-    max-height: 90vh;
+    max-height: 80vh;
     max-width: 80vw;
     overflow: auto;
 }
 
 .tabela {
-    width: 70vw;
+    width: 100%;
     background-color: white;
     border-collapse: collapse;
     font-size: 5vw;
@@ -397,7 +410,6 @@ button {
 .painelBotoes {
     position: relative;
     border-bottom: 1px solid #666666;
-    min-height: 4vh;
     display: flex;
     align-items: start;
     justify-content: start;
@@ -489,7 +501,7 @@ input[type="file"] {
     background-color: white;
     border-radius: 50px;
     padding-left: 5vw;
-    margin: 5vw;
+    margin: 2vw;
 }
 
 .pesquisa img {
@@ -499,6 +511,7 @@ input[type="file"] {
 .pesquisa input {
     border: none;
     background-color: transparent;
+    font-size: 5vw;
 }
 
 .barra {
@@ -559,7 +572,6 @@ input[type="file"] {
 }
 
 .telaInterna {
-    color: white;
     padding: 2vw 1vw;
 }
 
@@ -579,6 +591,9 @@ input[type="file"] {
     justify-content: start;
     background-color: #222222ec;
     width: 100%;
+    position: fixed;
+    left: 0;
+    z-index: 333;
 }
 
 .toolbar span {
@@ -597,7 +612,7 @@ input[type="file"] {
 }
 
 .botaoImg img {
-    width: 3vw;
+    width: 5vw;
 }
 
 .menu-btn {
@@ -631,6 +646,14 @@ input[type="file"] {
 
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
+
+    .botaoImg img {
+        width: 2vw;
+    }
+
+    .planoFundo img {
+        width: 30vw;
+    }
 
     .tabTarefas table {
         width: -webkit-fill-available;
@@ -726,7 +749,6 @@ screen and (min-aspect-ratio: 13/9) {
 
     .pesquisa {
         padding-left: 2vw;
-        margin: 2vw;
     }
 
     .pesquisa img,
@@ -787,6 +809,10 @@ screen and (min-aspect-ratio: 13/9) {
         width: 2vw
     }
 
+    button {
+        font-size: 2vw;
+    }
+
     .contornoInterno label {
         font-size: 1.2vw;
     }
@@ -802,6 +828,10 @@ screen and (min-aspect-ratio: 13/9) {
 
     .camposTd img {
         width: 3vw;
+    }
+
+    .pesquisa input {
+        font-size: 1.3vw;
     }
 
 }

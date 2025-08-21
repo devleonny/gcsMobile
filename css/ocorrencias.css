@@ -1,18 +1,202 @@
 .img-logo-td {
-    width: 20vw;
+    width: 50vw;
     background-color: #0000005e;
     border-radius: 5px;
 }
 
-.tabela1 {
-    max-width: 90vw;
+.tela-ocorrencias {
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    width: 90vw;
+}
+
+.painel-dashboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: #0000004d;
+    width: 100%;
+}
+
+.painel-dashboard-1 {
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    gap: 1px;
+}
+
+.painel-dashboard-2 {
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: solid 1px #222;
+}
+
+.itemFiltro {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 5px;
+    width: 100%;
+}
+
+.itemFiltro span {
+    color: white;
+}
+
+.itemFiltro img {
+    width: 5vw;
+}
+
+.tituloDashboard {
+    height: -webkit-fill-available;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.tituloDashboard label {
+    margin-left: 5vw;
+    font-size: 5vw;
+}
+
+.atalhosRelatorio {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    background-color: #e2e2e2;
+    border-radius: 3px;
+    padding: 10px;
+    width: 100%;
+    gap: 15px;
+}
+
+.atalhosRelatorio input {
+    width: 25px;
+    height: 25px;
+}
+
+.atalhosRelatorio label {
+    font-size: 5vw;
+}
+
+.blocoFiltro {
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+    color: #222;
+    background-color: #e6e6e6;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+}
+
+.blocoFiltro div label {
+    font-size: 0.7vw;
+    border-radius: 2px;
+    background-color: #383838;
+    padding: 3px;
+}
+
+.blocoFiltro div {
+    gap: 1px;
+    border: 1px solid #c3c3c3;
+    background-color: #d1d1d1;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    overflow-y: visible;
+    overflow-x: hidden;
+    max-height: 20vh;
     height: max-content;
-    max-height: 60vh;
+}
+
+.cabecalho-pesquisa {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    background-color: #b1b1b1;
+    gap: 1vw;
+    padding: 1vw;
+}
+
+.negativo {
+    background-color: #b12425;
+    padding: 5px;
+    border-radius: 3px;
+    color: white;
+}
+
+.totalBox {
+    min-height: -webkit-fill-available;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: #222;
+    color: white;
+    text-align: center;
+}
+
+.tabelaRelatorio {
+    height: max-content;
+    width: 100%;
+    overflow: auto;
+}
+
+.tabelaRelatorio img {
+    padding: 2vw;
+    width: 10vw;
+}
+
+.totalBox label {
+    font-size: 5vw;
+}
+
+.balaoOcorrencias {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 4vw;
+}
+
+.balaoSolicitante {
+    cursor: pointer;
+    padding: 5px;
+    background-color: #222;
+    border-bottom-left-radius: 15px;
+    border-top-left-radius: 15px;
+}
+
+.balaoExecutor {
+    cursor: pointer;
+    padding: 5px;
+    background-color: #222222c8;
+    border-bottom-right-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.tabela1 {
+    width: 100%;
+    height: 70vh;
     overflow: auto;
 }
 
 .tabela1 table {
-    min-width: 70vw;
     width: max-content;
     border-collapse: collapse;
     color: #222;
@@ -21,14 +205,14 @@
 .tabela1 td {
     border: solid 1px #222;
     text-align: center;
-    font-size: 3vw;
+    font-size: 4vw;
 }
 
 .fechar {
     cursor: pointer;
     color: #444444;
     float: right;
-    font-size: 3vw;
+    font-size: 10vw;
     font-weight: bold;
 }
 
@@ -37,7 +221,7 @@
 }
 
 .campos {
-    font-size: 1.5vw;
+    font-size: 5vw;
     text-align: left;
     cursor: pointer;
     padding: 5px;
@@ -86,12 +270,87 @@
     overflow-x: hidden;
 }
 
+.tela-dashboard {
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    width: 90vw;
+    height: 80vh;
+    overflow-y: auto;
+}
+
+.paginacao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 1vh;
+    margin-top: 1vh;
+}
+
+.paginacao img {
+    width: 6vw;
+}
+
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
+
+    .paginacao img {
+        width: 2vw;
+    }
+
+    .fechar {
+        font-size: 5vw;
+    }
+
+    .tabelaRelatorio img {
+        padding: 1vw;
+        width: 3vw;
+    }
+
+    .tabela1 {
+        max-height: 60vh;
+    }
+
+    .tabela1 table {
+        width: 100%;
+    }
 
     .tabela1 td {
         font-size: 1.2vw;
     }
 
+    .painel-dashboard-1,
+    .painel-dashboard-2 {
+        flex-direction: row;
+    }
 
+    .totalBox label {
+        font-size: 2vw;
+    }
+
+    .campos {
+        font-size: 1.2vw;
+    }
+
+    .tituloDashboard label {
+        font-size: 3vw;
+    }
+
+    .balaoOcorrencias {
+        font-size: 1.2vw;
+    }
+
+    .itemFiltro img {
+        width: 2vw;
+    }
+
+    .atalhosRelatorio label {
+        font-size: 2vw;
+    }
+
+    .img-logo-td {
+        width: 20vw;
+    }
 }

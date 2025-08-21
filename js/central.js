@@ -238,7 +238,7 @@ function popup(elementoHTML, titulo, naoRemoverAnteriores) {
                 
                 <div class="toolbarPopup">
 
-                    <div style="width: 90%;">${titulo || 'Popup'}</div>
+                    <span style="width: 90%;">${titulo || 'Popup'}</span>
                     <span style="width: 10%" onclick="removerPopup()">×</span>
 
                 </div>
@@ -321,7 +321,7 @@ async function telaPrincipal() {
                     <div class="botoesMenu">
 
                         ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
-                        ${btn('kanban', 'Dashboard', 'telaColaboradores()')}
+                        ${btn('kanban', 'Dashboard', 'dashboard()')}
                         ${btn('empresa', 'Unidades', 'telaUnidades()')}
                         ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
                         ${btn('perfil', 'Usuários', 'telaUsuarios()')}
@@ -334,7 +334,9 @@ async function telaPrincipal() {
             </div>
 
             <div class="telaInterna">
-                <img src="imagens/BG.png" class="imgFundo">
+                <div class="planoFundo">
+                    <img src="imagens/BG.png">
+                </div>
             </div>
         </div>
     `
