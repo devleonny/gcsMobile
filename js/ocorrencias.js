@@ -188,7 +188,7 @@ async function telaOcorrencias() {
     correcoes = await recuperarDados('correcoes')
     dados_clientes = await recuperarDados('dados_clientes')
 
-    titulo.textContent = empresas[acesso.empresa].nome
+    titulo.textContent = empresas[acesso.empresa]?.nome || 'Desatualizado'
 
     const acumulado = `
     

@@ -656,11 +656,7 @@ screen and (min-aspect-ratio: 13/9) {
     .cadeado {
         width: 15vw;
     }
-
-    .toolbar {
-        height: 10vh;
-    }
-
+    
     .botaoImg img {
         width: 2vw;
     }
