@@ -285,24 +285,35 @@ function removerOverlay() {
 }
 
 function overlayAguarde() {
-
-    const aguarde = document.querySelector('.aguarde')
-    if (aguarde) aguarde.remove()
+    const aguarde = document.querySelector('.aguarde');
+    if (aguarde) aguarde.remove();
 
     const elemento = `
         <div class="aguarde">
             <img src="gifs/loading.gif">
         </div>
-    `
-    document.body.insertAdjacentHTML('beforeend', elemento)
+    `;
+    document.body.insertAdjacentHTML('beforeend', elemento);
 
-    let pageHeight = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight
-    );
-
-    document.querySelector('.aguarde').style.height = `${pageHeight}px`;
-
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .aguarde {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+        }
+        .aguarde img {
+            max-width: 100px;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 async function telaPrincipal() {

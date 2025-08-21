@@ -54,7 +54,6 @@ async function telaCadastros() {
         <div class="painel-superior-cadastros">
             ${bases.map(base => `<button onclick="carregarBasesAuxiliares('${base}')">${inicialMaiuscula(base)}</button>`).join('')}
         </div>
-        <br>
         <div class="telaInferior"></div>
     `
 

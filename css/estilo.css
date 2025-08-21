@@ -131,7 +131,7 @@ span {
 }
 
 .botaoSuperiorLogin span {
-    font-size: 2vw;
+    font-size: 4vw;
     color: white;
 }
 
@@ -151,7 +151,7 @@ span {
 }
 
 .cadeado {
-    width: 15vw;
+    width: 30vw;
 }
 
 .overlay {
@@ -586,6 +586,7 @@ input[type="file"] {
 }
 
 .toolbar {
+    height: 6vh;
     display: flex;
     align-items: center;
     justify-content: start;
@@ -646,6 +647,18 @@ input[type="file"] {
 
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
+
+    .botaoSuperiorLogin span {
+        font-size: 2vw;
+    }
+
+    .cadeado {
+        width: 15vw;
+    }
+
+    .toolbar {
+        height: 10vh;
+    }
 
     .botaoImg img {
         width: 2vw;
