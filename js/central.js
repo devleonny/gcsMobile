@@ -88,7 +88,13 @@ const btn = (img, valor, funcao) => `
     </div>
 `
 
-telaLogin()
+if (typeof cordova !== "undefined") {
+    document.addEventListener('deviceready', () => {
+        telaLogin();
+    }, false);
+} else {
+    telaLogin();
+}
 
 function exibirSenha(img) {
 
@@ -323,8 +329,8 @@ function overlayAguarde() {
 
 async function telaPrincipal() {
 
-    toolbar.style.display = 'flex'
     acesso = JSON.parse(localStorage.getItem('acesso'))
+    toolbar.style.display = 'flex'
     const acumulado = `
         <div class="menu-container">
 
@@ -619,7 +625,6 @@ async function receber(chave) {
 
 async function deletar(chave) {
     const url = `${api}/deletar`;
-    const acesso = JSON.parse(localStorage.getItem('acesso'))
     const objeto = {
         chave,
         usuario: acesso.usuario,
@@ -683,7 +688,7 @@ async function sincronizarSetores() {
         if (objeto.timestamp && objeto.timestamp > timestamp) timestamp = objeto.timestamp
     }
 
-    let nuvem = await listaSetores(timestamp)
+    const nuvem = await listaSetores(timestamp)
 
     await inserirDados(nuvem, 'dados_setores')
 

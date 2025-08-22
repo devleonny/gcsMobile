@@ -175,9 +175,9 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
     document.getElementById('body').insertAdjacentHTML('beforeend', linha)
 }
 
-async function telaOcorrencias() {
+async function telaOcorrencias(evitarEsconder) {
 
-    esconderMenus()
+    if(!evitarEsconder) esconderMenus()
     overlayAguarde()
 
     const dados_ocorrencias = await recuperarDados('dados_ocorrencias')
@@ -188,7 +188,7 @@ async function telaOcorrencias() {
     correcoes = await recuperarDados('correcoes')
     dados_clientes = await recuperarDados('dados_clientes')
 
-    titulo.textContent = empresas[acesso.empresa]?.nome || 'Desatualizado'
+    titulo.textContent = empresas[acesso?.empresa]?.nome || 'Desatualizado'
 
     const acumulado = `
     
@@ -240,9 +240,8 @@ async function atualizarOcorrencias() {
     await inserirDados(resposta.ocorrencias, 'dados_ocorrencias', resposta.resetar)
     await inserirDados(resposta.clientes, 'dados_clientes', resposta.resetar)
     titulo.textContent = resposta.empresa
-    acesso = await recuperarDado('lista_setores', acesso.usuario)
 
-    await telaOcorrencias()
+    await telaOcorrencias(true)
 
     removerOverlay()
 }

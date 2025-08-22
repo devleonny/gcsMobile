@@ -37,6 +37,7 @@ async function salvarArquivoJSON(obj) {
 }
 
 async function inserirDados(dados, nomeBase, resetar) {
+
     if (isAndroid) {
         let banco = await lerArquivoJSON();
         banco[nomeBase] = banco[nomeBase] || {};
