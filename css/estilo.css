@@ -67,10 +67,21 @@ span {
 }
 
 .nomeUsuario {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+    margin-bottom: 5vw;
+}
+
+.nomeUsuario span {
+    font-size: 5vw;
+    padding: 5px;
+    width: 80%;
+    background-color: #249f41;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
     color: white;
-    position: absolute;
-    top: 5px;
-    right: 5px;
 }
 
 .invalido {
@@ -99,15 +110,16 @@ span {
     padding: 5px;
     gap: 5px;
 }
-
+ 
 .botoesMenu {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     flex-direction: column;
     width: 100%;
     gap: 1px;
-    margin-top: 20vw;
+    margin-top: 20vh;
+    margin-bottom: 20vh;
 }
 
 .loginBloco {
@@ -201,7 +213,8 @@ button {
     cursor: pointer;
     background-color: #249f41;
     border-radius: 3px;
-    border: solid 1px #616161;
+    border: none;
+    box-shadow: 0px 0px 3px black;
     white-space: nowrap;
     font-size: 5vw;
 }
@@ -376,7 +389,7 @@ button {
     padding-top: 5px;
     padding-bottom: 5px;
     width: 100%;
-    background-color: #d2d2d2;
+    background-color: #f3f3f3;
 }
 
 .btnLateral img {
@@ -402,6 +415,7 @@ button {
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
     transition: 0.3s;
     z-index: 200;
+    overflow: auto;
 }
 
 .side-menu.active {
@@ -618,6 +632,8 @@ input[type="file"] {
 }
 
 .menu-btn {
+    margin-left: 10px;
+    margin-right: 10px;
     background: none;
     border: none;
     cursor: pointer;
@@ -645,6 +661,10 @@ input[type="file"] {
 
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
+
+    .nomeUsuario span {
+        font-size: 2vw;
+    }
 
     .botaoSuperiorLogin span {
         font-size: 2vw;

@@ -342,21 +342,19 @@ async function telaPrincipal() {
 
             <div class="side-menu" id="sideMenu">
 
-                <span class="nomeUsuario">${acesso.usuario} <strong>${acesso.permissao}</strong></span>
-
-                <div style="${vertical}; justify-content: space-between; height: 100%;">
+                <div class="botoesMenu">
                     
-                    <div class="botoesMenu">
-
-                        ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
-                        ${btn('kanban', 'Dashboard', 'dashboard()')}
-                        ${btn('empresa', 'Unidades', 'telaUnidades()')}
-                        ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
-                        ${btn('perfil', 'Usuários', 'telaUsuarios()')}
-                        ${btn('ajustar', 'Cadastros', 'telaCadastros()')}
-                        ${btn('sair', 'Desconectar', 'deslogar()')}
-
+                    <div class="nomeUsuario">
+                        <span>${acesso.usuario} <strong>${acesso.permissao}</strong></span>
                     </div>
+
+                    ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
+                    ${btn('kanban', 'Dashboard', 'dashboard()')}
+                    ${btn('empresa', 'Unidades', 'telaUnidades()')}
+                    ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
+                    ${btn('perfil', 'Usuários', 'telaUsuarios()')}
+                    ${btn('ajustar', 'Cadastros', 'telaCadastros()')}
+                    ${btn('sair', 'Desconectar', 'deslogar()')}
 
                 </div>
             </div>

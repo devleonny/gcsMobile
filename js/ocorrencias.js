@@ -365,7 +365,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
 
             <div style="${horizontal}; gap: 5px;">
                 <label>Equipamentos usados</label>
-                <img src="imagens/baixar.png" style="width: 1.5vw; cursor: pointer;" onclick="maisLabel()">
+                <img src="imagens/baixar.png" class="olho" onclick="maisLabel()">
             </div>
             
             <div style="${vertical}; gap: 2px;" id="equipamentos">
@@ -388,7 +388,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
         </div>
    `
 
-    popup(acumulado, 'CORREÇÃO')
+    popup(acumulado, 'Gerenciar Correção')
 
 }
 
@@ -397,18 +397,22 @@ async function maisLabel({ codigo, quantidade, unidade } = {}) {
     let div = document.getElementById('equipamentos')
     const opcoes = ['UND', 'METRO', 'CX'].map(op => `<option ${unidade == op ? `selected` : ''}>${op}</option>`).join('')
     const temporario = ID5digitos()
-    let nome = 'Clique aqui'
+    let nome = 'Selecionar'
     if (codigo) {
         const produto = await recuperarDado('equipamentos', codigo)
         nome = produto.descricao
     }
 
     const label = `
-        <div style="${horizontal}; gap: 5px; width: 100%;">
-            <input class="campos" type="number" placeholder="quantidade" value="${quantidade || ''}">
-            <select class="campos">${opcoes}</select>
-            <label class="campos" name="${temporario}" ${codigo ? `id="${codigo}"` : ''} onclick="caixaOpcoes('${temporario}', 'equipamentos')">${nome}</label>
-            <img src="imagens/cancel.png" style="width: 1.5vw; cursor: pointer;" onclick="this.parentElement.remove()">
+        <div style="${horizontal}; gap: 5px;">
+            <img src="imagens/cancel.png" class="olho" onclick="this.parentElement.remove()">
+            <div style="${vertical}; gap: 5px;">
+                <label class="campos" name="${temporario}" ${codigo ? `id="${codigo}"` : ''} onclick="cxOpcoes('${temporario}', 'dados_composicoes')">${nome}</label>
+                <div style="${horizontal}; gap: 5px; width: 100%;">
+                    <input style="width: 100%;" class="campos" type="number" value="${quantidade || ''}">
+                    <select class="campos">${opcoes}</select>
+                </div>
+            </div>
         </div> 
     `
     if (codigo) return label
