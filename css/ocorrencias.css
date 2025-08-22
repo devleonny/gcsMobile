@@ -278,8 +278,6 @@
     justify-content: start;
     flex-direction: column;
     width: 90vw;
-    height: 80vh;
-    overflow-y: auto;
 }
 
 .paginacao {
