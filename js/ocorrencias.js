@@ -202,8 +202,8 @@ async function telaOcorrencias() {
                     <div style="${horizontal}; gap: 5px;">
                         ${botao('Nova Ocorrência', 'formularioOcorrencia()')}
                     </div>
-                    <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarOcorrencias()">
                 </div>
+                <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarOcorrencias()">
             </div>
 
             <div class="tabela1">
@@ -241,6 +241,8 @@ async function atualizarOcorrencias() {
     await inserirDados(resposta.clientes, 'dados_clientes', resposta.resetar)
     titulo.textContent = resposta.empresa
     acesso = await recuperarDado('lista_setores', acesso.usuario)
+
+    await telaOcorrencias()
 
     removerOverlay()
 }

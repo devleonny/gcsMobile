@@ -412,8 +412,8 @@ button {
     position: relative;
     border-bottom: 1px solid #666666;
     display: flex;
-    align-items: start;
-    justify-content: start;
+    align-items: center;
+    justify-content: space-between;
     border-top-right-radius: 10px;
     border-top-left-radius: 10px;
     background-color: #b1b1b1;
@@ -632,9 +632,6 @@ input[type="file"] {
 }
 
 .atualizar {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     width: 10vw;
 }
 
@@ -656,7 +653,7 @@ screen and (min-aspect-ratio: 13/9) {
     .cadeado {
         width: 15vw;
     }
-    
+
     .botaoImg img {
         width: 2vw;
     }
