@@ -155,10 +155,8 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
             
             ${ocorrencia.correcoes
             ? `<td style="background-color: white;">${await gerarCorrecoes(idOcorrencia, ocorrencia.correcoes)}</td>`
-            : `<td>
-                    <div style="${horizontal}; border-radius: 3px;">
-                        <img src="imagens/BG.png" class="img-logo-td">
-                    </div>
+            : `<td style="background-color: #0000005e">
+                    <img src="imagens/BG.png" class="img-logo-td">
                 </td>`}
         </tr>
     `
