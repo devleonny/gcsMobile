@@ -896,13 +896,13 @@ function abrirArquivo(link, nome) {
 
 async function cxOpcoes(name, nomeBase, funcaoAux) {
 
-    const campos = esquemaLinhas(nomeBase)
+    const campos = nomeBase == 'dados_setores' ? ['nome_completo', 'setor'] : esquemaLinhas(nomeBase).colunas
     const base = await recuperarDados(nomeBase)
     let opcoesDiv = ''
 
     for ([cod, dado] of Object.entries(base)) {
 
-        const labels = campos.colunas
+        const labels = campos
             .map(campo => `${(dado[campo] && dado[campo] !== '') ? `<label>${dado[campo]}</label>` : ''}`)
             .join('')
 

@@ -258,6 +258,7 @@
 
 .atalhos label {
     margin-left: 2vw;
+    font-size: 4vw;
 }
 
 .atalhos:hover {
@@ -323,6 +324,10 @@
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
+    .atalhos label {
+        font-size: 2vw;
+    }
+
     .painel-superior-cadastros {
         display: flex;
     }
@@ -362,7 +367,7 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .campos {
-        font-size: 1.2vw;
+        font-size: 1.5vw;
     }
 
     .tituloDashboard label {

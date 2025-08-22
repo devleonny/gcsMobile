@@ -489,7 +489,7 @@ async function carregarRoteiro(idOcorrencia, idCorrecao) {
     const mensagem = (texto) => `<div style="${horizontal}; width: 100%;">${texto}</div>`
 
     const ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
-    const correcao = ocorrencia.correcoes[idCorrecao]
+    const correcao = ocorrencia?.correcoes[idCorrecao] || {}
     const dadosUsuario = await recuperarDado('dados_setores', correcao.executor)
     const usuarioMobi7 = dadosUsuario?.mobi7 || ''
     const dtInicial = correcao.dataInicio
@@ -590,20 +590,21 @@ async function salvarOcorrencia(idOcorrencia) {
     ocorrencia.dataLimiteExecucao = obter('dataLimiteExecucao', 'value')
     ocorrencia.descricao = obter('descricao', 'value')
 
+    removerPopup()
+    
     if (idOcorrencia) {
         const ocorrenciaAtual = await recuperarDado('dados_ocorrencias', idOcorrencia)
         await inserirDados({ [idOcorrencia]: { ...ocorrenciaAtual, ...ocorrencia } }, 'dados_ocorrencias')
         await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
+        await atualizarOcorrencias()
     } else {
         await enviar('dados_ocorrencias/0000', ocorrencia)
         await atualizarOcorrencias()
+        await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
     }
 
     anexosProvisorios = {}
     
-    await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
-
-    removerPopup()
 }
 
 async function dashboard(dadosFiltrados, evitarEsconder) {
