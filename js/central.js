@@ -8,11 +8,16 @@ const nomeStore = 'Bases'
 let acesso = {}
 let app = 'clone'
 const api = `https://api.gcs.app.br`
-const esquemaLinhas = {
-    'dados_clientes': ['nome', 'cnpj', 'cidade'],
-    'dados_composicoes': ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'],
-    'dados_setores': ['nome_completo', 'setor', 'permissao'],
-    default: ['nome']
+function esquemaLinhas(base, id) {
+
+    const esquema = {
+        'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `` },
+        'dados_composicoes': { colunas: ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'], funcao: `` },
+        'dados_setores': { colunas: ['nome_completo', 'empresa', 'setor', 'permissao'], funcao: `gerenciarUsuario('${id}')` },
+        default: { colunas: ['nome'], funcao: `` }
+    }
+
+    return esquema?.[base] || esquema.default
 }
 const modelo = (valor1, valor2) => `
         <div style="gap: 3px; display: flex; flex-direction: column; align-items: start; margin-bottom: 5px; width: 100%;">
@@ -41,7 +46,7 @@ const dtFormatada = (data) => {
     const [ano, mes, dia] = data.split('-')
     return `${dia}/${mes}/${ano}`
 }
-const modeloTabela = (colunas, base, btnExtras) => {
+const modeloTabela = (colunas, base) => {
 
     const ths = colunas
         .map(col => `<th>${col}</th>`).join('')
@@ -90,6 +95,7 @@ const btn = (img, valor, funcao) => `
 
 if (typeof cordova !== "undefined") {
     document.addEventListener('deviceready', () => {
+        navigator.splashscreen.hide();
         telaLogin();
     }, false);
 } else {
@@ -373,9 +379,22 @@ async function telaPrincipal() {
 async function telaUsuarios() {
 
     esconderMenus()
+    overlayAguarde()
+
     titulo.textContent = 'Usuários'
-    const colunas = ['Nome', 'Setor', 'Permissão', '']
-    await carregarElementosPagina('dados_setores', colunas)
+
+    empresas = await recuperarDados('empresas')
+    const colunas = ['Nome', 'Empresa', 'Setor', 'Permissão', '']
+    const nomeBase = 'dados_setores'
+    const dados = await recuperarDados(nomeBase)
+    const telaInterna = document.querySelector('.telaInterna')
+    telaInterna.innerHTML = modeloTabela(colunas, nomeBase)
+
+    for (let [id, objeto] of Object.entries(dados)) {
+        criarLinha(objeto, id, nomeBase)
+    }
+
+    removerOverlay()
 
 }
 
@@ -391,17 +410,19 @@ async function criarLinha(dados, id, nomeBase) {
     }
 
     let tds = ''
-    let funcao = ''
+    if (nomeBase == 'dados_setores') {
+        dados.empresa = empresas?.[dados?.empresa]?.nome || '...'
+    }
 
-    const colunas = esquemaLinhas?.[nomeBase] || esquemaLinhas.default
+    const esquema = esquemaLinhas(nomeBase, id)
 
-    for (const linha of colunas) tds += modelo(dados?.[linha] || '--')
+    for (const linha of esquema.colunas) tds += modelo(dados?.[linha] || '--')
 
     const linha = `
         <tr id="${id}">
             ${tds}
             <td class="detalhes">
-                <img onclick="${funcao}" src="imagens/pesquisar.png">
+                <img onclick="${esquema.funcao}" src="imagens/pesquisar.png">
             </td>
         </tr>
     `
@@ -447,10 +468,25 @@ async function sincronizarDados(base, overlayOff) {
 async function atualizarDados(base) {
 
     overlayAguarde()
-    await sincronizarDados(base)
+    if (base == 'dados_setores') {
+        await sincronizarSetores()
+    } else {
+        await sincronizarDados(base)
+    }
 
+    // Mecânica para atualização/inclusão de linhas;
     const dados = await recuperarDados(base)
     for (const [id, objeto] of Object.entries(dados).reverse()) criarLinha(objeto, id, base)
+
+    // Mecânica para remoção de linhas de dados excluídos;
+    const chavesAtivas = Object.keys(dados)
+    const tbody = document.getElementById('body')
+    if (tbody) {
+        const trs = tbody.querySelectorAll('tr')
+        for (const tr of trs) {
+            if (!chavesAtivas.includes(tr.id)) tr.remove()
+        }
+    }
     removerOverlay()
 
 }
@@ -475,11 +511,14 @@ async function gerenciarUsuario(id) {
             <div>${elemento}</div>
         </div>
     `
+    const empresasOpcoes = Object.entries({ '': { nome: '' }, ...empresas }).sort()
+        .map(([id, empresa]) => `<option value="${id}" ${usuario?.empresa == id ? 'selected' : ''}>${empresa.nome}</option>`)
+        .join('')
 
-    const permissoes = ['', 'novo', 'adm', 'user', 'analista']
+    const permissoes = ['', 'novo', 'desativado', 'técnico', 'visitante', 'analista']
         .map(op => `<option ${usuario?.permissao == op ? 'selected' : ''}>${op}</option>`).join('')
 
-    const setores = ['', 'SUPORTE', 'GESTÃO', 'LOGÍSTICA']
+    const setores = ['', 'CHAMADOS', 'MATRIZ BA', 'INFRA', 'CHAMADO/INFRA', 'LOGÍSTICA']
         .map(op => `<option ${usuario?.setor == op ? 'selected' : ''}>${op}</option>`).join('')
 
     const acumulado = `
@@ -488,10 +527,11 @@ async function gerenciarUsuario(id) {
             ${modelo('E-mail', usuario?.email || '--')}
             ${modelo('Permissão', `<select onchange="configuracoes('${id}', 'permissao', this.value)">${permissoes}</select>`)}
             ${modelo('Setor', `<select onchange="configuracoes('${id}', 'setor', this.value)">${setores}</select>`)}
+            ${modelo('Empresa', `<select onchange="configuracoes('${id}', 'empresa', this.value)">${empresasOpcoes}</select>`)}
         </div>
     `
 
-    popup(acumulado, 'Usuário')
+    popup(acumulado, 'Gerenciar Usuário')
 }
 
 function unicoID() {
@@ -654,8 +694,20 @@ async function configuracoes(usuario, campo, valor) {
 
     let dados_usuario = await recuperarDado('dados_setores', usuario)
     dados_usuario[campo] = valor
+
     await inserirDados({ [usuario]: dados_usuario }, 'dados_setores')
-    criarLinha(dados_usuario, usuario, 'dados_setores')
+
+    if (campo == 'empresa') {
+        dados_usuario[campo] = empresas[valor].nome
+    }
+
+    if (campo == 'permissao' && valor == 'desativado') {
+        const tr = document.getElementById(usuario)
+        if (tr) tr.remove()
+
+    } else {
+        criarLinha(dados_usuario, usuario, 'dados_setores')
+    }
 
     return new Promise((resolve, reject) => {
         fetch(`${api}/configuracoes`, {
@@ -685,12 +737,18 @@ async function sincronizarSetores() {
 
     let timestamp = 0
     for (const [usuario, objeto] of Object.entries(dados_setores)) {
+
+        if (objeto.permissao == 'desativado') {
+            timestamp = 0
+            break
+        }
+
         if (objeto.timestamp && objeto.timestamp > timestamp) timestamp = objeto.timestamp
     }
 
-    const nuvem = await listaSetores(timestamp)
+    let nuvem = await listaSetores(timestamp)
 
-    await inserirDados(nuvem, 'dados_setores')
+    await inserirDados(nuvem, 'dados_setores', timestamp == 0)
 
     dados_setores = await recuperarDados('dados_setores')
 
@@ -838,13 +896,13 @@ function abrirArquivo(link, nome) {
 
 async function cxOpcoes(name, nomeBase, funcaoAux) {
 
-    const campos = esquemaLinhas?.[nomeBase] || esquemaLinhas.default
+    const campos = esquemaLinhas(nomeBase)
     const base = await recuperarDados(nomeBase)
     let opcoesDiv = ''
 
     for ([cod, dado] of Object.entries(base)) {
 
-        const labels = campos
+        const labels = campos.colunas
             .map(campo => `${(dado[campo] && dado[campo] !== '') ? `<label>${dado[campo]}</label>` : ''}`)
             .join('')
 

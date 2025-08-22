@@ -12,21 +12,15 @@ let opcoesValidas = {
     finalizado: new Set()
 }
 
-const labelBotao = (name, nomebase, id, nome) => {
-
-    return `
-        <div style="${horizontal}; justify-content: start; gap: 5px;">
-            <span class="fechar" onclick="removerCampo(this)">×</span>
-            <label 
-            class="campos" 
-            name="${name}"
-            ${id ? `id="${id}"` : ''} 
-            onclick="cxOpcoes('${name}', '${nomebase}')">
-                ${nome ? nome : 'Selecione'} 
-            </label>
-        </div>
+const labelBotao = (name, nomebase, id, nome) => `
+        <label 
+        class="campos" 
+        name="${name}"
+        ${id ? `id="${id}"` : ''} 
+        onclick="cxOpcoes('${name}', '${nomebase}')">
+            ${nome ? nome : 'Selecione'} 
+        </label>
     `
-}
 
 async function carregarElementosPagina(nomeBase, colunas, tela) {
 
