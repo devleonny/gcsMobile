@@ -15,11 +15,17 @@ function connectWebSocket() {
 
         console.log(data);
 
+        if(data.base == 'dados_ocorrencias') {
+            if(data.objeto.executor == acesso.usuario) {
+                notificacoes(data.id, 'Novo chamado aberto', `Solicitado por ${objeto.solicitante}`)
+            }
+        }
+
         if (data.base == 'dados_setores') {
             inserirDados({ [data.id]: data.objeto }, 'dados_setores')
 
             //criarLinha() verificando antes o elemento id existe;
-            
+
             if (data.id == acesso.usuario) {
                 localStorage.setItem('acesso', JSON.stringify(data.objeto))
                 telaPrincipal()

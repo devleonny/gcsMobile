@@ -92,6 +92,7 @@ const btn = (img, valor, funcao) => `
         <div>${valor}</div>
     </div>
 `
+
 document.addEventListener('keydown', function (event) {
     if (event.key === 'F5') f5()
 })
@@ -387,8 +388,26 @@ function overlayAguarde() {
 
 async function telaPrincipal() {
 
-    acesso = JSON.parse(localStorage.getItem('acesso'))
+    acesso = JSON.parse(localStorage.getItem('acesso')) //
     toolbar.style.display = 'flex'
+
+    const menus = {
+        'Ocorrências': { img: 'configuracoes', funcao: 'telaOcorrencias()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'Dashboard': { img: 'kanban', funcao: 'dashboard()', liberados: ['analista', 'supervisor', 'adm', 'visitante'] },
+        'Unidades': { img: 'empresa', funcao: 'telaUnidades()' , liberados: ['supervisor', 'adm'] },
+        'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()' , liberados: ['analista', 'supervisor', 'adm'] },
+        'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
+        'Cadastros': { img: 'ajustar', funcao: 'telaCadastros()', liberados: ['analista', 'supervisor', 'adm'] },
+        'Desconectar': { img: 'sair', funcao: 'desconectar()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+    }
+
+    let stringMenus = ''
+
+    for(const [nome, dados] of Object.entries(menus)) {
+        if(!dados.liberados.includes(acesso.permissao)) continue
+        stringMenus += btn(dados.img, nome, dados.funcao)
+    }
+
     const acumulado = `
         <div class="menu-container">
 
@@ -400,13 +419,7 @@ async function telaPrincipal() {
                         <span><strong>${inicialMaiuscula(acesso.permissao)}</strong> ${acesso.usuario}</span>
                     </div>
 
-                    ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
-                    ${btn('kanban', 'Dashboard', 'dashboard()')}
-                    ${btn('empresa', 'Unidades', 'telaUnidades()')}
-                    ${btn('composicoes', 'Equipamentos', 'telaEquipamentos()')}
-                    ${btn('perfil', 'Usuários', 'telaUsuarios()')}
-                    ${btn('ajustar', 'Cadastros', 'telaCadastros()')}
-                    ${btn('sair', 'Desconectar', 'deslogar()')}
+                    ${stringMenus}
 
                 </div>
             </div>

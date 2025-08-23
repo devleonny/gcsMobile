@@ -225,14 +225,26 @@ async function atualizarOcorrencias() {
 
     overlayAguarde()
 
-    const basesAuxiliares = ['empresas', 'sistemas', 'prioridades', 'correcoes', 'tipos']
+    const basesAuxiliares = ['empresas', 'dados_clientes', 'sistemas', 'prioridades', 'correcoes', 'tipos']
 
     for (const base of basesAuxiliares) await sincronizarDados(base, true)
 
-    const resposta = await baixarOcorrencias()
+    let resposta = await baixarOcorrencias()
+    if (acesso.permissao == 'técnico') {
+        let dados_ocorrencias = await recuperarDados('dados_ocorrencias')
+
+        for (let [id, ocorrencia] of Object.entries(dados_ocorrencias)) {
+            if (ocorrencia.executor !== acesso.usuario) delete dados_ocorrencias[id]
+        }
+
+        resposta = {
+            ...dados_ocorrencias,
+            ...resposta
+        }
+    }
+
+    await inserirDados(resposta, 'dados_ocorrencias', true) // True pra resetar o armazenamento;
     await sincronizarSetores()
-    await inserirDados(resposta.ocorrencias, 'dados_ocorrencias', resposta.resetar)
-    await inserirDados(resposta.clientes, 'dados_clientes', resposta.resetar)
     titulo.textContent = resposta.empresa
 
     await telaOcorrencias(true)
@@ -243,7 +255,6 @@ async function atualizarOcorrencias() {
 async function baixarOcorrencias() {
 
     const timestampOcorrencia = await maiorTimestamp('dados_ocorrencias')
-    const timestampCliente = await maiorTimestamp('dados_clientes')
 
     async function maiorTimestamp(nomeBase) {
 
@@ -260,7 +271,7 @@ async function baixarOcorrencias() {
         fetch(`${api}/ocorrencias`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuario: acesso.usuario, timestampOcorrencia, timestampCliente })
+            body: JSON.stringify({ usuario: acesso.usuario, timestampOcorrencia })
         })
             .then(response => {
                 if (!response.ok) {
@@ -318,7 +329,7 @@ async function formularioOcorrencia(idOcorrencia) {
                 ${Object.entries(oc?.anexos || {}).map(([idAnexo, anexo]) => criarAnexoVisual(anexo.nome, anexo.link, `removerAnexo(this, '${idAnexo}', '${idOcorrencia}')`)).join('')}
             </div>
 
-            ${oc.correcoes
+            ${oc?.correcoes
             ? `<hr style="width: 100%;">
                 <label>CORREÇÕES</label>
                 ${await gerarCorrecoes(idOcorrencia, oc.correcoes, true)}`
@@ -449,7 +460,7 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
     })
 
     const local = await capturarLocalizacao()
-    if(isAndroid && !local) return popup(mensagem(`É necessário autorizar o uso do GPS`), 'Alerta', true)
+    if (isAndroid && !local) return popup(mensagem(`É necessário autorizar o uso do GPS`), 'Alerta', true)
 
     if (!correcao.datas) correcao.datas = {}
     const data = new Date().getTime()
@@ -548,13 +559,12 @@ async function salvarOcorrencia(idOcorrencia) {
         const ocorrenciaAtual = await recuperarDado('dados_ocorrencias', idOcorrencia)
         await inserirDados({ [idOcorrencia]: { ...ocorrenciaAtual, ...ocorrencia } }, 'dados_ocorrencias')
         await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
-        await atualizarOcorrencias()
     } else {
         await enviar('dados_ocorrencias/0000', ocorrencia)
-        await atualizarOcorrencias()
         await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
     }
 
+    await atualizarOcorrencias()
     anexosProvisorios = {}
 
 }
