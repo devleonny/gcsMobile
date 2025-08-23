@@ -94,13 +94,31 @@ const btn = (img, valor, funcao) => `
 `
 
 if (typeof cordova !== "undefined") {
-    document.addEventListener('deviceready', () => {
+    document.addEventListener('deviceready', async () => {
         navigator.splashscreen.hide();
-        telaLogin();
+
+        if (cordova.plugins && cordova.plugins.permissions) {
+            const permissions = cordova.plugins.permissions;
+            permissions.requestPermission(
+                permissions.ACCESS_FINE_LOCATION,
+                function(status) {
+                    if (!status.hasPermission) {
+                        popup(mensagem('Você não será capaz de registrar correções sem essas autorizações', 'Alerta'))
+                    }
+                    telaLogin();
+                },
+                function() {
+                    telaLogin();
+                }
+            );
+        } else {
+            telaLogin();
+        }
     }, false);
 } else {
     telaLogin();
 }
+
 
 function exibirSenha(img) {
 
@@ -246,6 +264,32 @@ async function salvarCadastro() {
 
 }
 
+async function capturarLocalizacao() {
+  return new Promise((resolve) => {
+    if (!("geolocation" in navigator)) {
+      resolve(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        resolve(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
 function popup(elementoHTML, titulo, naoRemoverAnteriores) {
 
     const acumulado = `
@@ -256,7 +300,7 @@ function popup(elementoHTML, titulo, naoRemoverAnteriores) {
                 <div class="toolbarPopup">
 
                     <span style="width: 90%;">${titulo || 'Popup'}</span>
-                    <span style="width: 10%" onclick="removerPopup()">×</span>
+                    <label style="width: 10%" onclick="removerPopup()">×</label>
 
                 </div>
                 
@@ -326,6 +370,7 @@ function overlayAguarde() {
             background: rgba(0,0,0,0.5);
             z-index: 9999;
         }
+
         .aguarde img {
             max-width: 100px;
         }

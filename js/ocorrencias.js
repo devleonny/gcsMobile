@@ -73,6 +73,8 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes, ativarRelatorio) {
     let pagina = 1
     for (const [idCorrecao, recorte] of Object.entries(dadosCorrecoes)) {
 
+        const data = new Date(Number(Object.keys(recorte.datas)[0])).toLocaleString('pt-BR')
+
         correcoesDiv += `
             <div id="${idOcorrencia}_${pagina}" name="${idCorrecao}" style="${horizontal}; align-items: start; display: ${pagina == 1 ? 'flex' : 'none'}; width: 100%;">
 
@@ -83,10 +85,10 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes, ativarRelatorio) {
                         ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}', '${idCorrecao}')`)}
                     </div>
 
-                    ${modeloCampos('Solicitante > Executor', `<label style="white-space: nowrap;">${recorte?.solicitante || '??'} > ${recorte?.executor || '??'}</label>`)}
-                    ${modeloCampos('Status Correção', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
-                    ${modeloCampos('Início', dtAuxOcorrencia(recorte.dataInicio))}
-                    ${modeloCampos('Término', dtAuxOcorrencia(recorte.dataTermino))}
+                    ${modeloCampos('Solicitante', `<label style="white-space: nowrap;">${recorte?.solicitante || '??'}</label>`)}
+                    ${modeloCampos('Executor', `<label style="white-space: nowrap;">${recorte?.executor || '??'}</label>`)}
+                    ${modeloCampos('Status', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
+                    ${modeloCampos('Início', data)}
                     ${modeloCampos('Descrição', recorte.descricao)}
                 </div>
 
@@ -169,7 +171,7 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
 
 async function telaOcorrencias(evitarEsconder) {
 
-    if(!evitarEsconder) esconderMenus()
+    if (!evitarEsconder) esconderMenus()
     overlayAguarde()
 
     const dados_ocorrencias = await recuperarDados('dados_ocorrencias')
@@ -331,8 +333,6 @@ async function formularioOcorrencia(idOcorrencia) {
 
     popup(acumulado, 'Gerenciar ocorrência')
 
-    carregarRoteiro(idOcorrencia, Object.keys(oc?.correcoes || {})[0])
-
 }
 
 async function formularioCorrecao(idOcorrencia, idCorrecao) {
@@ -349,16 +349,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
     const acumulado = `
         <div class="painelCadastro">
 
-            ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcoes?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}
-            ${modelo('Data/Hora', `
-                    <input name="dataInicio" class="campos" type="date" value="${correcao?.dataInicio || ''}">
-                    <input name="horaInicio" class="campos" type="time" value="${correcao?.horaInicio || ''}">
-                `)}
-            ${modelo('Término', `
-                    <input name="dataTermino" class="campos" type="date" value="${correcao?.dataTermino || ''}">
-                    <input name="horaTermino" class="campos" type="time" value="${correcao?.horaTermino || ''}">
-                `)}
-        
+            ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcoes?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}        
             ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', correcao?.solicitante, dados_setores[correcao?.solicitante]?.nome_completo))}
             ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', correcao?.executor, dados_setores[correcao?.executor]?.nome_completo))}
             ${modelo('Descrição', `<textarea name="descricao" rows="7" class="campos">${correcao?.descricao || ''}</textarea>`)}
@@ -383,13 +374,26 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
             </div>
 
         </div>
-        <div style="${horizontal}; justify-content: start; background-color: #a0a0a0ff; padding: 5px; gap: 1vw;">
+        <div class="rodape-formulario">
             ${botao('Salvar', funcao)}
+            <span style="margin-left: 5vw;" name="timer"></span>
         </div>
    `
 
     popup(acumulado, 'Gerenciar Correção')
 
+    dispararTimer()
+
+}
+
+function dispararTimer() {
+    const timer = document.querySelector('[name="timer"]')
+
+    if (timer) {
+        setInterval(() => {
+            timer.textContent = new Date().toLocaleString('pt-BR')
+        }, 1000)
+    }
 }
 
 async function maisLabel({ codigo, quantidade, unidade } = {}) {
@@ -439,13 +443,18 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
         executor: obter('executor', 'id'),
         tipoCorrecao: obter('tipoCorrecao', 'id'),
         usuario: acesso.usuario,
-        dataInicio: obter('dataInicio', 'value'),
-        horaInicio: obter('horaInicio', 'value'),
-        dataTermino: obter('dataTermino', 'value'),
-        horaTermino: obter('horaTermino', 'value'),
-        dataRegistro: new Date().toLocaleString('pt-BR'),
         descricao: obter('descricao', 'value')
     })
+
+    const local = await capturarLocalizacao()
+    if(isAndroid && !local) return popup(mensagem(`É necessário autorizar o uso do GPS`), 'Alerta', true)
+
+    if (!correcao.datas) correcao.datas = {}
+    const data = new Date().getTime()
+    correcao.datas[data] = {
+        latitude: local.latitude,
+        longitude: local.longitude
+    }
 
     correcao.anexos = {
         ...correcao.anexos,
@@ -483,66 +492,6 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
 
 }
 
-async function carregarRoteiro(idOcorrencia, idCorrecao) {
-
-    let painel = document.getElementById(idCorrecao)
-    if (!painel) return
-
-    const mensagem = (texto) => `<div style="${horizontal}; width: 100%;">${texto}</div>`
-
-    const ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
-    const correcao = ocorrencia?.correcoes[idCorrecao] || {}
-    const dadosUsuario = await recuperarDado('dados_setores', correcao.executor)
-    const usuarioMobi7 = dadosUsuario?.mobi7 || ''
-    const dtInicial = correcao.dataInicio
-    const dtFinal = correcao.dataTermino
-    const hrInicial = correcao.horaInicio
-    const hrFinal = correcao.horaTermino
-
-    if (usuarioMobi7 == '' || dtInicial == '' || dtFinal == '') return painel.innerHTML = mensagem('Correção sem dados de Inicio/Final e/ou Executor')
-
-    const roteiro = await mobi7({ usuarioMobi7, dtInicial, dtFinal, hrInicial, hrFinal })
-
-    if (roteiro.length == 0) return painel.innerHTML = mensagem('Sem Dados')
-
-    const modelo = (valor1, valor2) => `
-        <div style="${horizontal}; gap: 5px;">
-            <label style="font-size: 0.7vw;"><strong>${valor1}</strong></label>
-            <label style="font-size: 0.7vw; text-align: left;">${valor2}</label>
-        </div>
-    `
-
-    let locais = ''
-    for (const registro of roteiro.reverse()) {
-
-        const partida = registro.startLocation
-        const dtPartida = new Date(registro.startPosition.date).toLocaleString('pt-BR')
-
-        const chegada = registro.endLocation
-        const dtChegada = new Date(registro.endPosition.date).toLocaleString('pt-BR')
-
-        locais += `
-            <div style="${horizontal}; gap: 1vw; width: 100%;">
-                <div style="${vertical}; width: 50%;">
-                    ${modelo('Bairro', partida.district)}
-                    ${modelo('Rua', partida.street)}
-                    ${modelo('Saída', dtPartida)}
-                </div>
-
-                <div style="${vertical}; width: 50%;">
-                    ${modelo('Bairro', chegada.district)}
-                    ${modelo('Rua', chegada.street)}
-                    ${modelo('Saída', dtChegada)}
-                </div>
-            </div>
-            <br>
-        `
-    }
-
-    painel.innerHTML = locais
-
-}
-
 function ir(img, acao, idOcorrencia) {
     const tabelas = document.querySelectorAll(`[id^='${idOcorrencia}_']`)
     const paginaAtual = img.closest('div').querySelectorAll('label')[0]
@@ -560,7 +509,6 @@ function ir(img, acao, idOcorrencia) {
     novaPagina.forEach(pag => pag.style.display = 'flex')
     paginaAtual.textContent = proximoNumero
 
-    carregarRoteiro(idOcorrencia, idCorrecao)
 }
 
 function obter(name, propriedade) {
@@ -593,7 +541,7 @@ async function salvarOcorrencia(idOcorrencia) {
     ocorrencia.descricao = obter('descricao', 'value')
 
     removerPopup()
-    
+
     if (idOcorrencia) {
         const ocorrenciaAtual = await recuperarDado('dados_ocorrencias', idOcorrencia)
         await inserirDados({ [idOcorrencia]: { ...ocorrenciaAtual, ...ocorrencia } }, 'dados_ocorrencias')
@@ -606,12 +554,12 @@ async function salvarOcorrencia(idOcorrencia) {
     }
 
     anexosProvisorios = {}
-    
+
 }
 
 async function dashboard(dadosFiltrados, evitarEsconder) {
 
-    if(!evitarEsconder) esconderMenus()
+    if (!evitarEsconder) esconderMenus()
     overlayAguarde()
 
     const dados_ocorrencias = dadosFiltrados ? dadosFiltrados : await recuperarDados('dados_ocorrencias')
@@ -777,7 +725,7 @@ async function dashboard(dadosFiltrados, evitarEsconder) {
     removerOverlay()
 
     const tabelaRelatorio = document.querySelector('.tabelaRelatorio')
-    if(tabelaRelatorio) return tabelaRelatorio.innerHTML = tabela
+    if (tabelaRelatorio) return tabelaRelatorio.innerHTML = tabela
 
     const telaInicial = document.querySelector('.telaInterna')
     telaInicial.innerHTML = acumulado
@@ -876,7 +824,7 @@ async function filtrarRelatorio(nameBloco) {
     let bloco = document.querySelector(`[name='${nameBloco}']`)
 
     console.log(nameBloco);
-    
+
 
     if (bloco) {
 

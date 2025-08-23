@@ -10,6 +10,19 @@
     width: 90vw;
 }
 
+.rodape-formulario {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    background-color: #a0a0a0ff;
+    padding: 5px;
+    gap: 1vw;
+}
+
+.rodape-formulario span {
+    font-size: 4vw;
+}
+
 .painel-dashboard {
     display: flex;
     align-items: center;
@@ -210,6 +223,7 @@
 }
 
 .tabela1 td {
+    width: 100vw;
     border: solid 1px #222;
     text-align: center;
     font-size: 4vw;
@@ -322,6 +336,10 @@
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
+    .rodape-formulario span {
+    font-size: 2vw;
+}
+
     .atalhos label {
         font-size: 2vw;
     }
@@ -352,7 +370,8 @@ screen and (min-aspect-ratio: 13/9) {
     }
 
     .tabela1 td {
-        font-size: 1.2vw;
+        width: 40vw;
+        font-size: 1.5vw;
     }
 
     .painel-dashboard-1,
