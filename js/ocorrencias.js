@@ -143,10 +143,10 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
                     ${modeloCampos('Última Correção', status)}
                     ${modeloCampos('Data Registro', ocorrencia?.dataRegistro || '')}
                     ${modeloCampos('Quem abriu', ocorrencia?.solicitante || '')}
-                    ${modeloCampos('Dt Limt Execução', dtAuxOcorrencia(ocorrencia?.dataLimiteExecucao))}
+                    ${modeloCampos('Data Limite', dtAuxOcorrencia(ocorrencia?.dataLimiteExecucao))}
                     ${modeloCampos('Número', idOcorrencia)}
                     ${modeloCampos('Tipo', tipos?.[ocorrencia?.tipo]?.nome || '...')}
-                    ${modeloCampos('Und Manutenção', dados_clientes?.[ocorrencia?.unidade]?.nome || '...')}
+                    ${modeloCampos('Unidade', dados_clientes?.[ocorrencia?.unidade]?.nome || '...')}
                     ${modeloCampos('Sistema', sistemas?.[ocorrencia?.sistema]?.nome || '...')}
                     ${modeloCampos('Prioridade', prioridades?.[ocorrencia?.prioridade]?.nome || '...')}
                     ${modeloCampos('Descrição ', ocorrencia?.descricao || '...')}
@@ -307,7 +307,6 @@ async function formularioOcorrencia(idOcorrencia) {
             ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', oc?.solicitante, dados_setores[oc?.solicitante]?.nome_completo))}
             ${modelo('Descrição', `<textarea rows="7" style="width: 100%;" name="descricao" class="campos">${oc?.descricao || ''}</textarea>`)}
             ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', oc?.executor, dados_setores[oc?.executor]?.nome_completo))}
-            ${modelo('Data / Hora', `<label class="campos">${new Date().toLocaleString('pt-BR')}</label>`)}
             ${modelo('Data Limite para a Execução', `<input name="dataLimiteExecucao" class="campos" type="date" value="${oc?.dataLimiteExecucao || ''}">`)}
             ${modelo('Anexos', `
                     <label class="campos">
@@ -326,12 +325,15 @@ async function formularioOcorrencia(idOcorrencia) {
             : ''}
 
         </div>
-        <div style="${horizontal}; justify-content: start; background-color: #a0a0a0ff; padding: 5px; gap: 1vw;">
+        <div class="rodape-formulario">
             ${botao('Salvar', funcao)}
+            <span style="margin-left: 5vw;" name="timer"></span>
         </div>
    `
 
     popup(acumulado, 'Gerenciar ocorrência')
+
+    dispararTimer()
 
 }
 

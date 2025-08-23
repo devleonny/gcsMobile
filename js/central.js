@@ -92,6 +92,13 @@ const btn = (img, valor, funcao) => `
         <div>${valor}</div>
     </div>
 `
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'F5') f5()
+})
+
+function f5() {
+    location.reload();
+}
 
 if (typeof cordova !== "undefined") {
     document.addEventListener('deviceready', async () => {
@@ -101,13 +108,13 @@ if (typeof cordova !== "undefined") {
             const permissions = cordova.plugins.permissions;
             permissions.requestPermission(
                 permissions.ACCESS_FINE_LOCATION,
-                function(status) {
+                function (status) {
                     if (!status.hasPermission) {
                         popup(mensagem('Você não será capaz de registrar correções sem essas autorizações', 'Alerta'))
                     }
                     telaLogin();
                 },
-                function() {
+                function () {
                     telaLogin();
                 }
             );
@@ -265,29 +272,29 @@ async function salvarCadastro() {
 }
 
 async function capturarLocalizacao() {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) {
-      resolve(false);
-      return;
-    }
+    return new Promise((resolve) => {
+        if (!("geolocation" in navigator)) {
+            resolve(false);
+            return;
+        }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        resolve(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-      }
-    );
-  });
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                });
+            },
+            (error) => {
+                resolve(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0,
+            }
+        );
+    });
 }
 
 function popup(elementoHTML, titulo, naoRemoverAnteriores) {
@@ -390,7 +397,7 @@ async function telaPrincipal() {
                 <div class="botoesMenu">
                     
                     <div class="nomeUsuario">
-                        <span>${acesso.usuario} <strong>${acesso.permissao}</strong></span>
+                        <span><strong>${inicialMaiuscula(acesso.permissao)}</strong> ${acesso.usuario}</span>
                     </div>
 
                     ${btn('configuracoes', 'Ocorrências', 'telaOcorrencias()')}
