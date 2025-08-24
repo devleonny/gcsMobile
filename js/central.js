@@ -36,11 +36,6 @@ const botaoImg = (img, funcao) => `
         <img src="imagens/${img}.png" onclick="${funcao}">
     </div>
 `
-const teste = (el) => `
-<div style="background-color: #d2d2d2;">
-    ${el}
-</div>
-`
 const dtFormatada = (data) => {
     if (!data) return '--'
     const [ano, mes, dia] = data.split('-')
@@ -101,32 +96,50 @@ function f5() {
     location.reload();
 }
 
-if (typeof cordova !== "undefined") {
-    document.addEventListener('deviceready', async () => {
-        navigator.splashscreen.hide();
+if (isAndroid) {
 
-        if (cordova.plugins && cordova.plugins.permissions) {
-            const permissions = cordova.plugins.permissions;
-            permissions.requestPermission(
-                permissions.ACCESS_FINE_LOCATION,
-                function (status) {
-                    if (!status.hasPermission) {
-                        popup(mensagem('Você não será capaz de registrar correções sem essas autorizações', 'Alerta'))
-                    }
-                    telaLogin();
-                },
-                function () {
-                    telaLogin();
-                }
-            );
-        } else {
-            telaLogin();
+    document.addEventListener('deviceready', () => {
+        try {
+            // Ativa o modo background para manter o JS rodando
+
+            cordova.plugins.backgroundMode.setDefaults({
+                title: 'GCS',
+                text: 'App rodando em segundo plano',
+                silent: false
+            });
+            cordova.plugins.backgroundMode.enable();
+
+            // Solicita permissões
+            solicitarPermissoes();
+
+        } catch (err) {
+            popup(msgteste(err));
         }
+
+        telaLogin();
+
     }, false);
+
 } else {
     telaLogin();
 }
 
+function solicitarPermissoes() {
+    if (!(cordova.plugins && cordova.plugins.permissions)) return;
+
+    const permissions = cordova.plugins.permissions;
+    const lista = [
+        permissions.ACCESS_FINE_LOCATION,
+        // POST_NOTIFICATIONS só em Android 13+
+        ...(cordova.platformId === 'android' && parseInt(device.version) >= 13 ? [permissions.POST_NOTIFICATIONS] : [])
+    ];
+
+    permissions.requestPermissions(lista, (status) => {
+        if (!status.hasPermission) {
+            popup(mensagem('Algumas permissões não foram concedidas. O funcionamento pode ser limitado'), 'Aviso');
+        }
+    })
+}
 
 function exibirSenha(img) {
 
@@ -198,22 +211,19 @@ async function acessoLogin() {
             const data = await response.json()
 
             if (data.mensagem) {
-                divAcesso.style.display = 'flex'
                 return popup(mensagem(data.mensagem), 'Alerta', true);
 
-            } if (data.permissao == 'novo') {
-                popup(mensagem('Alguém do setor de SUPORTE precisa autorizar sua entrada', 'imagens/concluido.png'), 'ALERTA', true)
-            } else if (data.permissao !== 'novo') {
+            } else if (data.usuario) {
                 localStorage.setItem('acesso', JSON.stringify(data));
                 telaPrincipal()
                 removerOverlay()
             }
 
-            divAcesso.style.display = 'flex'
-
         } catch (e) {
             popup(mensagem(e), 'Alerta', true);
         }
+
+        divAcesso.style.display = 'flex'
 
     }
 }
@@ -386,6 +396,12 @@ function overlayAguarde() {
     document.head.appendChild(style);
 }
 
+const msgteste = (msg) => `
+    <div style="background-color: #d2d2d2;">
+        ${msg}
+    </div>
+`
+
 async function telaPrincipal() {
 
     acesso = JSON.parse(localStorage.getItem('acesso')) //
@@ -394,17 +410,17 @@ async function telaPrincipal() {
     const menus = {
         'Ocorrências': { img: 'configuracoes', funcao: 'telaOcorrencias()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
         'Dashboard': { img: 'kanban', funcao: 'dashboard()', liberados: ['analista', 'supervisor', 'adm', 'visitante'] },
-        'Unidades': { img: 'empresa', funcao: 'telaUnidades()' , liberados: ['supervisor', 'adm'] },
-        'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()' , liberados: ['analista', 'supervisor', 'adm'] },
+        'Unidades': { img: 'empresa', funcao: 'telaUnidades()', liberados: ['supervisor', 'adm'] },
+        'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', liberados: ['analista', 'supervisor', 'adm'] },
         'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
         'Cadastros': { img: 'ajustar', funcao: 'telaCadastros()', liberados: ['analista', 'supervisor', 'adm'] },
-        'Desconectar': { img: 'sair', funcao: 'desconectar()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'Desconectar': { img: 'sair', funcao: 'deslogar()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
     }
 
     let stringMenus = ''
 
-    for(const [nome, dados] of Object.entries(menus)) {
-        if(!dados.liberados.includes(acesso.permissao)) continue
+    for (const [nome, dados] of Object.entries(menus)) {
+        if (!dados.liberados.includes(acesso.permissao)) continue
         stringMenus += btn(dados.img, nome, dados.funcao)
     }
 
@@ -554,9 +570,37 @@ async function atualizarDados(base) {
 
 }
 
+function popupNotificacao(msg) {
+
+    const idNot = ID5digitos()
+    const acumulado = `
+        <div id="${idNot}" class="notificacao">${msg}</div>
+    `
+
+    document.body.insertAdjacentHTML('beforeend', acumulado)
+
+    setTimeout(() => {
+       document.getElementById(idNot).remove()
+    }, 5000);
+
+}
+
 function deslogar() {
+
+    const acumulado = `
+        <div style="${horizontal}; gap: 10px; background-color: #d2d2d2; padding: 2vw;">
+            <span>Tem certeza?</span>
+            <button onclick="confirmarDeslogar()">Sim</button>
+        </div>
+    `
+    popup(acumulado, 'Sair do GCS', true)
+}
+
+async function confirmarDeslogar() {
+    removerPopup()
     localStorage.removeItem('acesso')
     telaLogin()
+    await inserirDados({}, 'dados_ocorrencias', true) // resetar a base para o próximo usuário;
 }
 
 function esconderMenus() {
@@ -812,11 +856,7 @@ async function sincronizarSetores() {
     let nuvem = await listaSetores(timestamp)
 
     await inserirDados(nuvem, 'dados_setores', timestamp == 0)
-
     dados_setores = await recuperarDados('dados_setores')
-
-    acesso = dados_setores[acesso.usuario]
-    localStorage.setItem('acesso', JSON.stringify(acesso))
 
 }
 

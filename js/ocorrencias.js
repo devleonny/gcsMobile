@@ -66,7 +66,7 @@ function dtAuxOcorrencia(dt) {
     return `${dia}/${mes}/${ano}`
 }
 
-async function gerarCorrecoes(idOcorrencia, dadosCorrecoes, ativarRelatorio) {
+async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
 
     const correcoes = await recuperarDados('correcoes')
     let correcoesDiv = ''
@@ -78,7 +78,7 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes, ativarRelatorio) {
         correcoesDiv += `
             <div id="${idOcorrencia}_${pagina}" name="${idCorrecao}" style="${horizontal}; align-items: start; display: ${pagina == 1 ? 'flex' : 'none'}; width: 100%;">
 
-                <div style="${vertical}; gap: 5px; width: ${ativarRelatorio ? '50%' : '100%'};">
+                <div style="${vertical}; gap: 5px; width: 100%;">
 
                     <div style="${horizontal}; gap: 5px; width: 100%;">
                         ${botaoImg('lapis', `formularioCorrecao('${idOcorrencia}', '${idCorrecao}')`)}
@@ -91,15 +91,6 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes, ativarRelatorio) {
                     ${modeloCampos('Início', data)}
                     ${modeloCampos('Descrição', recorte.descricao)}
                 </div>
-
-                ${ativarRelatorio
-                ? `<div id="${idCorrecao}" class="fundoTec">
-                        <div style="${horizontal}; gap: 5px;">
-                            <img src="gifs/loading.gif" style="width: 5vw;">
-                            <label>Carregando...</label>
-                        </div>
-                    </div>`
-                : ''}
 
             </div>
             `
@@ -140,11 +131,13 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
                         ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}')`)}
                     </div>
 
+                    ${modeloCampos('Empresa', empresas[ocorrencia?.empresa]?.nome || '--')}
+                    ${modeloCampos('Número', idOcorrencia)}
                     ${modeloCampos('Última Correção', status)}
                     ${modeloCampos('Data Registro', ocorrencia?.dataRegistro || '')}
-                    ${modeloCampos('Quem abriu', ocorrencia?.solicitante || '')}
                     ${modeloCampos('Data Limite', dtAuxOcorrencia(ocorrencia?.dataLimiteExecucao))}
-                    ${modeloCampos('Número', idOcorrencia)}
+                    ${modeloCampos('Solicitante', ocorrencia?.solicitante || '')}
+                    ${modeloCampos('Executor', ocorrencia?.executor || '')}
                     ${modeloCampos('Tipo', tipos?.[ocorrencia?.tipo]?.nome || '...')}
                     ${modeloCampos('Unidade', dados_clientes?.[ocorrencia?.unidade]?.nome || '...')}
                     ${modeloCampos('Sistema', sistemas?.[ocorrencia?.sistema]?.nome || '...')}
@@ -310,7 +303,7 @@ async function formularioOcorrencia(idOcorrencia) {
 
     const acumulado = `
         <div class="painelCadastro">
-
+            ${modelo('Empresa', labelBotao('empresa', 'empresas', oc?.empresa, empresas[oc?.empresa]?.nome))}
             ${modelo('Unidade de Manutenção', labelBotao('unidade', 'dados_clientes', oc?.unidade, dados_clientes[oc?.unidade]?.nome))}
             ${modelo('Sistema', labelBotao('sistema', 'sistemas', oc?.sistema, sistemas[oc?.sistema]?.nome))}
             ${modelo('Prioridade', labelBotao('prioridade', 'prioridades', oc?.prioridade, prioridades[oc?.prioridade]?.nome))}
@@ -533,7 +526,7 @@ async function salvarOcorrencia(idOcorrencia) {
 
     overlayAguarde()
 
-    const campos = ['unidade', 'sistema', 'prioridade', 'tipo', 'solicitante', 'executor']
+    const campos = ['unidade', 'sistema', 'empresa', 'prioridade', 'tipo', 'solicitante', 'executor']
     let ocorrencia = {}
 
     for (const campo of campos) {

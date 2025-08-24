@@ -15,9 +15,9 @@ function connectWebSocket() {
 
         console.log(data);
 
-        if(data.base == 'dados_ocorrencias') {
-            if(data.objeto.executor == acesso.usuario) {
-                notificacoes(data.id, 'Novo chamado aberto', `Solicitado por ${objeto.solicitante}`)
+        if (data.base == 'dados_ocorrencias') {
+            if (data.objeto.executor == acesso.usuario) {
+                notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas[data.objeto.empresa].nome} - Solicitado por ${data.objeto.solicitante}`)
             }
         }
 
