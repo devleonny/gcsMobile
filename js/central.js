@@ -98,48 +98,61 @@ function f5() {
 
 if (isAndroid) {
 
-    document.addEventListener('deviceready', () => {
-        try {
-            // Ativa o modo background para manter o JS rodando
+    document.addEventListener('deviceready', async () => {
 
-            cordova.plugins.backgroundMode.setDefaults({
-                title: 'GCS',
-                text: 'App rodando em segundo plano',
-                silent: false
-            });
-            cordova.plugins.backgroundMode.enable();
+        await solicitarPermissoes();
 
-            // Solicita permissões
-            solicitarPermissoes();
-
-        } catch (err) {
-            popup(msgteste(err));
-        }
-
+        cordova.plugins.foregroundService.start(
+            'GCS',
+            '',
+            'icon'
+        );
+    
+        connectWebSocket();
         telaLogin();
 
     }, false);
 
 } else {
+
+    connectWebSocket();
     telaLogin();
+
 }
 
 function solicitarPermissoes() {
-    if (!(cordova.plugins && cordova.plugins.permissions)) return;
-
-    const permissions = cordova.plugins.permissions;
-    const lista = [
-        permissions.ACCESS_FINE_LOCATION,
-        // POST_NOTIFICATIONS só em Android 13+
-        ...(cordova.platformId === 'android' && parseInt(device.version) >= 13 ? [permissions.POST_NOTIFICATIONS] : [])
-    ];
-
-    permissions.requestPermissions(lista, (status) => {
-        if (!status.hasPermission) {
-            popup(mensagem('Algumas permissões não foram concedidas. O funcionamento pode ser limitado'), 'Aviso');
+    return new Promise((resolve, reject) => {
+        if (!(cordova.plugins && cordova.plugins.permissions)) {
+            popup(mensagem('Plugin de permissões não está disponível. Algumas funcionalidades podem não funcionar.'), 'Aviso');
+            return resolve();
         }
-    })
+
+        const permissions = cordova.plugins.permissions;
+        const androidVersion = (device && device.version) || '0';
+        const lista = [
+            permissions.ACCESS_FINE_LOCATION,
+            permissions.ACCESS_COARSE_LOCATION,
+            permissions.FOREGROUND_SERVICE,
+            permissions.FOREGROUND_SERVICE_LOCATION,
+            ...(cordova.platformId === 'android' && parseFloat(androidVersion) >= 13
+                ? [permissions.POST_NOTIFICATIONS]
+                : [])
+        ];
+
+        permissions.requestPermissions(lista, (status) => {
+            if (!status || typeof status.hasPermission === 'undefined') {
+                popup(mensagem(`Falha ao verificar permissões. Verifique as configurações do dispositivo.`), 'Aviso');
+                return reject(new Error('Verificação de permissões falhou'));
+            }
+
+            resolve();
+        }, (error) => {
+            popup(mensagem(`Erro ao solicitar permissões: ${error}`), 'Erro');
+            reject(error);
+        });
+    });
 }
+
 
 function exibirSenha(img) {
 
@@ -580,7 +593,7 @@ function popupNotificacao(msg) {
     document.body.insertAdjacentHTML('beforeend', acumulado)
 
     setTimeout(() => {
-       document.getElementById(idNot).remove()
+        document.getElementById(idNot).remove()
     }, 5000);
 
 }

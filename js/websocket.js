@@ -1,6 +1,5 @@
 let socket;
 let reconnectInterval = 30000;
-connectWebSocket();
 
 function connectWebSocket() {
     socket = new WebSocket(`${api}:8443`);
@@ -12,8 +11,6 @@ function connectWebSocket() {
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
-        console.log(data);
 
         if (data.base == 'dados_ocorrencias') {
             if (data.objeto.executor == acesso.usuario) {
