@@ -12,15 +12,18 @@ let opcoesValidas = {
     finalizado: new Set()
 }
 
-const labelBotao = (name, nomebase, id, nome) => `
+const labelBotao = (name, nomebase, id, nome) => {
+    
+    return `
         <label 
         class="campos" 
         name="${name}"
-        ${id ? `id="${id}"` : ''} 
+        ${id ? `id="${id}"` : ''}
         onclick="cxOpcoes('${name}', '${nomebase}')">
             ${nome ? nome : 'Selecione'} 
         </label>
     `
+}
 
 async function carregarElementosPagina(nomeBase, colunas, tela) {
 
@@ -57,6 +60,109 @@ async function telaCadastros() {
 
 }
 
+function pararCam() {
+    const cameraDiv = document.querySelector('.cameraDiv');
+    if (cameraDiv) cameraDiv.style.display = 'none'
+
+    try {
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        stream = null;
+        const video = document.getElementById('video');
+        if (!video) return
+        video.srcObject = null;
+    } catch (err) {
+        popup(mensagem(`Falha no plugin: ${err}`))
+    }
+}
+
+function blocoAuxiliarFotos(fotos) {
+
+    const imagens = Object.entries(fotos)
+        .map(([link, foto]) => `<img name="foto" data-salvo="sim" id="${link}" src="${api}/uploads/GCS/${link}" class="foto" onclick="ampliarImagem(this, '${link}')">`)
+        .join('')
+
+    const acumulado = `
+        <div style="${vertical}; gap: 3px;">
+            <div class="fotos">${imagens}</div>
+            <div class="capturar" onclick="abrirCamera()">
+                <img src="imagens/camera.png" class="olho">
+                <span>Capturar Imagem</span>
+            </div>
+            <div class="cameraDiv">
+                <video autoplay playsinline></video>
+                <canvas style="display: none;"></canvas>
+            </div>
+        </div>
+    `
+
+    return acumulado
+}
+
+async function abrirCamera() {
+    const cameraDiv = document.querySelector('.cameraDiv');
+    const video = cameraDiv.querySelector('video');
+
+    setInterval(pararCam, 5 * 60 * 1000);
+
+    if (cameraDiv.style.display == 'flex') return tirarFoto() // Caso já esteva visível, tire uma foto;
+
+    try {
+        const modo = isAndroid ? { facingMode: { exact: "environment" } } : true
+        stream = await navigator.mediaDevices.getUserMedia({ video: modo });
+        video.srcObject = stream;
+        cameraDiv.style.display = 'flex';
+
+    } catch (err) {
+        popup(mensagem('Erro ao acessar a câmera: ' + err.message), 'Alerta', true);
+    }
+}
+
+function visibilidadeFotos() {
+    const fotos = document.querySelector('.fotos')
+    const qtd = fotos.querySelectorAll('img')
+    fotos.style.display = qtd.length == 0 ? 'none' : 'grid'
+}
+
+async function tirarFoto() {
+
+    const fotos = document.querySelector('.fotos')
+    const cameraDiv = document.querySelector('.cameraDiv');
+    const canvas = cameraDiv.querySelector('canvas');
+    const video = cameraDiv.querySelector('video');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    const idFoto = ID5digitos()
+    const foto = `<img name="foto" id="${idFoto}" src="${canvas.toDataURL('image/png')}" class="foto" onclick="ampliarImagem(this, '${idFoto}')">`
+    fotos.insertAdjacentHTML('beforeend', foto)
+
+    visibilidadeFotos()
+
+}
+
+function removerImagem(id) {
+    removerPopup()
+    const img = document.getElementById(id)
+    if (img) img.remove()
+
+    visibilidadeFotos()
+}
+
+function ampliarImagem(img, idFoto) {
+
+    const acumulado = `
+        <div style="position: relative; background-color: #d2d2d2;">
+            <button style="position: absolute; top: 10px; left: 10px;" onclick="removerImagem('${idFoto}')">Remover Imagem</button>
+            <img style="width: 95%;" src="${img.src}">
+        </div>
+    `
+
+    popup(acumulado, 'Imagem', true)
+
+}
+
 function dtAuxOcorrencia(dt) {
 
     if (!dt || '') return '--'
@@ -90,6 +196,7 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
                     ${modeloCampos('Status', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
                     ${modeloCampos('Início', data)}
                     ${modeloCampos('Descrição', recorte.descricao)}
+
                 </div>
 
             </div>
@@ -115,6 +222,26 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
     return acumulado
 }
 
+async function gerenciarCliente(idCliente) {
+
+    const cliente = await recuperarDado('dados_clientes', idCliente)
+
+    console.log(cliente);
+
+    const acumulado = `
+        <div class="painelCadastro">
+            ${modelo('Nome', cliente.nome)}
+            ${modelo('CNPJ', cliente.cnpj)}
+            ${modelo('Cidade', cliente.cidade)}
+            ${modelo('Endereço', cliente.bairro)}
+            ${modelo('Cep', cliente.cep)}
+        <div>
+    `
+
+    popup(acumulado, 'Gerenciar Cliente')
+
+}
+
 async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
 
     const status = correcoes[ocorrencia?.tipoCorrecao]?.nome || 'Não analisada'
@@ -126,7 +253,7 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
                 <div style="${vertical}; gap: 5px; width: 100%; position: relative;">
 
                     <div style="${horizontal}; width: 90%; gap: 5px; padding: 5px;">
-                        ${botao('Incluir Correção', `formularioCorrecao('${idOcorrencia}')`, '#e47a00')}
+                        ${botao('INCLUIR CORREÇÃO', `formularioCorrecao('${idOcorrencia}')`, '#e47a00')}
                         ${botaoImg('lapis', `formularioOcorrencia('${idOcorrencia}')`)}
                         ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}')`)}
                     </div>
@@ -187,7 +314,7 @@ async function telaOcorrencias(evitarEsconder) {
                         <img src="imagens/pesquisar2.png">
                     </div>
                     <div style="${horizontal}; gap: 5px;">
-                        ${botao('Nova Ocorrência', 'formularioOcorrencia()')}
+                        ${botao('NOVA OCORRÊNCIA', 'formularioOcorrencia()')}
                     </div>
                 </div>
                 <img class="atualizar" src="imagens/atualizar.png" onclick="atualizarOcorrencias()">
@@ -314,6 +441,11 @@ async function formularioOcorrencia(idOcorrencia) {
             ${modelo('Descrição', `<textarea rows="7" style="width: 100%;" name="descricao" class="campos">${oc?.descricao || ''}</textarea>`)}
             ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', oc?.executor, dados_setores[oc?.executor]?.nome_completo))}
             ${modelo('Data Limite para a Execução', `<input name="dataLimiteExecucao" class="campos" type="date" value="${oc?.dataLimiteExecucao || ''}">`)}
+            
+            <br>
+            ${blocoAuxiliarFotos(oc?.fotos || {})}
+            <br>
+
             ${modelo('Anexos', `
                     <label class="campos">
                         Clique aqui
@@ -340,6 +472,7 @@ async function formularioOcorrencia(idOcorrencia) {
     popup(acumulado, 'Gerenciar ocorrência')
 
     dispararTimer()
+    visibilidadeFotos()
 
 }
 
@@ -357,7 +490,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
     const acumulado = `
         <div class="painelCadastro">
 
-            ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcoes?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}        
+            ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcao?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}        
             ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', correcao?.solicitante, dados_setores[correcao?.solicitante]?.nome_completo))}
             ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', correcao?.executor, dados_setores[correcao?.executor]?.nome_completo))}
             ${modelo('Descrição', `<textarea name="descricao" rows="7" class="campos">${correcao?.descricao || ''}</textarea>`)}
@@ -371,12 +504,17 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
                 ${equipamentos}
             </div>
 
+            <br>
+            ${blocoAuxiliarFotos(correcao?.fotos || {})}
+            <br>
+
             ${modelo('Anexos', `
                     <label class="campos">
                         Clique aqui
                         <input type="file" style="display: none;" onchange="anexosOcorrencias(this, '${idOcorrencia}', '${idCorrecao ? idCorrecao : 'novo'}')">
                     </label>
                 `)}
+
             <div id="anexos" style="${vertical};">
                 ${Object.entries(correcao?.anexos || {}).map(([idAnexo, anexo]) => criarAnexoVisual(anexo.nome, anexo.link, `removerAnexo(this, '${idAnexo}', '${idOcorrencia}', '${idCorrecao}')`)).join('')}
             </div>
@@ -391,6 +529,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
     popup(acumulado, 'Gerenciar Correção')
 
     dispararTimer()
+    visibilidadeFotos()
 
 }
 
@@ -469,6 +608,17 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
         ...anexosProvisorios
     }
 
+    const fotos = document.querySelector('.fotos')
+    const imgs = fotos.querySelectorAll('img')
+    if (imgs.length > 0) {
+        if (!correcao.fotos) correcao.fotos = {}
+        for (const img of imgs) {
+            if (img.dataset && img.dataset.salvo == 'sim') continue
+            const foto = await importarAnexos({ foto: img.src })
+            correcao.fotos[foto[0].link] = foto[0]
+        }
+    }
+
     const equipamentos = document.getElementById('equipamentos')
 
     if (equipamentos) {
@@ -508,10 +658,7 @@ function ir(img, acao, idOcorrencia) {
     const numeroAtual = Number(paginaAtual.textContent)
     const proximoNumero = acao === 'avancar' ? numeroAtual + 1 : numeroAtual - 1
     const novaPagina = document.querySelectorAll(`[id=${idOcorrencia}_${proximoNumero}]`)
-    if (!novaPagina[0]) return
-    const idCorrecao = novaPagina[0].getAttribute('name')
-
-    if (novaPagina.length == 0) return
+    if (!novaPagina[0] || novaPagina.length == 0) return
 
     for (const tabela of tabelas) tabela.style.display = 'none'
     novaPagina.forEach(pag => pag.style.display = 'flex')
@@ -528,38 +675,55 @@ async function salvarOcorrencia(idOcorrencia) {
 
     overlayAguarde()
 
-    const campos = ['unidade', 'sistema', 'empresa', 'prioridade', 'tipo', 'solicitante', 'executor']
-    let ocorrencia = {}
+    try {
 
-    for (const campo of campos) {
-        const resultado = obter(campo, 'id')
+        const campos = ['unidade', 'sistema', 'empresa', 'prioridade', 'tipo', 'solicitante', 'executor']
+        let ocorrencia = idOcorrencia ? await recuperarDado('dados_ocorrencias', idOcorrencia) : {}
 
-        if (resultado == '') return popup(mensagem(`Preencha o campo ${inicialMaiuscula(campo)}`), 'ALERTA', true)
+        for (const campo of campos) {
+            const resultado = obter(campo, 'id')
 
-        ocorrencia[campo] = resultado
+            if (resultado == '') return popup(mensagem(`Preencha o campo ${inicialMaiuscula(campo)}`), 'ALERTA', true)
+
+            ocorrencia[campo] = resultado
+        }
+
+        ocorrencia.anexos = {
+            ...ocorrencia.anexos,
+            ...anexosProvisorios
+        }
+        ocorrencia.usuario = acesso.usuario
+        ocorrencia.dataRegistro = new Date().toLocaleString('pt-BR')
+        ocorrencia.dataLimiteExecucao = obter('dataLimiteExecucao', 'value')
+        ocorrencia.descricao = obter('descricao', 'value')
+
+        if (!ocorrencia.fotos) ocorrencia.fotos = {}
+
+        const fotos = document.querySelector('.fotos')
+        const imgs = fotos.querySelectorAll('img')
+        if (imgs.length > 0) {
+            for (const img of imgs) {
+                if (img.dataset && img.dataset.salvo == 'sim') continue
+                const foto = await importarAnexos({ foto: img.src })
+                ocorrencia.fotos[foto[0].link] = foto[0]
+            }
+        }
+
+        removerPopup()
+
+        if (idOcorrencia) {
+            await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+            await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
+            await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+        } else {
+            await enviar('dados_ocorrencias/0000', ocorrencia)
+            await atualizarOcorrencias()
+        }
+
+    } catch (err) {
+        popup(mensagem(err), 'Alerta', true)
     }
 
-    ocorrencia.anexos = {
-        ...ocorrencia.anexos,
-        ...anexosProvisorios
-    }
-    ocorrencia.usuario = acesso.usuario
-    ocorrencia.dataRegistro = new Date().toLocaleString('pt-BR')
-    ocorrencia.dataLimiteExecucao = obter('dataLimiteExecucao', 'value')
-    ocorrencia.descricao = obter('descricao', 'value')
-
-    removerPopup()
-
-    if (idOcorrencia) {
-        const ocorrenciaAtual = await recuperarDado('dados_ocorrencias', idOcorrencia)
-        await inserirDados({ [idOcorrencia]: { ...ocorrenciaAtual, ...ocorrencia } }, 'dados_ocorrencias')
-        await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
-    } else {
-        await enviar('dados_ocorrencias/0000', ocorrencia)
-        await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
-    }
-
-    await atualizarOcorrencias()
     anexosProvisorios = {}
 
 }

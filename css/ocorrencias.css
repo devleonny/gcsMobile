@@ -15,8 +15,12 @@
     align-items: center;
     justify-content: start;
     background-color: #a0a0a0ff;
-    padding: 5px;
     gap: 1vw;
+}
+
+.rodape-formulario button {
+    padding: 5vw;
+    font-size: 4vw;
 }
 
 .rodape-formulario span {
@@ -242,12 +246,15 @@
 }
 
 .campos {
+    text-align: center;
     font-size: 5vw;
-    text-align: left;
     cursor: pointer;
     padding: 5px;
     background-color: #b5b5b5;
-    border-radius: 5px;
+    border-radius: 20px;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .campos:hover {
@@ -337,8 +344,13 @@
 screen and (min-aspect-ratio: 13/9) {
 
     .rodape-formulario span {
-    font-size: 2vw;
-}
+        font-size: 2vw;
+    }
+
+    .rodape-formulario button {
+        padding: 2vw;
+        font-size: 2vw;
+    }
 
     .atalhos label {
         font-size: 2vw;

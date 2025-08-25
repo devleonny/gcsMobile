@@ -11,7 +11,7 @@ const api = `https://api.gcs.app.br`
 function esquemaLinhas(base, id) {
 
     const esquema = {
-        'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `` },
+        'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `gerenciarCliente('${id}')` },
         'dados_composicoes': { colunas: ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'], funcao: `` },
         'dados_setores': { colunas: ['nome_completo', 'empresa', 'setor', 'permissao'], funcao: `gerenciarUsuario('${id}')` },
         default: { colunas: ['nome'], funcao: `` }
@@ -107,7 +107,7 @@ if (isAndroid) {
             'Serviço ativo',
             'icon'
         );
-    
+
         connectWebSocket();
         telaLogin();
 
@@ -130,6 +130,7 @@ function solicitarPermissoes() {
         const permissions = cordova.plugins.permissions;
         const androidVersion = (device && device.version) || '0';
         const lista = [
+            permissions.CAMERA,
             permissions.ACCESS_FINE_LOCATION,
             permissions.ACCESS_COARSE_LOCATION,
             permissions.FOREGROUND_SERVICE,
@@ -551,6 +552,7 @@ async function sincronizarDados(base, overlayOff) {
 
     if (!overlayOff) overlayAguarde()
 
+
     let nuvem = await receber(base) || {}
     await inserirDados(nuvem, base)
 
@@ -743,30 +745,29 @@ function enviar(caminho, info) {
 
 async function receber(chave) {
 
-    let chavePartes = chave.split('/')
+    const chavePartes = chave.split('/')
+    const dados = await recuperarDados(chavePartes[0]) || {}
     let timestamp = 0
-    let dados = await recuperarDados(chavePartes[0]) || {}
 
     for (const [id, objeto] of Object.entries(dados)) {
         if (objeto.timestamp && objeto.timestamp > timestamp) timestamp = objeto.timestamp
     }
 
-    let objeto = {
-        app,
-        chave: chave,
-        timestamp: timestamp
-    };
-
+    const rota = chavePartes[0] == 'dados_clientes' ? 'clientes-validos' : 'dados'
     const obs = {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(objeto)
+        body: JSON.stringify({
+            app,
+            chave: chave,
+            timestamp: timestamp
+        })
     };
 
     return new Promise((resolve, reject) => {
-        fetch(`${api}/dados`, obs)
+        fetch(`${api}/${rota}`, obs)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
@@ -952,6 +953,18 @@ function ID5digitos() {
     return id;
 }
 
+function base64ToFile(base64, filename = 'foto.png') {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
+
 async function importarAnexos({ input, foto }) {
     const formData = new FormData();
 
@@ -965,7 +978,7 @@ async function importarAnexos({ input, foto }) {
     }
 
     try {
-        const response = await fetch(`${api}/upload/RECONST`, {
+        const response = await fetch(`${api}/upload/GCS`, {
             method: 'POST',
             body: formData
         });
@@ -993,7 +1006,7 @@ function criarAnexoVisual({ nome, link, funcao }) {
 }
 
 function abrirArquivo(link, nome) {
-    link = `${api}/uploads/RECONST/${link}`;
+    link = `${api}/uploads/GCS/${link}`;
     const imagens = ['png', 'jpg', 'jpeg'];
 
     const extensao = nome.split('.').pop().toLowerCase(); // pega sem o ponto
