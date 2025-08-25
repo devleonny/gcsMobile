@@ -12,6 +12,8 @@ function connectWebSocket() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
+        console.log(data);
+        
         if (data.base == 'dados_ocorrencias') {
             if (data.objeto.executor == acesso.usuario) {
                 notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas[data.objeto.empresa].nome} - Solicitado por ${data.objeto.solicitante}`)
@@ -27,6 +29,7 @@ function connectWebSocket() {
                 localStorage.setItem('acesso', JSON.stringify(data.objeto))
                 telaPrincipal()
                 popup(mensagem('Seu acesso foi atualizado', 'imagens/concluido.png'), 'Alerta')
+                inserirDados({}, 'dados_ocorrencias', true) // Reset na base;
             }
         }
 

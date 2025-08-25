@@ -104,7 +104,7 @@ if (isAndroid) {
 
         cordova.plugins.foregroundService.start(
             'GCS',
-            '',
+            'Serviço ativo',
             'icon'
         );
     

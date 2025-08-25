@@ -653,6 +653,7 @@ input[type="file"] {
 }
 
 .atualizar {
+    margin-right: 1vw;
     width: 10vw;
 }
 
@@ -811,8 +812,7 @@ screen and (min-aspect-ratio: 13/9) {
         max-height: 50vh;
     }
 
-    .aguarde img,
-    .dino {
+    .aguarde img {
         width: 10vw;
     }
 
@@ -843,7 +843,6 @@ screen and (min-aspect-ratio: 13/9) {
     .atualizar {
         width: 5vw;
     }
-
 
     .olho,
     .edicao img,

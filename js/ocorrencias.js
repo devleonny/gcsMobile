@@ -220,20 +220,22 @@ async function atualizarOcorrencias() {
 
     const basesAuxiliares = ['empresas', 'dados_clientes', 'sistemas', 'prioridades', 'correcoes', 'tipos']
 
-    for (const base of basesAuxiliares) await sincronizarDados(base, true)
+    for (const base of basesAuxiliares) {
+        await sincronizarDados(base, true)
+    }
 
     let resposta = await baixarOcorrencias()
-    if (acesso.permissao == 'técnico') {
-        let dados_ocorrencias = await recuperarDados('dados_ocorrencias')
+    let dados_ocorrencias = await recuperarDados('dados_ocorrencias')
 
+    if (acesso.empresa !== '0') {
         for (let [id, ocorrencia] of Object.entries(dados_ocorrencias)) {
-            if (ocorrencia.executor !== acesso.usuario) delete dados_ocorrencias[id]
+            if (ocorrencia.empresa !== acesso.empresa) delete dados_ocorrencias[id]
         }
+    }
 
-        resposta = {
-            ...dados_ocorrencias,
-            ...resposta
-        }
+    resposta = {
+        ...dados_ocorrencias,
+        ...resposta
     }
 
     await inserirDados(resposta, 'dados_ocorrencias', true) // True pra resetar o armazenamento;
