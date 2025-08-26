@@ -225,8 +225,9 @@ async function acessoLogin() {
             const data = await response.json()
 
             if (data.mensagem) {
+                divAcesso.style.display = 'flex'
                 return popup(mensagem(data.mensagem), 'Alerta', true);
-
+                
             } else if (data.usuario) {
                 localStorage.setItem('acesso', JSON.stringify(data));
                 telaPrincipal()

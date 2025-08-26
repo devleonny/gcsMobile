@@ -584,8 +584,6 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
         <div class="painel-cadastro">
 
             ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcao?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}        
-            ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', correcao?.solicitante, dados_setores[correcao?.solicitante]?.nome_completo))}
-            ${modelo('Executor / Responsável', labelBotao('executor', 'dados_setores', correcao?.executor, dados_setores[correcao?.executor]?.nome_completo))}
             ${modelo('Descrição', `<textarea name="descricao" rows="7" class="campos">${correcao?.descricao || ''}</textarea>`)}
 
             <div style="${horizontal}; gap: 5px;">
@@ -679,8 +677,7 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
     let correcao = ocorrencia.correcoes[idCorrecao]
 
     Object.assign(correcao, {
-        solicitante: obter('solicitante', 'id'),
-        executor: obter('executor', 'id'),
+        executor: acesso.usuario,
         tipoCorrecao: obter('tipoCorrecao', 'id'),
         usuario: acesso.usuario,
         descricao: obter('descricao', 'value')
@@ -1195,6 +1192,61 @@ async function processarFiltros() {
     }
 
     await dashboard(dadosFiltrados, true)
+
+    removerOverlay()
+
+}
+
+async function anexosOcorrencias(input, idOcorrencia, idCorrecao) {
+
+    overlayAguarde()
+
+    const divAnexos = document.getElementById('anexos')
+    let ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+    let objeto = {}
+    const anexos = await importarAnexos({ input })
+    const novo = (idCorrecao == 'novo' || idOcorrencia == 'novo')
+
+    if (novo) {
+        objeto = anexosProvisorios
+    } else if (idCorrecao) {
+        if (!ocorrencia.correcoes[idCorrecao].anexos) ocorrencia.correcoes[idCorrecao].anexos = {}
+        objeto = ocorrencia.correcoes[idCorrecao].anexos
+    } else {
+        if (!ocorrencia.anexos) ocorrencia.anexos = {}
+        objeto = ocorrencia.anexos
+    }
+
+    anexos.forEach(anexo => {
+        const idAnexo = ID5digitos()
+        objeto[idAnexo] = anexo
+
+        if (divAnexos) divAnexos.insertAdjacentHTML('beforeend', criarAnexoVisual(anexo.nome, anexo.link, `removerAnexo(this, '${idAnexo}', '${idOcorrencia}' ${idCorrecao ? `, '${idCorrecao}'` : ''})`))
+
+    })
+
+    if (!novo) await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+
+    removerOverlay()
+
+}
+
+
+async function removerAnexo(img, idAnexo, idOcorrencia, idCorrecao) {
+
+    overlayAguarde()
+
+    let ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+
+    if (idCorrecao) {
+        delete ocorrencia.correcoes[idCorrecao].anexos[idAnexo]
+    } else {
+        delete ocorrencia.anexos[idAnexo]
+    }
+
+    await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+
+    img.parentElement.remove()
 
     removerOverlay()
 
