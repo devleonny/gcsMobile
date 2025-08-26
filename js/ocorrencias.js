@@ -172,6 +172,44 @@ function dtAuxOcorrencia(dt) {
     return `${dia}/${mes}/${ano}`
 }
 
+function confirmarExclusao(idOcorrencia, idCorrecao) {
+
+    const funcao = idCorrecao ? `excluirCorrecao('${idOcorrencia}', '${idCorrecao}')` : `excluirOcorrenciaCorrecao('${idOcorrencia}')`
+
+    const acumulado = `
+        <div style="background-color: #d2d2d2; ${horizontal}; padding: 2vw; gap: 1vw;">
+
+            <label>Você tem certeza que deseja excluir?</label>
+
+            ${botao('Confirmar', funcao, 'green')}
+
+        </div>
+    
+    `
+    popup(acumulado, 'ALERTA', true)
+}
+
+async function excluirOcorrenciaCorrecao(idOcorrencia, idCorrecao) {
+
+    removerPopup()
+    overlayAguarde()
+    let ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+
+    if (idCorrecao) {
+        delete ocorrencia.correcoes[idCorrecao]
+        await deletar(`dados_ocorrencias/${idOcorrencia}/correcoes/${idCorrecao}`)
+        await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+    } else {
+        await deletar(`dados_ocorrencias/${idOcorrencia}`)
+        await deletarDB('dados_ocorrencias', idOcorrencia)
+    }
+
+    await carregarOcorrencias()
+
+    removerOverlay()
+
+}
+
 async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
 
     const correcoes = await recuperarDados('correcoes')
@@ -734,7 +772,7 @@ async function dashboard(dadosFiltrados, evitarEsconder) {
     overlayAguarde()
 
     const dados_ocorrencias = dadosFiltrados ? dadosFiltrados : await recuperarDados('dados_ocorrencias')
-    const dados_empresas = await recuperarDados('dados_empresas')
+    const dados_clientes = await recuperarDados('dados_clientes')
     const correcoes = await recuperarDados('correcoes')
 
     let linhas = ''
@@ -794,7 +832,7 @@ async function dashboard(dadosFiltrados, evitarEsconder) {
         linhas += `
             <tr>
                 <td>${idOcorrencia}</td>
-                <td>${dados_empresas?.[ocorrencia?.unidade]?.nome || '...'}</td>
+                <td>${dados_clientes?.[ocorrencia?.unidade]?.nome || '...'}</td>
                 <td>${ocorrencia.dataRegistro.split(',')[0]}</td>
                 <td>${dtAuxOcorrencia(ocorrencia.dataLimiteExecucao)}</td>
                 <td>${dtAuxOcorrencia(dtTermino)}</td>
