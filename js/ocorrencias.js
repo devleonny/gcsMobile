@@ -13,7 +13,7 @@ let opcoesValidas = {
 }
 
 const labelBotao = (name, nomebase, id, nome) => {
-    
+
     return `
         <label 
         class="campos" 
@@ -31,6 +31,13 @@ async function carregarElementosPagina(nomeBase, colunas, tela) {
     const dados = await recuperarDados(nomeBase)
     const telaInterna = document.querySelector(`.${tela ? tela : 'telaInterna'}`)
     telaInterna.innerHTML = modeloTabela(colunas, nomeBase)
+
+    if (nomeBase !== 'dados_composicoes' && nomeBase !== 'dados_clientes') {
+        const adicionar = `<button onclick="editarBaseAuxiliar('${nomeBase}')">Adicionar</button>`
+        const painelBotoes = document.querySelector('.botoes')
+        painelBotoes.insertAdjacentHTML('beforeend', adicionar)
+    }
+
     for (const [id, objeto] of Object.entries(dados)) criarLinha(objeto, id, nomeBase)
     removerOverlay()
 
@@ -42,13 +49,49 @@ async function carregarBasesAuxiliares(nomeBase) {
     await carregarElementosPagina(nomeBase, colunas, 'telaInferior')
 }
 
+async function editarBaseAuxiliar(nomeBase, id) {
+    const dados = await recuperarDado(nomeBase, id)
+    const funcao = id ? `salvarNomeAuxiliar('${nomeBase}', '${id}')` : `salvarNomeAuxiliar('${nomeBase}')`
+    const acumulado = `
+        <div class="painel-cadastro">
+            <span>Nome</span>
+            <input name="nome" placeholder="${inicialMaiuscula(nomeBase)}" value="${dados?.nome || ''}">
+        </div>
+        <div class="rodape-formulario">
+            <button onclick="${funcao}">Salvar</button>
+            <span style="margin-left: 5vw;" name="timer"></span>
+        </div>
+    `
+
+    popup(acumulado, 'Gerenciar', true)
+
+}
+
+async function salvarNomeAuxiliar(nomeBase, id) {
+
+    overlayAguarde()
+
+    id = id || ID5digitos()
+
+    const nome = document.querySelector('[name="nome"]')
+    await enviar(`${nomeBase}/${id}/nome`, nome.value)
+
+    let dado = await recuperarDado(nomeBase, id) || {}
+    dado.nome = nome.value
+    await inserirDados({ [id]: dado }, nomeBase)
+    await criarLinha(dado, id, nomeBase)
+
+    removerPopup()
+
+}
+
 async function telaCadastros() {
     esconderMenus()
     titulo.textContent = 'Cadastros'
     const telaInterna = document.querySelector('.telaInterna')
     const bases = ['empresas', 'tipos', 'sistemas', 'prioridades', 'correcoes']
     const acumulado = `
-        <div class="painel-cadastro">
+        <div style="${vertical}; gap: 2px;">
             <div class="painel-superior-cadastros">
                 ${bases.map(base => `<button onclick="carregarBasesAuxiliares('${base}')">${inicialMaiuscula(base)}</button>`).join('')}
             </div>
@@ -75,27 +118,42 @@ function pararCam() {
     }
 }
 
-function blocoAuxiliarFotos(fotos) {
+async function blocoAuxiliarFotos(fotos) {
 
-    const imagens = Object.entries(fotos)
-        .map(([link, foto]) => `<img name="foto" data-salvo="sim" id="${link}" src="${api}/uploads/GCS/${link}" class="foto" onclick="ampliarImagem(this, '${link}')">`)
-        .join('')
+    if (fotos) {
 
-    const acumulado = `
-        <div style="${vertical}; gap: 3px;">
+        const imagens = Object.entries(fotos)
+            .map(([link, foto]) => `<img name="foto" data-salvo="sim" id="${link}" src="${api}/uploads/GCS/${link}" class="foto" onclick="ampliarImagem(this, '${link}')">`)
+            .join('')
+
+        const painel = `
             <div class="fotos">${imagens}</div>
-            <div class="capturar" onclick="abrirCamera()">
+            <div class="capturar" onclick="blocoAuxiliarFotos()">
                 <img src="imagens/camera.png" class="olho">
-                <span>Capturar Imagem</span>
+                <span>Abrir Câmera</span>
             </div>
-            <div class="cameraDiv">
-                <video autoplay playsinline></video>
-                <canvas style="display: none;"></canvas>
-            </div>
-        </div>
-    `
+        `
+        return painel
 
-    return acumulado
+    } else {
+
+        const popupCamera = `
+            <div style="${vertical}; gap: 3px; background-color: #d2d2d2;">
+                <div class="capturar" style="position: fixed; bottom: 10px; left: 10px; z-index: 10003;" onclick="tirarFoto()">
+                    <img src="imagens/camera.png" class="olho">
+                    <span>Capturar Imagem</span>
+                </div>
+
+                <div class="cameraDiv">
+                    <video autoplay playsinline></video>
+                    <canvas style="display: none;"></canvas>
+                </div>
+            </div>
+            `
+        popup(popupCamera, 'Captura', true)
+        await abrirCamera()
+    }
+
 }
 
 async function abrirCamera() {
@@ -103,8 +161,6 @@ async function abrirCamera() {
     const video = cameraDiv.querySelector('video');
 
     setInterval(pararCam, 5 * 60 * 1000);
-
-    if (cameraDiv.style.display == 'flex') return tirarFoto() // Caso já esteva visível, tire uma foto;
 
     try {
         const modo = isAndroid ? { facingMode: { exact: "environment" } } : true
@@ -138,6 +194,7 @@ async function tirarFoto() {
     const foto = `<img name="foto" id="${idFoto}" src="${canvas.toDataURL('image/png')}" class="foto" onclick="ampliarImagem(this, '${idFoto}')">`
     fotos.insertAdjacentHTML('beforeend', foto)
 
+    removerPopup()
     visibilidadeFotos()
 
 }
@@ -177,16 +234,16 @@ function confirmarExclusao(idOcorrencia, idCorrecao) {
     const funcao = idCorrecao ? `excluirCorrecao('${idOcorrencia}', '${idCorrecao}')` : `excluirOcorrenciaCorrecao('${idOcorrencia}')`
 
     const acumulado = `
-        <div style="background-color: #d2d2d2; ${horizontal}; padding: 2vw; gap: 1vw;">
+        <div style="background-color: #d2d2d2; ${horizontal}; padding: 2vw; gap: 10px;">
 
             <label>Você tem certeza que deseja excluir?</label>
 
-            ${botao('Confirmar', funcao, 'green')}
+            <button onclick="${funcao}">Confirmar</button>
 
         </div>
     
     `
-    popup(acumulado, 'ALERTA', true)
+    popup(acumulado, 'Aviso', true)
 }
 
 async function excluirOcorrenciaCorrecao(idOcorrencia, idCorrecao) {
@@ -264,10 +321,8 @@ async function gerenciarCliente(idCliente) {
 
     const cliente = await recuperarDado('dados_clientes', idCliente)
 
-    console.log(cliente);
-
     const acumulado = `
-        <div class="painelCadastro">
+        <div class="painel-cadastro">
             ${modelo('Nome', cliente.nome)}
             ${modelo('CNPJ', cliente.cnpj)}
             ${modelo('Cidade', cliente.cidade)}
@@ -469,7 +524,7 @@ async function formularioOcorrencia(idOcorrencia) {
     const funcao = idOcorrencia ? `salvarOcorrencia('${idOcorrencia}')` : 'salvarOcorrencia()'
 
     const acumulado = `
-        <div class="painelCadastro">
+        <div class="painel-cadastro">
             ${modelo('Empresa', labelBotao('empresa', 'empresas', oc?.empresa, empresas[oc?.empresa]?.nome))}
             ${modelo('Unidade de Manutenção', labelBotao('unidade', 'dados_clientes', oc?.unidade, dados_clientes[oc?.unidade]?.nome))}
             ${modelo('Sistema', labelBotao('sistema', 'sistemas', oc?.sistema, sistemas[oc?.sistema]?.nome))}
@@ -481,7 +536,7 @@ async function formularioOcorrencia(idOcorrencia) {
             ${modelo('Data Limite para a Execução', `<input name="dataLimiteExecucao" class="campos" type="date" value="${oc?.dataLimiteExecucao || ''}">`)}
             
             <br>
-            ${blocoAuxiliarFotos(oc?.fotos || {})}
+            ${await blocoAuxiliarFotos(oc?.fotos || {}, true)}
             <br>
 
             ${modelo('Anexos', `
@@ -526,7 +581,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
     for (const [id, equip] of Object.entries(correcao?.equipamentos || {})) equipamentos += await maisLabel(equip)
 
     const acumulado = `
-        <div class="painelCadastro">
+        <div class="painel-cadastro">
 
             ${modelo('Status da Correção', labelBotao('tipoCorrecao', 'correcoes', correcao?.tipoCorrecao, correcoes[correcao?.tipoCorrecao]?.nome))}        
             ${modelo('Solicitante', labelBotao('solicitante', 'dados_setores', correcao?.solicitante, dados_setores[correcao?.solicitante]?.nome_completo))}
@@ -543,7 +598,7 @@ async function formularioCorrecao(idOcorrencia, idCorrecao) {
             </div>
 
             <br>
-            ${blocoAuxiliarFotos(correcao?.fotos || {})}
+            ${await blocoAuxiliarFotos(correcao?.fotos || {})}
             <br>
 
             ${modelo('Anexos', `
@@ -715,13 +770,13 @@ async function salvarOcorrencia(idOcorrencia) {
 
     try {
 
-        const campos = ['unidade', 'sistema', 'empresa', 'prioridade', 'tipo', 'solicitante', 'executor']
+        const campos = ['empresa', 'unidade', 'sistema', 'prioridade', 'tipo', 'solicitante', 'executor']
         let ocorrencia = idOcorrencia ? await recuperarDado('dados_ocorrencias', idOcorrencia) : {}
 
         for (const campo of campos) {
             const resultado = obter(campo, 'id')
 
-            if (resultado == '') return popup(mensagem(`Preencha o campo ${inicialMaiuscula(campo)}`), 'ALERTA', true)
+            if (resultado == '') return popup(mensagem(`Preencha o campo ${inicialMaiuscula(campo)}`), 'Alerta', true)
 
             ocorrencia[campo] = resultado
         }

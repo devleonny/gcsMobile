@@ -14,7 +14,7 @@ function esquemaLinhas(base, id) {
         'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `gerenciarCliente('${id}')` },
         'dados_composicoes': { colunas: ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'], funcao: `` },
         'dados_setores': { colunas: ['nome_completo', 'empresa', 'setor', 'permissao'], funcao: `gerenciarUsuario('${id}')` },
-        default: { colunas: ['nome'], funcao: `` }
+        default: { colunas: ['nome'], funcao: `editarBaseAuxiliar('${base}', '${id}')`}
     }
 
     return esquema?.[base] || esquema.default
@@ -953,7 +953,7 @@ function ID5digitos() {
     return id;
 }
 
-function base64ToFile(base64, filename = 'foto.png') {
+function base64ToBlob(base64) {
     const arr = base64.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
     const bstr = atob(arr[1]);
@@ -962,15 +962,15 @@ function base64ToFile(base64, filename = 'foto.png') {
     while (n--) {
         u8arr[n] = bstr.charCodeAt(n);
     }
-    return new File([u8arr], filename, { type: mime });
+    return new Blob([u8arr], { type: mime });
 }
 
 async function importarAnexos({ input, foto }) {
     const formData = new FormData();
 
     if (foto) {
-        const imagem = base64ToFile(foto);
-        formData.append('arquivos', imagem);
+        const blob = base64ToBlob(foto);
+        formData.append('arquivos', blob);
     } else {
         for (const file of input.files) {
             formData.append('arquivos', file);
