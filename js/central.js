@@ -856,6 +856,8 @@ async function configuracoes(usuario, campo, valor) {
 
 async function sincronizarSetores() {
 
+    overlayAguarde()
+
     dados_setores = await recuperarDados('dados_setores')
 
     let timestamp = 0
@@ -879,6 +881,8 @@ async function sincronizarSetores() {
 
     await inserirDados(nuvem, 'dados_setores', timestamp == 0)
     dados_setores = await recuperarDados('dados_setores')
+
+    removerOverlay()
 
 }
 
