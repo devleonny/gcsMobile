@@ -156,9 +156,9 @@ span {
     display: flex;
     align-items: center;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-evenly;
     background-color: white;
-    padding-bottom: 10vw;
+    padding: 3rem;
 }
 
 .credenciais {
