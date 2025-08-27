@@ -131,7 +131,6 @@ span {
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 90vw;
-    height: 70vh;
 }
 
 .botaoSuperiorLogin {
@@ -153,14 +152,13 @@ span {
 }
 
 .baixoLogin {
-    gap: 20px;
     flex: 1;
     display: flex;
     align-items: center;
     flex-direction: column;
     justify-content: center;
     background-color: white;
-    padding: 1vw;
+    padding-bottom: 10vw;
 }
 
 .credenciais {
@@ -171,7 +169,7 @@ span {
 }
 
 .credenciais input {
-    font-size: 6vw;
+    font-size: 5vw;
 }
 
 .cadeado {
@@ -283,6 +281,7 @@ button {
 }
 
 .rodape-login button {
+    border-radius: 0px;
     width: 100%;
     padding: 5vw;
     font-size: 6vw;
