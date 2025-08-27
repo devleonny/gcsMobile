@@ -424,7 +424,6 @@ async function telaPrincipal() {
 
     const menus = {
         'Ocorrências': { img: 'configuracoes', funcao: 'telaOcorrencias()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
-        'Dashboard': { img: 'kanban', funcao: 'dashboard()', liberados: ['analista', 'supervisor', 'adm', 'visitante'] },
         'Unidades': { img: 'empresa', funcao: 'telaUnidades()', liberados: ['supervisor', 'adm'] },
         'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', liberados: ['analista', 'supervisor', 'adm'] },
         'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
@@ -776,6 +775,10 @@ async function receber(chave) {
                 return response.json();
             })
             .then(data => {
+                if(data.mensagem) {
+                    popup(mensagem(`Falha na atualização: ${data.mensagem}`), 'Alerta', true)
+                    resolve({})
+                }
                 resolve(data);
             })
             .catch(err => {

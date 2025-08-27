@@ -27,35 +27,6 @@
     font-size: 4vw;
 }
 
-.painel-dashboard {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    background-color: #0000004d;
-    width: 100%;
-}
-
-.painel-dashboard-1 {
-    flex-direction: column;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding-top: 1px;
-    padding-bottom: 1px;
-    gap: 1px;
-}
-
-.painel-dashboard-2 {
-    flex-direction: column;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    border: solid 1px #222;
-}
-
 .itemFiltro {
     display: flex;
     align-items: center;
@@ -70,19 +41,6 @@
 
 .itemFiltro img {
     width: 5vw;
-}
-
-.tituloDashboard {
-    height: -webkit-fill-available;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
-
-.tituloDashboard label {
-    margin-left: 5vw;
-    font-size: 5vw;
 }
 
 .atalhosRelatorio {
@@ -299,14 +257,6 @@
     overflow-x: hidden;
 }
 
-.tela-dashboard {
-    display: flex;
-    align-items: start;
-    justify-content: start;
-    flex-direction: column;
-    width: 90vw;
-}
-
 .paginacao {
     display: flex;
     align-items: center;
@@ -377,21 +327,12 @@ screen and (min-aspect-ratio: 13/9) {
         font-size: 1.5vw;
     }
 
-    .painel-dashboard-1,
-    .painel-dashboard-2 {
-        flex-direction: row;
-    }
-
     .totalBox label {
         font-size: 2vw;
     }
 
     .campos {
         font-size: 1.5vw;
-    }
-
-    .tituloDashboard label {
-        font-size: 3vw;
     }
 
     .balaoOcorrencias {
