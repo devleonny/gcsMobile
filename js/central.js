@@ -14,7 +14,7 @@ function esquemaLinhas(base, id) {
         'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `gerenciarCliente('${id}')` },
         'dados_composicoes': { colunas: ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'], funcao: `` },
         'dados_setores': { colunas: ['nome_completo', 'empresa', 'setor', 'permissao'], funcao: `gerenciarUsuario('${id}')` },
-        default: { colunas: ['nome'], funcao: `editarBaseAuxiliar('${base}', '${id}')`}
+        default: { colunas: ['nome'], funcao: `editarBaseAuxiliar('${base}', '${id}')` }
     }
 
     return esquema?.[base] || esquema.default
@@ -227,7 +227,7 @@ async function acessoLogin() {
             if (data.mensagem) {
                 divAcesso.style.display = 'flex'
                 return popup(mensagem(data.mensagem), 'Alerta', true);
-                
+
             } else if (data.usuario) {
                 localStorage.setItem('acesso', JSON.stringify(data));
                 telaPrincipal()
@@ -419,7 +419,8 @@ const msgteste = (msg) => `
 
 async function telaPrincipal() {
 
-    acesso = JSON.parse(localStorage.getItem('acesso')) //
+    acesso = JSON.parse(localStorage.getItem('acesso'))
+    await sincronizarSetores()
     toolbar.style.display = 'flex'
 
     const menus = {
@@ -465,7 +466,6 @@ async function telaPrincipal() {
     tela.innerHTML = acumulado
 
     dados_distritos = await recuperarDados('dados_distritos')
-    await sincronizarSetores()
 
 }
 
@@ -775,7 +775,7 @@ async function receber(chave) {
                 return response.json();
             })
             .then(data => {
-                if(data.mensagem) {
+                if (data.mensagem) {
                     popup(mensagem(`Falha na atualização: ${data.mensagem}`), 'Alerta', true)
                     resolve({})
                 }
@@ -872,6 +872,12 @@ async function sincronizarSetores() {
     }
 
     let nuvem = await listaSetores(timestamp)
+
+    if (nuvem[acesso.usuario]) {
+        await inserirDados({}, 'dados_ocorrencias')
+        acesso = nuvem[acesso.usuario]
+        localStorage.setItem('acesso', JSON.stringify(nuvem[acesso.usuario]))
+    }
 
     await inserirDados(nuvem, 'dados_setores', timestamp == 0)
     dados_setores = await recuperarDados('dados_setores')
