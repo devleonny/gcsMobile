@@ -123,7 +123,6 @@ span {
 }
 
 .loginBloco {
-    margin-top: 5vh;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -131,6 +130,8 @@ span {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 90vw;
+    height: 70vh;
 }
 
 .botaoSuperiorLogin {
@@ -143,7 +144,7 @@ span {
 }
 
 .botaoSuperiorLogin span {
-    font-size: 4vw;
+    font-size: 6vw;
     color: white;
 }
 
@@ -162,8 +163,19 @@ span {
     padding: 1vw;
 }
 
+.credenciais {
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+}
+
+.credenciais input {
+    font-size: 6vw;
+}
+
 .cadeado {
-    width: 30vw;
+    width: 70vw;
 }
 
 .overlay {
@@ -180,7 +192,7 @@ span {
 }
 
 .olho {
-    width: 6vw;
+    width: 8vw;
 }
 
 select {
@@ -262,6 +274,22 @@ button {
     background-color: white;
     border: solid 1px #676767;
     padding: 8px;
+}
+
+.rodape-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rodape-login button {
+    width: 100%;
+    padding: 5vw;
+    font-size: 6vw;
+}
+
+.rodape-login span {
+    font-size: 4vw;
 }
 
 .painel-cadastro th {
@@ -720,6 +748,15 @@ input[type="file"] {
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
+    .credenciais input {
+        font-size: 2vw;
+    }
+
+    .rodape-login button {
+        padding: 1vw;
+        font-size: 2vw;
+    }
+
     .nomeUsuario span {
         font-size: 2vw;
     }
@@ -774,11 +811,6 @@ screen and (min-aspect-ratio: 13/9) {
 
     .btnLateral img {
         width: 3vw;
-    }
-
-    .loginBloco {
-        max-width: 80vw;
-        max-height: 80vh;
     }
 
     .baixoLogin {

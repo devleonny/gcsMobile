@@ -686,11 +686,9 @@ function telaLogin() {
 
             <div class="baixoLogin">
 
-                <br>
-
                 <img src="imagens/GrupoCostaSilva.png" class="cadeado">
                 
-                <div style="padding: 20px; display: flex; flex-direction: column; align-items: start; justify-content: center;">
+                <div class="credenciais">
 
                     <label>Usuário</label>
                     <input type="text" placeholder="Usuário">
@@ -701,18 +699,18 @@ function telaLogin() {
                         <img src="imagens/olhoFechado.png" class="olho" onclick="exibirSenha(this)">
                     </div>
 
-                    <br>
-                    <button onclick="acessoLogin()">Entrar</button>
+                </div>
 
-                </div>
-                <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-                    <label>Primeiro acesso?</label>
-                    <button style="background-color: #097fe6; white-space: nowrap;" onclick="cadastrar()">Cadastre-se</button>
-                </div>
-                <br>
+            </div>
+
+            <div class="rodape-login">
+                <button onclick="acessoLogin()">Entrar</button>
+                <button style="background-color: #097fe6;" onclick="cadastrar()">Cadastrar</button>
             </div>
 
         </div>
+
+        
     `
 
     tela.innerHTML = acumulado
