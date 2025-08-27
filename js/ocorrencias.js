@@ -466,7 +466,6 @@ async function atualizarOcorrencias() {
         'tipos'
     ];
 
-    // roda todas as sincronizações em paralelo
     await Promise.all(basesAuxiliares.map(base => sincronizarDados(base, true)));
 
     let resposta = await baixarOcorrencias();
@@ -542,7 +541,7 @@ async function telaEquipamentos() {
 
     esconderMenus()
     titulo.textContent = 'Equipamentos'
-    const colunas = ['Código', 'Descrição', 'Unidade', 'Modelo', 'Fabricante', '']
+    const colunas = ['Descrição', 'Código', 'Unidade', 'Modelo', 'Fabricante', '']
     await carregarElementosPagina('dados_composicoes', colunas)
 }
 

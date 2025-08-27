@@ -12,7 +12,7 @@ function esquemaLinhas(base, id) {
 
     const esquema = {
         'dados_clientes': { colunas: ['nome', 'cnpj', 'cidade'], funcao: `gerenciarCliente('${id}')` },
-        'dados_composicoes': { colunas: ['codigo', 'descricao', 'unidade', 'modelo', 'fabricante'], funcao: `` },
+        'dados_composicoes': { colunas: ['descricao', 'codigo', 'unidade', 'modelo', 'fabricante'], funcao: `` },
         'dados_setores': { colunas: ['nome_completo', 'empresa', 'setor', 'permissao'], funcao: `gerenciarUsuario('${id}')` },
         default: { colunas: ['nome'], funcao: `editarBaseAuxiliar('${base}', '${id}')` }
     }
@@ -1043,8 +1043,10 @@ async function cxOpcoes(name, nomeBase, funcaoAux) {
             .map(campo => `${(dado[campo] && dado[campo] !== '') ? `<label>${dado[campo]}</label>` : ''}`)
             .join('')
 
+        const valorSeguro = (dado[campos[0]] || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\r?\n|\r/g, "\\n");
+
         opcoesDiv += `
-            <div name="camposOpcoes" class="atalhos" onclick="selecionar('${name}', '${cod}', '${dado[campos[0]]}' ${funcaoAux ? `, '${funcaoAux}'` : ''})">
+            <div name="camposOpcoes" class="atalhos" onclick="selecionar('${name}', '${cod}', '${valorSeguro}' ${funcaoAux ? `, '${funcaoAux}'` : ''})">
                 ${labels}
             </div>`
     }

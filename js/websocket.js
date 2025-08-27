@@ -14,7 +14,7 @@ function connectWebSocket() {
 
         if(data.tipo !== 'usuarios_online') console.log(data);
         
-        if (data.base == 'dados_ocorrencias') {
+        if (data.base == 'dados_ocorrencias' && acesso.usuario) {
             if (data.objeto.executor == acesso.usuario) {
                 notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas?.[data?.objeto?.empresa]?.nome || '??'} - Solicitado por ${data.objeto.solicitante}`)
             }
@@ -22,8 +22,6 @@ function connectWebSocket() {
 
         if (data.base == 'dados_setores') {
             inserirDados({ [data.id]: data.objeto }, 'dados_setores')
-
-            //criarLinha() verificando antes o elemento id existe;
 
             if (data.id == acesso.usuario) {
                 localStorage.setItem('acesso', JSON.stringify(data.objeto))
