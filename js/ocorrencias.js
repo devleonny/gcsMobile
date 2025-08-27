@@ -231,7 +231,7 @@ function dtAuxOcorrencia(dt) {
 
 function confirmarExclusao(idOcorrencia, idCorrecao) {
 
-    const funcao = idCorrecao ? `excluirCorrecao('${idOcorrencia}', '${idCorrecao}')` : `excluirOcorrenciaCorrecao('${idOcorrencia}')`
+    const funcao = idCorrecao ? `excluirInformacao('${idOcorrencia}', '${idCorrecao}')` : `excluirInformacao('${idOcorrencia}')`
 
     const acumulado = `
         <div style="background-color: #d2d2d2; ${horizontal}; padding: 2vw; gap: 10px;">
@@ -244,6 +244,28 @@ function confirmarExclusao(idOcorrencia, idCorrecao) {
     
     `
     popup(acumulado, 'Aviso', true)
+}
+
+async function excluirInformacao(idOcorrencia, idCorrecao) {
+
+    overlayAguarde()
+    let ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
+
+    if (idCorrecao) {
+        delete ocorrencia.correcoes[idCorrecao]
+        await deletar(`dados_ocorrencias/${idOcorrencia}/correcoes/${idCorrecao}`)
+        await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
+        await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+        removerPopup()
+        return
+    }
+
+    await deletar(`dados_ocorrencias/${idOcorrencia}`)
+    await deletarDB('dados_ocorrencias', idOcorrencia)
+    const tr = document.getElementById(idOcorrencia)
+    if (tr) tr.remove()
+    removerPopup()
+
 }
 
 async function excluirOcorrenciaCorrecao(idOcorrencia, idCorrecao) {
@@ -285,9 +307,7 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
                         ${botaoImg('lapis', `formularioCorrecao('${idOcorrencia}', '${idCorrecao}')`)}
                         ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}', '${idCorrecao}')`)}
                     </div>
-
-                    ${modeloCampos('Solicitante', `<label style="white-space: nowrap;">${recorte?.solicitante || '??'}</label>`)}
-                    ${modeloCampos('Executor', `<label style="white-space: nowrap;">${recorte?.executor || '??'}</label>`)}
+                    ${modeloCampos('Executor', `<label style="white-space: nowrap;">${recorte.usuario}</label>`)}
                     ${modeloCampos('Status', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
                     ${modeloCampos('Início', data)}
                     ${modeloCampos('Descrição', recorte.descricao)}
@@ -368,7 +388,7 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
 
             </td>
             
-            ${ocorrencia.correcoes
+            ${Object.keys(ocorrencia?.correcoes || {}).length > 0
             ? `<td style="background-color: white;">${await gerarCorrecoes(idOcorrencia, ocorrencia.correcoes)}</td>`
             : `<td style="background-color: #0000005e">
                     <img src="imagens/BG.png" class="img-logo-td">
@@ -435,37 +455,45 @@ async function telaOcorrencias(evitarEsconder) {
 }
 
 async function atualizarOcorrencias() {
+    overlayAguarde();
 
-    overlayAguarde()
+    const basesAuxiliares = [
+        'empresas',
+        'dados_clientes',
+        'sistemas',
+        'prioridades',
+        'correcoes',
+        'tipos'
+    ];
 
-    const basesAuxiliares = ['empresas', 'dados_clientes', 'sistemas', 'prioridades', 'correcoes', 'tipos']
+    // roda todas as sincronizações em paralelo
+    await Promise.all(basesAuxiliares.map(base => sincronizarDados(base, true)));
 
-    for (const base of basesAuxiliares) {
-        await sincronizarDados(base, true)
-    }
-
-    let resposta = await baixarOcorrencias()
-    let dados_ocorrencias = await recuperarDados('dados_ocorrencias')
+    let resposta = await baixarOcorrencias();
+    let dados_ocorrencias = await recuperarDados('dados_ocorrencias');
 
     if (acesso.empresa !== '0') {
         for (let [id, ocorrencia] of Object.entries(dados_ocorrencias)) {
-            if (ocorrencia.empresa !== acesso.empresa) delete dados_ocorrencias[id]
+            if (ocorrencia.empresa !== acesso.empresa) {
+                delete dados_ocorrencias[id];
+            }
         }
     }
 
     resposta = {
         ...dados_ocorrencias,
         ...resposta
-    }
+    };
 
-    await inserirDados(resposta, 'dados_ocorrencias', true) // True pra resetar o armazenamento;
-    await sincronizarSetores()
-    titulo.textContent = resposta.empresa
+    await inserirDados(resposta, 'dados_ocorrencias', true); // reset
+    await sincronizarSetores();
+    titulo.textContent = resposta.empresa;
 
-    await telaOcorrencias(true)
+    await telaOcorrencias(true);
 
-    removerOverlay()
+    removerOverlay();
 }
+
 
 async function baixarOcorrencias() {
 
@@ -804,6 +832,7 @@ async function salvarOcorrencia(idOcorrencia) {
             await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
             await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
             await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+
         } else {
             await enviar('dados_ocorrencias/0000', ocorrencia)
             await atualizarOcorrencias()
