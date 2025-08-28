@@ -5,6 +5,7 @@ let prioridades = {}
 let empresas = {}
 let correcoes = {}
 let dados_clientes = {}
+let dados_ocorrencias = {}
 let opcoesValidas = {
     solicitante: new Set(),
     executor: new Set(),
@@ -86,7 +87,7 @@ async function salvarNomeAuxiliar(nomeBase, id) {
 }
 
 async function telaCadastros() {
-    esconderMenus()
+    mostrarMenus(false)
     titulo.textContent = 'Cadastros'
     const telaInterna = document.querySelector('.telaInterna')
     const bases = ['empresas', 'tipos', 'sistemas', 'prioridades', 'correcoes']
@@ -402,12 +403,10 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
     document.getElementById('body').insertAdjacentHTML('beforeend', linha)
 }
 
-async function telaOcorrencias(evitarEsconder) {
+async function telaOcorrencias(abertos) {
 
-    if (!evitarEsconder) esconderMenus()
-    overlayAguarde()
-
-    const dados_ocorrencias = await recuperarDados('dados_ocorrencias')
+    mostrarMenus(false)
+    dados_ocorrencias = await recuperarDados('dados_ocorrencias')
     empresas = await recuperarDados('empresas')
     sistemas = await recuperarDados('sistemas')
     tipos = await recuperarDados('tipos')
@@ -415,7 +414,9 @@ async function telaOcorrencias(evitarEsconder) {
     correcoes = await recuperarDados('correcoes')
     dados_clientes = await recuperarDados('dados_clientes')
 
-    titulo.textContent = empresas[acesso?.empresa]?.nome || 'Desatualizado'
+    const empresaAtiva = empresas[acesso?.empresa]?.nome || 'Desatualizado'
+
+    titulo.innerHTML = `${abertos ? 'ABERTOS' : 'SOLUCIONADOS'} • ${empresaAtiva}`
 
     const acumulado = `
     
@@ -446,16 +447,55 @@ async function telaOcorrencias(evitarEsconder) {
     const telaInterna = document.querySelector('.telaInterna')
     telaInterna.innerHTML = acumulado
 
-    for (const [idOcorrencia, ocorrencia] of Object.entries(dados_ocorrencias).reverse()) {
-        await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+    let contador = {
+        abertos: 0,
+        solucionados: 0
     }
+
+    for (const [idOcorrencia, ocorrencia] of Object.entries(dados_ocorrencias).reverse()) {
+        if (abertos && ocorrencia.tipoCorrecao == 'gtfu5') {
+            await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+        } else if (!abertos && ocorrencia.tipoCorrecao !== 'gtfu5') {
+            await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+        }
+
+        contador[ocorrencia.tipoCorrecao == 'gtfu5' ? 'abertos' : 'solucionados']++
+
+    }
+
+    criarBadge(contador.abertos, 'abertos', 'red')
+    criarBadge(contador.solucionados, 'solucionados', 'green')
 
     removerOverlay()
 
 }
 
+function criarBadge(numero, idPai, bg) {
+
+    const idBadge = `badge_${idPai}`
+    const badgeExistente = document.getElementById(idBadge)
+    if(badgeExistente) badgeExistente.remove()
+
+    const badge = `<span id="${idBadge}" class="badge" style="background-color: ${bg};">${numero}</span>`
+    const elementoPai = document.getElementById(idPai)
+    elementoPai.insertAdjacentHTML('beforeend', badge)
+
+}
+
 async function atualizarOcorrencias() {
-    overlayAguarde();
+
+    mostrarMenus(true)
+    sincronizarApp()
+    let status = { total: 8, atual: 1 }
+
+    sincronizarApp(status)
+    await sincronizarSetores(true)
+    status.atual++
+
+    sincronizarApp(status)
+    const nuvem = await baixarOcorrencias()
+    await inserirDados(nuvem, 'dados_ocorrencias')
+    status.atual++
 
     const basesAuxiliares = [
         'empresas',
@@ -466,33 +506,57 @@ async function atualizarOcorrencias() {
         'tipos'
     ];
 
-    await Promise.all(basesAuxiliares.map(base => sincronizarDados(base, true)));
-
-    let resposta = await baixarOcorrencias();
-    let dados_ocorrencias = await recuperarDados('dados_ocorrencias');
-
-    if (acesso.empresa !== '0') {
-        for (let [id, ocorrencia] of Object.entries(dados_ocorrencias)) {
-            if (ocorrencia.empresa !== acesso.empresa) {
-                delete dados_ocorrencias[id];
-            }
-        }
+    for (const base of basesAuxiliares) {
+        sincronizarApp(status)
+        await sincronizarDados(base, true)
+        status.atual++
     }
 
-    resposta = {
-        ...dados_ocorrencias,
-        ...resposta
-    };
-
-    await inserirDados(resposta, 'dados_ocorrencias', true); // reset
-    await sincronizarSetores();
-    titulo.textContent = resposta.empresa;
-
-    await telaOcorrencias(true);
-
-    removerOverlay();
+    sincronizarApp({ remover: true })
 }
 
+function sincronizarApp({ atual, total, remover } = {}) {
+
+    if (remover) {
+
+        setTimeout(async () => {
+            document.querySelector('.circular-loader').remove()
+            await telaOcorrencias(true)
+            return
+        }, 2000)
+
+        return
+
+    } else if (atual) {
+
+        const circumference = 2 * Math.PI * 50;
+        const percent = (atual / total) * 100;
+        const offset = circumference - (circumference * percent / 100);
+        progressCircle.style.strokeDasharray = circumference;
+        progressCircle.style.strokeDashoffset = offset;
+        percentageText.textContent = `${percent.toFixed(0)}%`;
+
+        return
+
+    } else {
+
+        const carregamentoHTML = `
+        <div class="circular-loader">
+            <svg>
+                <circle class="bg" cx="60" cy="60" r="50"></circle>
+                <circle class="progress" cx="60" cy="60" r="50"></circle>
+            </svg>
+            <div class="percentage">0%</div>
+        </div>
+        `
+        const botoesMenu = document.querySelector('.botoesMenu')
+        botoesMenu.insertAdjacentHTML('afterbegin', carregamentoHTML)
+
+        progressCircle = document.querySelector('.circular-loader .progress');
+        percentageText = document.querySelector('.circular-loader .percentage');
+    }
+
+}
 
 async function baixarOcorrencias() {
 
@@ -531,7 +595,7 @@ async function baixarOcorrencias() {
 
 async function telaUnidades() {
 
-    esconderMenus()
+    mostrarMenus(false)
     titulo.textContent = 'Unidades'
     const colunas = ['CNPJ', 'Cidade', 'Nome', '']
     await carregarElementosPagina('dados_clientes', colunas)
@@ -539,7 +603,7 @@ async function telaUnidades() {
 
 async function telaEquipamentos() {
 
-    esconderMenus()
+    mostrarMenus(false)
     titulo.textContent = 'Equipamentos'
     const colunas = ['Descrição', 'Código', 'Unidade', 'Modelo', 'Fabricante', '']
     await carregarElementosPagina('dados_composicoes', colunas)
@@ -598,7 +662,6 @@ async function formularioOcorrencia(idOcorrencia) {
 
 async function formularioCorrecao(idOcorrencia, idCorrecao) {
 
-    const dados_setores = await recuperarDados('dados_setores')
     const ocorrencia = await recuperarDado('dados_ocorrencias', idOcorrencia)
     const correcoes = await recuperarDados('correcoes')
     const correcao = ocorrencia?.correcoes?.[idCorrecao] || {}
@@ -756,10 +819,10 @@ async function salvarCorrecao(idOcorrencia, idCorrecao) {
 
     ocorrencia.tipoCorrecao = correcao.tipoCorrecao // Atualiza no objeto principal também;
 
-    await enviar(`dados_ocorrencias/${idOcorrencia}/correcoes/${idCorrecao}`, correcao)
-    await enviar(`dados_ocorrencias/${idOcorrencia}/tipoCorrecao`, correcao.tipoCorrecao)
     await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
     await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+    enviar(`dados_ocorrencias/${idOcorrencia}/correcoes/${idCorrecao}`, correcao)
+    enviar(`dados_ocorrencias/${idOcorrencia}/tipoCorrecao`, correcao.tipoCorrecao)
 
     anexosProvisorios = {}
     removerPopup()
@@ -829,8 +892,8 @@ async function salvarOcorrencia(idOcorrencia) {
 
         if (idOcorrencia) {
             await inserirDados({ [idOcorrencia]: ocorrencia }, 'dados_ocorrencias')
-            await enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
             await criarLinhaOcorrencia(idOcorrencia, ocorrencia)
+            enviar(`dados_ocorrencias/${idOcorrencia}`, ocorrencia)
 
         } else {
             await enviar('dados_ocorrencias/0000', ocorrencia)

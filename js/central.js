@@ -8,6 +8,9 @@ const nomeStore = 'Bases'
 let acesso = {}
 let app = 'clone'
 const api = `https://api.gcs.app.br`
+let progressCircle = null
+let percentageText = null
+
 function esquemaLinhas(base, id) {
 
     const esquema = {
@@ -81,10 +84,10 @@ const btnRodape = (texto, funcao) => `
 const btnPadrao = (texto, funcao) => `
         <span class="btnPadrao" onclick="${funcao}">${texto}</span>
 `
-const btn = (img, valor, funcao) => `
-    <div class="btnLateral" onclick="${funcao}">
+const btn = ({ img, nome, funcao, id }) => `
+    <div class="btnLateral" ${id ? `id="${id}"` : ''} onclick="${funcao}">
         <img src="imagens/${img}.png">
-        <div>${valor}</div>
+        <div>${nome}</div>
     </div>
 `
 
@@ -96,17 +99,20 @@ function f5() {
     location.reload();
 }
 
+function statusOnline(msg) {
+    if (!isAndroid) return
+    cordova.plugins.foregroundService.start(
+        'GCS',
+        msg,
+        'icon'
+    );
+}
+
 if (isAndroid) {
 
     document.addEventListener('deviceready', async () => {
 
         await solicitarPermissoes();
-
-        cordova.plugins.foregroundService.start(
-            'GCS',
-            'Serviço ativo',
-            'icon'
-        );
 
         connectWebSocket();
         telaLogin();
@@ -235,10 +241,9 @@ async function acessoLogin() {
             }
 
         } catch (e) {
+            divAcesso.style.display = 'flex'
             popup(mensagem(e), 'Alerta', true);
         }
-
-        divAcesso.style.display = 'flex'
 
     }
 }
@@ -420,11 +425,11 @@ const msgteste = (msg) => `
 async function telaPrincipal() {
 
     acesso = JSON.parse(localStorage.getItem('acesso'))
-    await sincronizarSetores()
     toolbar.style.display = 'flex'
 
     const menus = {
-        'Ocorrências': { img: 'configuracoes', funcao: 'telaOcorrencias()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'ABERTOS': { id: 'abertos', img: 'configuracoes', funcao: 'telaOcorrencias(true)', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'SOLUCIONADOS': { id: 'solucionados', img: 'configuracoes', funcao: 'telaOcorrencias(false)', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
         'Unidades': { img: 'empresa', funcao: 'telaUnidades()', liberados: ['supervisor', 'adm'] },
         'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', liberados: ['analista', 'supervisor', 'adm'] },
         'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
@@ -436,7 +441,7 @@ async function telaPrincipal() {
 
     for (const [nome, dados] of Object.entries(menus)) {
         if (!dados.liberados.includes(acesso.permissao)) continue
-        stringMenus += btn(dados.img, nome, dados.funcao)
+        stringMenus += btn({ ...dados, nome })
     }
 
     const acumulado = `
@@ -445,7 +450,9 @@ async function telaPrincipal() {
             <div class="side-menu" id="sideMenu">
 
                 <div class="botoesMenu">
-                    
+
+                    <br>
+
                     <div class="nomeUsuario">
                         <span><strong>${inicialMaiuscula(acesso.permissao)}</strong> ${acesso.usuario}</span>
                     </div>
@@ -465,13 +472,13 @@ async function telaPrincipal() {
 
     tela.innerHTML = acumulado
 
-    dados_distritos = await recuperarDados('dados_distritos')
+    await atualizarOcorrencias()
 
 }
 
 async function telaUsuarios() {
 
-    esconderMenus()
+    mostrarMenus(false)
     overlayAguarde()
 
     titulo.textContent = 'Usuários'
@@ -525,22 +532,6 @@ async function criarLinha(dados, id, nomeBase) {
     const body = document.getElementById('body')
     body.insertAdjacentHTML('beforeend', linha)
 
-}
-
-async function salvarConfigs() {
-
-    const emailFolha = document.getElementById('emailFolha').value
-    const emailAlertas = document.getElementById('emailAlertas').value
-
-    const configuracoes = {
-        emailFolha,
-        emailAlertas
-    }
-
-    await enviar('configuracoes', configuracoes)
-    await inserirDados(configuracoes, 'configuracoes')
-
-    popup(mensagem('Configurações Salvas', 'imagens/concluido.png'), 'Sucesso', true)
 }
 
 function verificarClique(event) {
@@ -618,9 +609,10 @@ async function confirmarDeslogar() {
     await inserirDados({}, 'dados_ocorrencias', true) // resetar a base para o próximo usuário;
 }
 
-function esconderMenus() {
-    const sideMenu = document.getElementById('sideMenu');
-    sideMenu.classList.toggle('active');
+function mostrarMenus(operacao) {
+    const menu = document.getElementById('sideMenu').classList
+    if (operacao == 'toggle') return menu.toggle('active')
+    operacao ? menu.add('active') : menu.remove('active')
 }
 
 async function gerenciarUsuario(id) {
@@ -717,7 +709,40 @@ function telaLogin() {
 }
 
 // API
-function enviar(caminho, info) {
+setInterval(async function () {
+    await reprocessarOffline()
+}, 30 * 1000)
+
+async function reprocessarOffline() {
+    let dados_offline = JSON.parse(localStorage.getItem('dados_offline')) || {};
+
+    for (let [operacao, operacoes] of Object.entries(dados_offline)) {
+        const ids = Object.keys(operacoes);
+
+        for (let idEvento of ids) {
+            const evento = operacoes[idEvento];
+
+            if (operacao === 'enviar') {
+                await enviar(evento.caminho, evento.valor, idEvento);
+            } else if (operacao === 'deletar', idEvento) {
+                await deletar(evento.chave, idEvento);
+            }
+
+        }
+    }
+}
+
+function salvarOffline(objeto, operacao, idEvento) {
+    let dados_offline = JSON.parse(localStorage.getItem('dados_offline')) || {}
+    idEvento = idEvento || ID5digitos()
+
+    if (!dados_offline[operacao]) dados_offline[operacao] = {}
+    dados_offline[operacao][idEvento] = objeto
+
+    localStorage.setItem('dados_offline', JSON.stringify(dados_offline))
+}
+
+function enviar(caminho, info, idEvento) {
     return new Promise((resolve) => {
         let objeto = {
             caminho: caminho,
@@ -732,10 +757,11 @@ function enviar(caminho, info) {
             },
             body: JSON.stringify(objeto)
         })
-            .then(data => resolve(data))
+            .then(data => {
+                resolve(data)
+            })
             .catch((erro) => {
-                console.mensagem(erro);
-                salvar_offline(objeto, 'enviar');
+                salvarOffline(objeto, 'enviar', idEvento);
                 resolve();
             });
     });
@@ -786,7 +812,7 @@ async function receber(chave) {
     })
 }
 
-async function deletar(chave) {
+async function deletar(chave, idEvento) {
     const url = `${api}/deletar`;
     const objeto = {
         chave,
@@ -807,6 +833,7 @@ async function deletar(chave) {
                 resolve(data);
             })
             .catch((err) => {
+                salvarOffline(objeto, 'deletar', idEvento);
                 popup(mensagem(err), 'Aviso', true)
                 resolve();
             });
@@ -854,9 +881,9 @@ async function configuracoes(usuario, campo, valor) {
     })
 }
 
-async function sincronizarSetores() {
+async function sincronizarSetores(overflow) {
 
-    overlayAguarde()
+    if (!overflow) overlayAguarde()
 
     dados_setores = await recuperarDados('dados_setores')
 

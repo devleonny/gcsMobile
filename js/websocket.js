@@ -6,18 +6,22 @@ function connectWebSocket() {
 
     socket.onopen = () => {
         if (acesso) socket.send(JSON.stringify({ tipo: 'autenticar', usuario: acesso.usuario }));
+        statusOnline('🟢 Online')
         console.log(`🟢🟢🟢 WS ${new Date().toLocaleString('pt-BR')} 🟢🟢🟢`);
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if(data.tipo !== 'usuarios_online') console.log(data);
-        
         if (data.base == 'dados_ocorrencias' && acesso.usuario) {
-            if (data.objeto.executor == acesso.usuario) {
-                notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas?.[data?.objeto?.empresa]?.nome || '??'} - Solicitado por ${data.objeto.solicitante}`)
-            }
+
+            const ocorrencia = dados_ocorrencias?.[data.id] || {}
+            const idEmpresa = ocorrencia?.empresa || ''
+            
+            if (ocorrencia.usuario !== acesso.usuario) return
+            
+            notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas?.[idEmpresa]?.nome || '??'} - Solicitado por ${ocorrencia?.solicitante || '??'}`)
+
         }
 
         if (data.base == 'dados_setores') {
@@ -36,6 +40,7 @@ function connectWebSocket() {
     };
 
     socket.onclose = () => {
+        statusOnline('🔴 Offline')
         console.log(`🔴🔴🔴 WS ${new Date().toLocaleString('pt-BR')} 🔴🔴🔴`);
         console.log(`Tentando reconectar em ${reconnectInterval / 1000} segundos...`);
         setTimeout(connectWebSocket, reconnectInterval);
