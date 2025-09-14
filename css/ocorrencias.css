@@ -2,6 +2,18 @@
     width: 50vw;
 }
 
+.div-linha {
+    padding: 0.5rem;
+    border: 1px solid #949494;
+    background-color: white;
+    display: flex;
+    align-items: start;
+    justify-content: start;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.8rem;
+}
+
 .tela-ocorrencias {
     display: flex;
     align-items: start;
@@ -20,11 +32,6 @@
 
 .rodape-formulario button {
     padding: 5vw;
-    font-size: 4vw;
-}
-
-.rodape-formulario span {
-    font-size: 4vw;
 }
 
 .itemFiltro {
@@ -59,10 +66,6 @@
     height: 25px;
 }
 
-.atalhosRelatorio label {
-    font-size: 5vw;
-}
-
 .blocoFiltro {
     height: -webkit-fill-available;
     width: -webkit-fill-available;
@@ -76,7 +79,6 @@
 }
 
 .blocoFiltro div label {
-    font-size: 0.7vw;
     border-radius: 2px;
     background-color: #383838;
     padding: 3px;
@@ -136,16 +138,11 @@
     width: 10vw;
 }
 
-.totalBox label {
-    font-size: 5vw;
-}
-
 .balaoOcorrencias {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 4vw;
     border-radius: 15px;
     overflow: hidden;
 }
@@ -188,7 +185,6 @@
     width: 100vw;
     border: solid 1px #222;
     text-align: center;
-    font-size: 4vw;
 }
 
 .fechar {
@@ -203,9 +199,13 @@
     color: red;
 }
 
+.tabelaCorrecoes {
+    width: 100%;
+}
+
 .campos {
+    border: solid 1px #7d7d7d;
     text-align: center;
-    font-size: 5vw;
     cursor: pointer;
     padding: 5px;
     background-color: #b5b5b5;
@@ -235,7 +235,6 @@
 
 .atalhos label {
     margin-left: 2vw;
-    font-size: 4vw;
 }
 
 .atalhos:hover {
@@ -284,17 +283,8 @@
 @media screen and (orientation: landscape),
 screen and (min-aspect-ratio: 13/9) {
 
-    .rodape-formulario span {
-        font-size: 2vw;
-    }
-
     .rodape-formulario button {
         padding: 2vw;
-        font-size: 2vw;
-    }
-
-    .atalhos label {
-        font-size: 2vw;
     }
 
     .painel-superior-cadastros {
@@ -303,10 +293,6 @@ screen and (min-aspect-ratio: 13/9) {
 
     .paginacao img {
         width: 2vw;
-    }
-
-    .fechar {
-        font-size: 5vw;
     }
 
     .tabelaRelatorio img {
@@ -324,27 +310,14 @@ screen and (min-aspect-ratio: 13/9) {
 
     .tabela1 td {
         width: 40vw;
-        font-size: 1.5vw;
     }
 
     .totalBox label {
         font-size: 2vw;
     }
 
-    .campos {
-        font-size: 1.5vw;
-    }
-
-    .balaoOcorrencias {
-        font-size: 1.2vw;
-    }
-
     .itemFiltro img {
         width: 2vw;
-    }
-
-    .atalhosRelatorio label {
-        font-size: 2vw;
     }
 
     .img-logo-td {

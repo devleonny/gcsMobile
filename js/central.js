@@ -6,7 +6,6 @@ const vertical = `display: flex; align-items: start; justify-content: start; fle
 const nomeBaseCentral = 'GCSMob'
 const nomeStore = 'Bases'
 let acesso = {}
-let app = 'clone'
 const api = `https://api.gcs.app.br`
 let progressCircle = null
 let percentageText = null
@@ -97,15 +96,6 @@ document.addEventListener('keydown', function (event) {
 
 function f5() {
     location.reload();
-}
-
-function statusOnline(msg) {
-    if (!isAndroid) return
-    cordova.plugins.foregroundService.start(
-        'GCS',
-        msg,
-        'icon'
-    );
 }
 
 if (isAndroid) {
@@ -210,7 +200,6 @@ async function acessoLogin() {
 
         const requisicao = {
             tipoAcesso: 'login',
-            app,
             dados: {
                 usuario: inputs[0].value,
                 senha: inputs[1].value
@@ -428,13 +417,14 @@ async function telaPrincipal() {
     toolbar.style.display = 'flex'
 
     const menus = {
-        'ABERTOS': { id: 'abertos', img: 'configuracoes', funcao: 'telaOcorrencias(true)', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
-        'SOLUCIONADOS': { id: 'solucionados', img: 'configuracoes', funcao: 'telaOcorrencias(false)', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'Atualizar': {img: 'atualizar', funcao: 'atualizarOcorrencias()', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante']},
+        'Abertos': { id: 'abertos', img: 'configuracoes', funcao: 'telaOcorrencias(true)', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'Solucionados': { id: 'solucionados', img: 'configuracoes', funcao: 'telaOcorrencias(false)', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
         'Unidades': { img: 'empresa', funcao: 'telaUnidades()', liberados: ['supervisor', 'adm'] },
         'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', liberados: ['analista', 'supervisor', 'adm'] },
         'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
         'Cadastros': { img: 'ajustar', funcao: 'telaCadastros()', liberados: ['analista', 'supervisor', 'adm'] },
-        'Desconectar': { img: 'sair', funcao: 'deslogar()', liberados: ['técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
+        'Desconectar': { img: 'sair', funcao: 'deslogar()', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
     }
 
     let stringMenus = ''
@@ -693,6 +683,8 @@ function telaLogin() {
 
                 </div>
 
+                <br>
+
             </div>
 
             <div class="rodape-login">
@@ -746,11 +738,10 @@ function enviar(caminho, info, idEvento) {
     return new Promise((resolve) => {
         let objeto = {
             caminho: caminho,
-            valor: info,
-            app
+            valor: info
         };
 
-        fetch(`${api}/salvar`, {
+        fetch(`${api}/salvar-dados`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -777,14 +768,13 @@ async function receber(chave) {
         if (objeto.timestamp && objeto.timestamp > timestamp) timestamp = objeto.timestamp
     }
 
-    const rota = chavePartes[0] == 'dados_clientes' ? 'clientes-validos' : 'dados'
+    const rota = chavePartes[0] == 'dados_clientes' ? 'clientes-validos' : 'obter-dados'
     const obs = {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            app,
             chave: chave,
             timestamp: timestamp
         })
@@ -816,8 +806,7 @@ async function deletar(chave, idEvento) {
     const url = `${api}/deletar`;
     const objeto = {
         chave,
-        usuario: acesso.usuario,
-        app
+        usuario: acesso.usuario
     }
 
     return new Promise((resolve) => {
@@ -863,7 +852,7 @@ async function configuracoes(usuario, campo, valor) {
         fetch(`${api}/configuracoes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuario, campo, valor, app })
+            body: JSON.stringify({ usuario, campo, valor })
         })
             .then(response => {
                 if (!response.ok) {
@@ -1041,7 +1030,8 @@ function criarAnexoVisual({ nome, link, funcao }) {
                 <label title="${nome}">${nome}</label>
             </div>
             <img src="imagens/cancel.png" style="display: ${displayExcluir};" onclick="${funcao}">
-        </div>`
+        </div>
+    `
 }
 
 function abrirArquivo(link, nome) {
@@ -1053,7 +1043,7 @@ function abrirArquivo(link, nome) {
     if (imagens.includes(extensao)) {
         const acumulado = `
             <div class="fundoImagens">
-                <img src="${link}">
+                <img src="${link}" style="width: 100%;">
             </div>
         `
         return popup(acumulado, nome, true);

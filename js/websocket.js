@@ -6,21 +6,21 @@ function connectWebSocket() {
 
     socket.onopen = () => {
         if (acesso) socket.send(JSON.stringify({ tipo: 'autenticar', usuario: acesso.usuario }));
-        statusOnline('🟢 Online')
         console.log(`🟢🟢🟢 WS ${new Date().toLocaleString('pt-BR')} 🟢🟢🟢`);
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if (data.base == 'dados_ocorrencias' && acesso.usuario) {
-
+        if (data.base == 'dados_ocorrencias' && acesso.usuario) {          
             const ocorrencia = dados_ocorrencias?.[data.id] || {}
-            const idEmpresa = ocorrencia?.empresa || ''
+            const idEmpresa = (data.objeto && data.objeto.empresa) ? data.objeto.empresa : ocorrencia?.empresa || ''
+            const usuarioOcorrencia = (data.objeto && data.objeto.usuario) ? data.objeto.usuario : ocorrencia.usuario
+            const solicitante = (data.objeto && data.objeto.solicitante) ? data.objeto.solicitante : ocorrencia.solicitante
             
-            if (ocorrencia.usuario !== acesso.usuario) return
+            if (usuarioOcorrencia !== acesso.usuario) return
             
-            notificacoes(data.id, `Chamado ${data.id} atualizado`, `${empresas?.[idEmpresa]?.nome || '??'} - Solicitado por ${ocorrencia?.solicitante || '??'}`)
+            notificacoes(`Chamado ${data.id} atualizado`, `${empresas?.[idEmpresa]?.nome || '??'} - Solicitado por ${solicitante || '??'}`)
 
         }
 
@@ -40,7 +40,6 @@ function connectWebSocket() {
     };
 
     socket.onclose = () => {
-        statusOnline('🔴 Offline')
         console.log(`🔴🔴🔴 WS ${new Date().toLocaleString('pt-BR')} 🔴🔴🔴`);
         console.log(`Tentando reconectar em ${reconnectInterval / 1000} segundos...`);
         setTimeout(connectWebSocket, reconnectInterval);

@@ -220,9 +220,6 @@ async function deletarDB(base, idInterno) {
 
 // ----- Android (JSON local) -----
 async function deletarDBJson(base, idInterno) {
-    const clone = JSON.parse(sessionStorage.getItem('modoClone')) || false;
-    base = clone ? `${base}_clone` : base;
-
     let banco = await lerArquivoJSON();
 
     if (banco[base] && banco[base][idInterno]) {
@@ -233,8 +230,6 @@ async function deletarDBJson(base, idInterno) {
 
 // ----- Navegador (IndexedDB) -----
 async function deletarDBIndexedDB(base, idInterno) {
-    const clone = JSON.parse(sessionStorage.getItem('modoClone')) || false;
-    base = clone ? `${base}_clone` : base;
 
     const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open(nomeBaseCentral);
