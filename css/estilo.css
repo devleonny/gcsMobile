@@ -262,11 +262,11 @@ button {
     justify-content: start;
     flex-direction: column;
     gap: 5px;
-    padding: 10vw;
     background-color: #d2d2d2;
     max-height: 40vh;
     overflow-y: auto;
     overflow-x: hidden;
+    padding: 2rem;
 }
 
 .painel-cadastro table {
@@ -558,6 +558,7 @@ input[type="file"] {
     background-color: white;
     border-radius: 50px;
     padding-left: 2rem;
+    margin: 0.5rem;
 }
 
 .pesquisa img {
@@ -868,10 +869,6 @@ screen and (min-aspect-ratio: 13/9) {
 
     .camposCadastro {
         padding: 2vw;
-    }
-
-    .painel-cadastro {
-        padding: 5vw;
     }
 
     .contornoInterno img {

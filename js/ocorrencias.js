@@ -12,6 +12,7 @@ let opcoesValidas = {
     tipoCorrecao: new Set(),
     finalizado: new Set()
 }
+let emAtualizacao = false
 
 const labelBotao = (name, nomebase, id, nome) => {
 
@@ -293,9 +294,12 @@ async function excluirOcorrenciaCorrecao(idOcorrencia, idCorrecao) {
 async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
 
     const correcoes = await recuperarDados('correcoes')
+    
     let correcoesDiv = ''
     let pagina = 1
     for (const [idCorrecao, recorte] of Object.entries(dadosCorrecoes)) {
+
+        const btnExclusao = (acesso.permissao == 'adm' || recorte.usuario == acesso.usuario) ? botaoImg('fechar', `confirmarExclusao('${idOcorrencia}', '${idCorrecao}')`) : ''
 
         const data = new Date(Number(Object.keys(recorte.datas)[0])).toLocaleString('pt-BR')
 
@@ -306,7 +310,7 @@ async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
 
                     <div style="${horizontal}; gap: 5px; width: 100%;">
                         ${botaoImg('lapis', `formularioCorrecao('${idOcorrencia}', '${idCorrecao}')`)}
-                        ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}', '${idCorrecao}')`)}
+                        ${btnExclusao}
                     </div>
                     ${modeloCampos('Executor', `<label style="white-space: nowrap;">${recorte.usuario}</label>`)}
                     ${modeloCampos('Status', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
@@ -360,12 +364,14 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
 
     const qtdeCorrecoes = Object.keys(ocorrencia?.correcoes || {}).length
 
+    const btnExclusao = (acesso.permissao == 'adm' || ocorrencia.usuario == acesso.usuario) ? botaoImg('fechar', `confirmarExclusao('${idOcorrencia}')`) : ''
+
     const status = correcoes[ocorrencia?.tipoCorrecao]?.nome || 'Não analisada'
     const linha = `
         <div style="${horizontal}; width: 90%; gap: 5px; padding: 5px;">
             ${botao('Incluir Correção', `formularioCorrecao('${idOcorrencia}')`, '#e47a00')}
             ${botaoImg('lapis', `formularioOcorrencia('${idOcorrencia}')`)}
-            ${botaoImg('fechar', `confirmarExclusao('${idOcorrencia}')`)}
+            ${btnExclusao}
             <div class="contador" onclick="abrirCorrecoes('${idOcorrencia}')">
                 <img src="imagens/configuracoes.png" style="width: 2rem;">
                 <span>${qtdeCorrecoes}</span>
@@ -543,11 +549,15 @@ function criarBadge(numero, idPai, bg) {
 
     const badge = `<span id="${idBadge}" class="badge" style="background-color: ${bg};">${numero}</span>`
     const elementoPai = document.getElementById(idPai)
-    if(elementoPai) elementoPai.insertAdjacentHTML('beforeend', badge)
+    if (elementoPai) elementoPai.insertAdjacentHTML('beforeend', badge)
 
 }
 
 async function atualizarOcorrencias() {
+
+    if (emAtualizacao) return
+
+    emAtualizacao = true
 
     mostrarMenus(true)
     sincronizarApp()
@@ -579,6 +589,8 @@ async function atualizarOcorrencias() {
     }
 
     sincronizarApp({ remover: true })
+
+    emAtualizacao = false
 }
 
 function sincronizarApp({ atual, total, remover } = {}) {
@@ -586,7 +598,8 @@ function sincronizarApp({ atual, total, remover } = {}) {
     if (remover) {
 
         setTimeout(async () => {
-            document.querySelector('.circular-loader').remove()
+            const loader = document.querySelector('.circular-loader')
+            if (loader) loader.remove()
             await telaOcorrencias(true)
             return
         }, 1000)
@@ -916,6 +929,7 @@ async function salvarOcorrencia(idOcorrencia) {
             ...ocorrencia.anexos,
             ...anexosProvisorios
         }
+
         ocorrencia.usuario = acesso.usuario
         ocorrencia.dataRegistro = new Date().toLocaleString('pt-BR')
         ocorrencia.dataLimiteExecucao = obter('dataLimiteExecucao').value

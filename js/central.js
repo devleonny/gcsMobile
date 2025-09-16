@@ -43,6 +43,7 @@ const dtFormatada = (data) => {
     const [ano, mes, dia] = data.split('-')
     return `${dia}/${mes}/${ano}`
 }
+
 const modeloTabela = (colunas, base) => {
 
     const ths = colunas
@@ -410,7 +411,7 @@ const msgteste = (msg) => `
 `
 
 async function telaPrincipal() {
-    const acesso = JSON.parse(localStorage.getItem('acesso'));
+    acesso = JSON.parse(localStorage.getItem('acesso'));
     toolbar.style.display = 'flex';
 
     const menus = {
@@ -606,7 +607,7 @@ async function gerenciarUsuario(id) {
         .map(([id, empresa]) => `<option value="${id}" ${usuario?.empresa == id ? 'selected' : ''}>${empresa.nome}</option>`)
         .join('')
 
-    const permissoes = ['', 'novo', 'desativado', 'técnico', 'visitante', 'analista']
+    const permissoes = ['', 'novo', 'desativado', 'técnico', 'visitante', 'analista', 'gerente']
         .map(op => `<option ${usuario?.permissao == op ? 'selected' : ''}>${op}</option>`).join('')
 
     const setores = ['', 'CHAMADOS', 'MATRIZ BA', 'INFRA', 'CHAMADO/INFRA', 'LOGÍSTICA']
@@ -790,7 +791,7 @@ async function receber(chave) {
 }
 
 async function deletar(chave, idEvento) {
-    const url = `${api}/deletar`;
+    const url = `${api}/deletar-dados`;
     const objeto = {
         chave,
         usuario: acesso.usuario
