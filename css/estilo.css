@@ -142,7 +142,6 @@ span {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    width: 90vw;
     font-size: 1.2rem;
 }
 
@@ -170,6 +169,7 @@ span {
     flex-direction: column;
     justify-content: space-evenly;
     background-color: white;
+    padding: 1rem;
 }
 
 .credenciais {
@@ -180,7 +180,8 @@ span {
 }
 
 .cadeado {
-    width: 18rem;
+    padding: 0.5rem;
+    width: 15rem;
 }
 
 .overlay {
@@ -288,7 +289,7 @@ button {
 .rodape-login button {
     border-radius: 0px;
     width: 100%;
-    padding: 5vw;
+    padding: 1rem;
 }
 
 .painel-cadastro th {
@@ -547,7 +548,7 @@ input[type="file"] {
 }
 
 .mensagem img {
-    width: 10vw;
+    width: 2rem;
 }
 
 .pesquisa {
@@ -851,10 +852,6 @@ screen and (min-aspect-ratio: 13/9) {
     .btnExcel {
         gap: 10vw;
         display: flex;
-    }
-
-    .mensagem img {
-        width: 7vw;
     }
 
     .botoesMenu {

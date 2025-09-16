@@ -279,8 +279,6 @@ async function salvarCadastro() {
             }
 
             const data = await response.json()
-
-            divAcesso.style.display = 'flex'
             return popup(mensagem(data.mensagem), 'Alerta');
 
         } catch (e) {
@@ -412,58 +410,47 @@ const msgteste = (msg) => `
 `
 
 async function telaPrincipal() {
-
-    acesso = JSON.parse(localStorage.getItem('acesso'))
-    toolbar.style.display = 'flex'
+    const acesso = JSON.parse(localStorage.getItem('acesso'));
+    toolbar.style.display = 'flex';
 
     const menus = {
-        'Atualizar': {img: 'atualizar', funcao: 'atualizarOcorrencias()', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante']},
-        'Abertos': { id: 'abertos', img: 'configuracoes', funcao: 'telaOcorrencias(true)', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
-        'Solucionados': { id: 'solucionados', img: 'configuracoes', funcao: 'telaOcorrencias(false)', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
-        'Unidades': { img: 'empresa', funcao: 'telaUnidades()', liberados: ['supervisor', 'adm'] },
-        'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', liberados: ['analista', 'supervisor', 'adm'] },
-        'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', liberados: ['supervisor', 'adm'] },
-        'Cadastros': { img: 'ajustar', funcao: 'telaCadastros()', liberados: ['analista', 'supervisor', 'adm'] },
-        'Desconectar': { img: 'sair', funcao: 'deslogar()', liberados: ['user', 'técnico', 'analista', 'supervisor', 'adm', 'visitante'] },
-    }
+        'Atualizar': { img: 'atualizar', funcao: 'atualizarOcorrencias()', proibidos: [] },
+        'Abertos': { id: 'abertos', img: 'configuracoes', funcao: 'telaOcorrencias(true)', proibidos: [] },
+        'Solucionados': { id: 'solucionados', img: 'configuracoes', funcao: 'telaOcorrencias(false)', proibidos: [] },
+        'Unidades': { img: 'empresa', funcao: 'telaUnidades()', proibidos: ['user', 'técnico', 'analista', 'visitante'] },
+        'Equipamentos': { img: 'composicoes', funcao: 'telaEquipamentos()', proibidos: ['user', 'técnico', 'visitante'] },
+        'Usuários': { img: 'perfil', funcao: 'telaUsuarios()', proibidos: ['user', 'técnico', 'analista', 'visitante'] },
+        'Cadastros': { img: 'ajustar', funcao: 'telaCadastros()', proibidos: ['user', 'técnico', 'visitante'] },
+        'Desconectar': { img: 'sair', funcao: 'deslogar()', proibidos: [] },
+    };
 
-    let stringMenus = ''
-
-    for (const [nome, dados] of Object.entries(menus)) {
-        if (!dados.liberados.includes(acesso.permissao)) continue
-        stringMenus += btn({ ...dados, nome })
-    }
+    const stringMenus = Object.entries(menus)
+        .filter(([_, dados]) => !dados.proibidos.includes(acesso.permissao))
+        .map(([nome, dados]) => btn({ ...dados, nome }))
+        .join('');
 
     const acumulado = `
         <div class="menu-container">
-
             <div class="side-menu" id="sideMenu">
-
                 <div class="botoesMenu">
-
                     <br>
-
                     <div class="nomeUsuario">
                         <span><strong>${inicialMaiuscula(acesso.permissao)}</strong> ${acesso.usuario}</span>
                     </div>
-
                     ${stringMenus}
-
                 </div>
             </div>
-
             <div class="telaInterna">
                 <div class="planoFundo">
                     <img src="imagens/BG.png">
                 </div>
             </div>
         </div>
-    `
+    `;
 
-    tela.innerHTML = acumulado
+    tela.innerHTML = acumulado;
 
-    await atualizarOcorrencias()
-
+    await atualizarOcorrencias();
 }
 
 async function telaUsuarios() {
