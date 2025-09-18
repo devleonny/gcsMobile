@@ -13,6 +13,7 @@ let opcoesValidas = {
     finalizado: new Set()
 }
 let emAtualizacao = false
+let ocorrenciasAbertas = null
 
 const labelBotao = (name, nomebase, id, nome) => {
 
@@ -213,7 +214,7 @@ function ampliarImagem(img, idFoto) {
 
     const acumulado = `
         <div style="position: relative; background-color: #d2d2d2;">
-            <button style="position: absolute; top: 10px; left: 10px;" onclick="removerImagem('${idFoto}')">Remover Imagem</button>
+            <!-- <button style="position: absolute; top: 10px; left: 10px;" onclick="removerImagem('${idFoto}')">Remover Imagem</button> -->
             <img style="width: 95%;" src="${img.src}">
         </div>
     `
@@ -291,57 +292,6 @@ async function excluirOcorrenciaCorrecao(idOcorrencia, idCorrecao) {
 
 }
 
-async function gerarCorrecoes(idOcorrencia, dadosCorrecoes) {
-
-    const correcoes = await recuperarDados('correcoes')
-    
-    let correcoesDiv = ''
-    let pagina = 1
-    for (const [idCorrecao, recorte] of Object.entries(dadosCorrecoes)) {
-
-        const btnExclusao = (acesso.permissao == 'adm' || recorte.usuario == acesso.usuario) ? botaoImg('fechar', `confirmarExclusao('${idOcorrencia}', '${idCorrecao}')`) : ''
-
-        const data = new Date(Number(Object.keys(recorte.datas)[0])).toLocaleString('pt-BR')
-
-        correcoesDiv += `
-            <div id="${idOcorrencia}_${pagina}" name="${idCorrecao}" style="${horizontal}; align-items: start; display: ${pagina == 1 ? 'flex' : 'none'}; width: 100%;">
-
-                <div style="${vertical}; gap: 5px; width: 100%;">
-
-                    <div style="${horizontal}; gap: 5px; width: 100%;">
-                        ${botaoImg('lapis', `formularioCorrecao('${idOcorrencia}', '${idCorrecao}')`)}
-                        ${btnExclusao}
-                    </div>
-                    ${modeloCampos('Executor', `<label style="white-space: nowrap;">${recorte.usuario}</label>`)}
-                    ${modeloCampos('Status', correcoes?.[recorte?.tipoCorrecao]?.nome || '??')}
-                    ${modeloCampos('Início', data)}
-                    ${modeloCampos('Descrição', recorte.descricao)}
-
-                </div>
-
-            </div>
-            `
-
-        pagina++
-    }
-
-    const acumulado = `
-        <div style="${vertical}; align-items: center; background-color: white; width: 100%;">
-            ${correcoesDiv}
-
-            <div class="paginacao">
-                <img onclick="ir(this, 'voltar', '${idOcorrencia}')" src="imagens/esq.png">
-                <label>1</label>
-                <label>de</label>
-                <label>${pagina - 1}</label>
-                <img onclick="ir(this, 'avancar', '${idOcorrencia}')" src="imagens/dir.png">
-            </div>
-        </div>
-        `
-
-    return acumulado
-}
-
 async function gerenciarCliente(idCliente) {
 
     const cliente = await recuperarDado('dados_clientes', idCliente)
@@ -368,15 +318,26 @@ async function criarLinhaOcorrencia(idOcorrencia, ocorrencia) {
 
     const status = correcoes[ocorrencia?.tipoCorrecao]?.nome || 'Não analisada'
     const linha = `
-        <div style="${horizontal}; width: 90%; gap: 5px; padding: 5px;">
-            ${botao('Incluir Correção', `formularioCorrecao('${idOcorrencia}')`, '#e47a00')}
+
+        <div style="${horizontal}; justify-content: start; width: 90%; gap: 5px; padding: 5px;">
             ${botaoImg('lapis', `formularioOcorrencia('${idOcorrencia}')`)}
             ${btnExclusao}
             <div class="contador" onclick="abrirCorrecoes('${idOcorrencia}')">
-                <img src="imagens/configuracoes.png" style="width: 2rem;">
+                <img src="imagens/configuracoes.png" style="width: 2.5rem;">
                 <span>${qtdeCorrecoes}</span>
             </div>
+            <img src="imagens/pdf.png" style="width: 2.5rem;" onclick="telaOS('${idOcorrencia}')">
+            <div style="position: relative;" onclick="coletarAssinatura('${idOcorrencia}')">
+                <img src="imagens/assinatura.png" style="width: 2.5rem;">
+                <img src="imagens/${ocorrencia.assinatura ? 'concluido' : 'cancel'}.png" style="width: 2rem; position: absolute; top: -10px; right: -20px;">
+            </div>
         </div>
+
+        <br>
+
+        ${botao('Incluir Correção', `formularioCorrecao('${idOcorrencia}')`, '#e47a00')}
+
+        <br>
 
         ${modeloCampos('Empresa', empresas[ocorrencia?.empresa]?.nome || '--')}
         ${modeloCampos('Número', idOcorrencia)}
@@ -429,13 +390,16 @@ async function abrirCorrecoes(idOcorrencia) {
 
 }
 
-async function carregarLinhaCorrecao(idCorrecao, correcao, idOcorrencia) { //29
+async function gerarOS(idOcorrencia) { //29
+
+
+}
+
+async function carregarLinhaCorrecao(idCorrecao, correcao, idOcorrencia) {
 
     const imagens = Object.entries(correcao?.fotos || {})
         .map(([link, foto]) => `<img name="foto" data-salvo="sim" id="${link}" src="${api}/uploads/GCS/${link}" class="foto" onclick="ampliarImagem(this, '${link}')">`)
         .join('')
-
-    console.log(correcao);
 
     const edicao = (correcao.executor == acesso.usuario || acesso.permissao == 'adm')
         ? `
@@ -478,6 +442,9 @@ async function carregarLinhaCorrecao(idCorrecao, correcao, idOcorrencia) { //29
 }
 
 async function telaOcorrencias(abertos) {
+
+    if (abertos !== undefined) ocorrenciasAbertas = abertos
+    if (abertos == undefined && ocorrenciasAbertas !== null) abertos = ocorrenciasAbertas
 
     mostrarMenus(false)
 
@@ -600,7 +567,8 @@ function sincronizarApp({ atual, total, remover } = {}) {
         setTimeout(async () => {
             const loader = document.querySelector('.circular-loader')
             if (loader) loader.remove()
-            await telaOcorrencias(true)
+            await telaOcorrencias()
+            mostrarMenus(false)
             return
         }, 1000)
 

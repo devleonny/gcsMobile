@@ -521,7 +521,6 @@ async function sincronizarDados(base, overlayOff) {
 
     if (!overlayOff) overlayAguarde()
 
-
     let nuvem = await receber(base) || {}
     await inserirDados(nuvem, base)
 

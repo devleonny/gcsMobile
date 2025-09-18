@@ -21,7 +21,7 @@ html {
     align-items: center;
     justify-content: space-between;
     border-radius: 3px;
-    background: linear-gradient(to left, #e47a00 60%, #e5e5e5 0%);
+    background: linear-gradient(to left, #e47a00 50%, #e5e5e5 0%);
 }
 
 .contador span {
@@ -676,8 +676,22 @@ input[type="file"] {
     padding: 5vw;
 }
 
+.botoes-flutuantes {
+    border-radius: 5px;
+    background-color: #222222de;
+    z-index: 2222;
+    position: fixed;
+    bottom: 5%;
+    right: 5%;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
 .toolbar {
-    height: 6vh;
+    min-height: 6vh;
     display: flex;
     align-items: center;
     justify-content: start;
@@ -702,7 +716,7 @@ input[type="file"] {
 }
 
 .botaoImg img {
-    width: 1.5rem;
+    width: 2.2rem;
 }
 
 .menu-btn {
